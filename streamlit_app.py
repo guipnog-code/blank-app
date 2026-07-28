@@ -21,7 +21,6 @@ def preencher_documentos_oficiais(dados):
     pdf_procuracao_bytes = None
     pdf_termo_bytes = None
 
-    # Preenchendo a Procuração
     if os.path.exists(caminho_procuracao):
         doc_proc = fitz.open(caminho_procuracao)
         pag_proc = doc_proc[0]
@@ -34,7 +33,6 @@ def preencher_documentos_oficiais(dados):
         pdf_procuracao_bytes = doc_proc.tobytes()
         doc_proc.close()
 
-    # Preenchendo o Termo
     if os.path.exists(caminho_termo):
         doc_termo = fitz.open(caminho_termo)
         pag_termo = doc_termo[0]
@@ -47,6 +45,12 @@ def preencher_documentos_oficiais(dados):
 
 st.title("📋 Cadastro e Preenchimento de Documentos")
 st.write("Preencha os dados abaixo para cadastrar e gerar os documentos em PDF.")
+
+# Inicializa o estado da sessão para manter os botões visíveis
+if "pdf_proc" not in st.session_state:
+    st.session_state.pdf_proc = None
+if "pdf_termo" not in st.session_state:
+    st.session_state.pdf_termo = None
 
 with st.form("form_cadastro"):
     st.subheader("Dados Profissionais")
@@ -90,26 +94,29 @@ if submitted:
     salvar_no_excel(dados_usuario)
     st.success("Dados salvos com sucesso no sistema!")
 
-    pdf_proc, pdf_termo = preencher_documentos_oficiais(dados_usuario)
+    # Guarda os arquivos na sessão para não sumirem após o clique
+    st.session_state.pdf_proc, st.session_state.pdf_termo = preencher_documentos_oficiais(dados_usuario)
 
+# Exibe os botões se os arquivos já estiverem gerados na sessão
+if st.session_state.pdf_proc or st.session_state.pdf_termo:
     st.markdown("### 📥 Baixar Documentos Gerados")
     
     col1, col2 = st.columns(2)
     
-    if pdf_proc:
+    if st.session_state.pdf_proc:
         with col1:
             st.download_button(
                 label="📄 Baixar Procuração",
-                data=pdf_proc,
+                data=st.session_state.pdf_proc,
                 file_name="Procuracao_Preenchida.pdf",
                 mime="application/pdf"
             )
             
-    if pdf_termo:
+    if st.session_state.pdf_termo:
         with col2:
             st.download_button(
                 label="📄 Baixar Termo",
-                data=pdf_termo,
+                data=st.session_state.pdf_termo,
                 file_name="Termo_Preenchido.pdf",
                 mime="application/pdf"
             )
