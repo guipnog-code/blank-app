@@ -21,23 +21,34 @@ def preencher_documentos_oficiais(dados):
     pdf_procuracao_bytes = None
     pdf_termo_bytes = None
 
+    # Preenchendo a Procuração com base no PDF de referência
     if os.path.exists(caminho_procuracao):
         doc_proc = fitz.open(caminho_procuracao)
         pag_proc = doc_proc[0]
         pag_proc.insert_text((92, 184), dados['Nome'], fontsize=9, color=(0,0,0))
         pag_proc.insert_text((83, 200), dados['CPF'], fontsize=9, color=(0,0,0))
         pag_proc.insert_text((223, 200), dados['RG'], fontsize=9, color=(0,0,0))
-        pag_proc.insert_text((369, 200), dados['Cargo'], fontsize=9, color=(0,0,0))
-        pag_proc.insert_text((94, 215), dados['Órgão'], fontsize=8, color=(0,0,0))
-        pag_proc.insert_text((284, 215), dados['Data de Ingresso'], fontsize=9, color=(0,0,0))
+        pag_proc.insert_text((368, 200), dados['Cargo'], fontsize=9, color=(0,0,0))
+        pag_proc.insert_text((94, 216), dados['Órgão'], fontsize=8, color=(0,0,0))
+        pag_proc.insert_text((284, 216), dados['Data de Ingresso'], fontsize=9, color=(0,0,0))
+        pag_proc.insert_text((428, 216), dados['Estado Civil'], fontsize=9, color=(0,0,0))
+        pag_proc.insert_text((109, 230), dados['Telefone'], fontsize=9, color=(0,0,0))
+        pag_proc.insert_text((253, 230), dados['E-mail'], fontsize=9, color=(0,0,0))
+        pag_proc.insert_text((116, 245), dados['Endereço'], fontsize=9, color=(0,0,0))
+        pag_proc.insert_text((99, 260), dados['Município'], fontsize=9, color=(0,0,0))
+        pag_proc.insert_text((392, 260), dados['Estado'], fontsize=9, color=(0,0,0))
+        pag_proc.insert_text((457, 260), dados['CEP'], fontsize=9, color=(0,0,0))
         pdf_procuracao_bytes = doc_proc.tobytes()
         doc_proc.close()
 
+    # Preenchendo o Termo com base no PDF de referência
     if os.path.exists(caminho_termo):
         doc_termo = fitz.open(caminho_termo)
         pag_termo = doc_termo[0]
-        pag_termo.insert_text((100, 150), dados['Nome'], fontsize=9, color=(0,0,0))
-        pag_termo.insert_text((100, 170), dados['CPF'], fontsize=9, color=(0,0,0))
+        pag_termo.insert_text((125, 145), dados['Nome'], fontsize=9, color=(0,0,0))
+        pag_termo.insert_text((82, 170), dados['CPF'], fontsize=9, color=(0,0,0))
+        pag_termo.insert_text((265, 170), dados['Matrícula'], fontsize=9, color=(0,0,0))
+        pag_termo.insert_text((377, 169), dados['Cargo'], fontsize=9, color=(0,0,0))
         pdf_termo_bytes = doc_termo.tobytes()
         doc_termo.close()
 
@@ -46,7 +57,6 @@ def preencher_documentos_oficiais(dados):
 st.title("📋 Cadastro e Preenchimento de Documentos")
 st.write("Preencha os dados abaixo para cadastrar e gerar os documentos em PDF.")
 
-# Inicializa o estado da sessão para manter os botões visíveis
 if "pdf_proc" not in st.session_state:
     st.session_state.pdf_proc = None
 if "pdf_termo" not in st.session_state:
@@ -94,10 +104,8 @@ if submitted:
     salvar_no_excel(dados_usuario)
     st.success("Dados salvos com sucesso no sistema!")
 
-    # Guarda os arquivos na sessão para não sumirem após o clique
     st.session_state.pdf_proc, st.session_state.pdf_termo = preencher_documentos_oficiais(dados_usuario)
 
-# Exibe os botões se os arquivos já estiverem gerados na sessão
 if st.session_state.pdf_proc or st.session_state.pdf_termo:
     st.markdown("### 📥 Baixar Documentos Gerados")
     
