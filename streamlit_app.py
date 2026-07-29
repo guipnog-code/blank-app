@@ -127,18 +127,18 @@ if st.session_state.pdf_proc or st.session_state.pdf_termo:
                 mime="application/pdf"
             )
 
-    # Tutorial Passo a Passo com as Imagens Buscando na Pasta 'imagens'
+    # Tutorial Passo a Passo com o nome correto 'passo_'
     st.markdown("---")
     st.markdown("## 📖 Tutorial: Como Assinar Digitalmente e Enviar")
     st.write("Siga o passo a passo ilustrado abaixo:")
 
     passos = [
-        ("Passo 1: Baixar os documentos gerados", "pass_01"),
-        ("Passo 2: Abrir o aplicativo Gov.br", "pass_02"),
-        ("Passo 3: Localizar o serviço", "pass_03"),
-        ("Passo 4: Selecionar 'Assinar documentos digitalmente'", "pass_04"),
-        ("Passo 5: Clicar em 'Escolher arquivo'", "pass_05"),
-        ("Passo 6: Selecionar os PDFs recentes", "pass_06"),
+        ("Passo 1: Baixar os documentos gerados", "passo_01"),
+        ("Passo 2: Abrir o aplicativo Gov.br", "passo_02"),
+        ("Passo 3: Localizar o serviço", "passo_03"),
+        ("Passo 4: Selecionar 'Assinar documentos digitalmente'", "passo_04"),
+        ("Passo 5: Clicar em 'Escolher arquivo'", "passo_05"),
+        ("Passo 6: Selecionar os PDFs recentes", "passo_06"),
         ("Passo 7: Visualizar o documento carregado", "pass_07"),
         ("Passo 8: Arrastar o quadrado para a área de assinatura", "pass_08"),
         ("Passo 9: Confirmar a assinatura", "pass_09"),
@@ -160,7 +160,6 @@ if st.session_state.pdf_proc or st.session_state.pdf_termo:
     for titulo, nome_base in passos:
         st.subheader(titulo)
         
-        # Procura dentro da pasta 'imagens' considerando extensões .jpeg ou .jpg
         arquivo_encontrado = None
         for ext in [".jpeg", ".jpg", ".JPEG", ".JPG"]:
             caminho_teste = os.path.join("imagens", nome_base + ext)
