@@ -55,13 +55,13 @@ def preencher_documentos_oficiais(dados):
 st.title("📋 Cadastro e Preenchimento de Documentos")
 st.write("Preencha os dados abaixo para cadastrar e gerar os documentos em PDF.")
 
-# Configuração da Barra Lateral (Sidebar) com a Dica
+# Configuração da Barra Lateral (Sidebar) com o link oficial integrado
 with st.sidebar:
     st.header("💡 Dica Importante")
     st.info(
         "O processo será muito mais fácil caso abra este link em outro aparelho "
         "para que possa visualizar o tutorial sem precisar mudar de tela:\n\n"
-        "🔗 **[Link do Tutorial (Em breve)]()**"
+        "🔗 [Acessar Tutorial](https://blank-app-8vxh0tfzj3.streamlit.app/)"
     )
 
 if "pdf_proc" not in st.session_state:
