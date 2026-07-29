@@ -127,7 +127,7 @@ if st.session_state.pdf_proc or st.session_state.pdf_termo:
                 mime="application/pdf"
             )
 
-    # Tutorial Passo a Passo com o nome correto 'passo_'
+    # Tutorial Passo a Passo - CORRIGIDO
     st.markdown("---")
     st.markdown("## 📖 Tutorial: Como Assinar Digitalmente e Enviar")
     st.write("Siga o passo a passo ilustrado abaixo:")
@@ -139,22 +139,22 @@ if st.session_state.pdf_proc or st.session_state.pdf_termo:
         ("Passo 4: Selecionar 'Assinar documentos digitalmente'", "passo_04"),
         ("Passo 5: Clicar em 'Escolher arquivo'", "passo_05"),
         ("Passo 6: Selecionar os PDFs recentes", "passo_06"),
-        ("Passo 7: Visualizar o documento carregado", "pass_07"),
-        ("Passo 8: Arrastar o quadrado para a área de assinatura", "pass_08"),
-        ("Passo 9: Confirmar a assinatura", "pass_09"),
-        ("Passo 10: Opção de carregar outro documento", "pass_10"),
-        ("Passo 11: Iniciar o processo de assinar ambos", "pass_11"),
-        ("Passo 12: Autorização via notificação", "pass_12"),
-        ("Passo 13: Digitar o código recebido", "pass_13"),
-        ("Passo 14: Clicar em Autorizar", "pass_14"),
-        ("Passo 15: Concluir etapa de assinatura", "pass_15"),
-        ("Passo 16: Baixar arquivos assinados", "pass_16"),
-        ("Passo 17: Menu de opções do navegador", "pass_17"),
-        ("Passo 18: Abrir no navegador Chrome", "pass_18"),
-        ("Passo 19: Retornar às opções", "pass_19"),
-        ("Passo 20: Acessar pasta de Transferências", "pass_20"),
-        ("Passo 21: Localizar os arquivos assinados", "pass_21"),
-        ("Passo 22: Compartilhar os documentos via WhatsApp", "pass_22"),
+        ("Passo 7: Visualizar o documento carregado", "passo_07"),
+        ("Passo 8: Arrastar o quadrado para a área de assinatura", "passo_08"),
+        ("Passo 9: Confirmar a assinatura", "passo_09"),
+        ("Passo 10: Opção de carregar outro documento", "passo_10"),
+        ("Passo 11: Iniciar o processo de assinar ambos", "passo_11"),
+        ("Passo 12: Autorização via notificação", "passo_12"),
+        ("Passo 13: Digitar o código recebido", "passo_13"),
+        ("Passo 14: Clicar em Autorizar", "passo_14"),
+        ("Passo 15: Concluir etapa de assinatura", "passo_15"),
+        ("Passo 16: Baixar arquivos assinados", "passo_16"),
+        ("Passo 17: Menu de opções do navegador", "passo_17"),
+        ("Passo 18: Abrir no navegador Chrome", "passo_18"),
+        ("Passo 19: Retornar às opções", "passo_19"),
+        ("Passo 20: Acessar pasta de Transferências", "passo_20"),
+        ("Passo 21: Localizar os arquivos assinados", "passo_21"),
+        ("Passo 22: Compartilhar os documentos via WhatsApp", "passo_22"),
     ]
 
     for titulo, nome_base in passos:
