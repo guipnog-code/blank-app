@@ -55,6 +55,15 @@ def preencher_documentos_oficiais(dados):
 st.title("📋 Cadastro e Preenchimento de Documentos")
 st.write("Preencha os dados abaixo para cadastrar e gerar os documentos em PDF.")
 
+# Configuração da Barra Lateral (Sidebar) com a Dica
+with st.sidebar:
+    st.header("💡 Dica Importante")
+    st.info(
+        "O processo será muito mais fácil caso abra este link em outro aparelho "
+        "para que possa visualizar o tutorial sem precisar mudar de tela:\n\n"
+        "🔗 **[Link do Tutorial (Em breve)]()**"
+    )
+
 if "pdf_proc" not in st.session_state:
     st.session_state.pdf_proc = None
 if "pdf_termo" not in st.session_state:
@@ -128,10 +137,10 @@ if st.session_state.pdf_proc or st.session_state.pdf_termo:
             )
 
     st.markdown("---")
-    st.markdown("## 📖 Tutorial: Como Assinar Digitalmente e Enviar")
-    st.write("Siga o passo a passo ilustrado abaixo:")
+    
+    st.markdown("<h2 style='margin-bottom: 0px;'>📖 Tutorial: Como Assinar Digitalmente e Enviar</h2>", unsafe_allow_html=True)
+    st.markdown("<p style='margin-top: 5px; margin-bottom: 10px;'>Siga o passo a passo ilustrado abaixo:</p>", unsafe_allow_html=True)
 
-    # Exibe o player utilizando o arquivo Audio_tutorial.mp4
     if os.path.exists("Audio_tutorial.mp4"):
         st.video("Audio_tutorial.mp4")
         st.caption("🎧 *Dica: Você pode reproduzir o guia em áudio/vídeo e acompanhar o passo a passo.*")
@@ -174,7 +183,7 @@ if st.session_state.pdf_proc or st.session_state.pdf_termo:
                 break
                 
         if arquivo_encontrado:
-            st.image(arquivo_encontrado, use_container_width=True)
+            st.image(arquivo_encontrado, width=400)
         else:
             st.info(f"*(Imagem não encontrada na pasta 'imagens' para este passo)*")
         st.markdown("---")
