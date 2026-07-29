@@ -131,11 +131,12 @@ if st.session_state.pdf_proc or st.session_state.pdf_termo:
     st.markdown("## 📖 Tutorial: Como Assinar Digitalmente e Enviar")
     st.write("Siga o passo a passo ilustrado abaixo:")
 
-    if os.path.exists("tutorial.mp3"):
-        st.audio("tutorial.mp3", format="audio/mp3")
-        st.caption("🎧 *Dica: Você pode dar play no áudio e continuar navegando ou acelerar a reprodução direto nos controles do player.*")
+    # Exibe o player utilizando o arquivo Audio_tutorial.mp4
+    if os.path.exists("Audio_tutorial.mp4"):
+        st.video("Audio_tutorial.mp4")
+        st.caption("🎧 *Dica: Você pode reproduzir o guia em áudio/vídeo e acompanhar o passo a passo.*")
     else:
-        st.info("💡 *(Áudio do tutorial em breve)*")
+        st.info("💡 *(Envie o arquivo 'Audio_tutorial.mp4' para a pasta raiz do projeto para exibi-lo aqui)*")
 
     passos = [
         ("Passo 1: Baixar os documentos gerados", "passo_01"),
