@@ -21,7 +21,6 @@ def preencher_documentos_oficiais(dados):
     pdf_procuracao_bytes = None
     pdf_termo_bytes = None
 
-    # Preenchendo a Procuração com as coordenadas exatas
     if os.path.exists(caminho_procuracao):
         doc_proc = fitz.open(caminho_procuracao)
         pag_proc = doc_proc[0]
@@ -41,7 +40,6 @@ def preencher_documentos_oficiais(dados):
         pdf_procuracao_bytes = doc_proc.tobytes()
         doc_proc.close()
 
-    # Preenchendo o Termo com as coordenadas exatas
     if os.path.exists(caminho_termo):
         doc_termo = fitz.open(caminho_termo)
         pag_termo = doc_termo[0]
@@ -129,16 +127,49 @@ if st.session_state.pdf_proc or st.session_state.pdf_termo:
                 mime="application/pdf"
             )
 
-    # Seção do Tutorial para Assinatura Digital
+    # Tutorial Passo a Passo com as Imagens Buscando na Pasta 'imagens'
     st.markdown("---")
-    st.markdown("## 📖 Tutorial para Assinar Digitalmente")
-    st.write("Siga o passo a passo ilustrado abaixo para realizar a assinatura digital dos seus documentos:")
+    st.markdown("## 📖 Tutorial: Como Assinar Digitalmente e Enviar")
+    st.write("Siga o passo a passo ilustrado abaixo:")
 
-    # Exemplo de exibição estruturada das etapas do tutorial
-    # (Se você quiser salvar as imagens na pasta do projeto, basta chamá-las aqui via st.image)
-    with st.expander("Ver Passo a Passo Detalhado (Tutorial)"):
-        st.write("1. Clique nos botões acima para baixar a Procuração e o Termo.")
-        st.write("2. Abra o aplicativo oficial do Gov.br no seu celular.")
-        st.write("3. Selecione a opção **'Assinar documentos digitalmente'**.")
-        st.write("4. Escolha os arquivos baixados e posicione a assinatura nos campos indicados.")
-        st.write("5. Autorize com o código enviado e baixe os arquivos assinados para enviá-los ao jurídico.")
+    passos = [
+        ("Passo 1: Baixar os documentos gerados", "pass_01"),
+        ("Passo 2: Abrir o aplicativo Gov.br", "pass_02"),
+        ("Passo 3: Localizar o serviço", "pass_03"),
+        ("Passo 4: Selecionar 'Assinar documentos digitalmente'", "pass_04"),
+        ("Passo 5: Clicar em 'Escolher arquivo'", "pass_05"),
+        ("Passo 6: Selecionar os PDFs recentes", "pass_06"),
+        ("Passo 7: Visualizar o documento carregado", "pass_07"),
+        ("Passo 8: Arrastar o quadrado para a área de assinatura", "pass_08"),
+        ("Passo 9: Confirmar a assinatura", "pass_09"),
+        ("Passo 10: Opção de carregar outro documento", "pass_10"),
+        ("Passo 11: Iniciar o processo de assinar ambos", "pass_11"),
+        ("Passo 12: Autorização via notificação", "pass_12"),
+        ("Passo 13: Digitar o código recebido", "pass_13"),
+        ("Passo 14: Clicar em Autorizar", "pass_14"),
+        ("Passo 15: Concluir etapa de assinatura", "pass_15"),
+        ("Passo 16: Baixar arquivos assinados", "pass_16"),
+        ("Passo 17: Menu de opções do navegador", "pass_17"),
+        ("Passo 18: Abrir no navegador Chrome", "pass_18"),
+        ("Passo 19: Retornar às opções", "pass_19"),
+        ("Passo 20: Acessar pasta de Transferências", "pass_20"),
+        ("Passo 21: Localizar os arquivos assinados", "pass_21"),
+        ("Passo 22: Compartilhar os documentos via WhatsApp", "pass_22"),
+    ]
+
+    for titulo, nome_base in passos:
+        st.subheader(titulo)
+        
+        # Procura dentro da pasta 'imagens' considerando extensões .jpeg ou .jpg
+        arquivo_encontrado = None
+        for ext in [".jpeg", ".jpg", ".JPEG", ".JPG"]:
+            caminho_teste = os.path.join("imagens", nome_base + ext)
+            if os.path.exists(caminho_teste):
+                arquivo_encontrado = caminho_teste
+                break
+                
+        if arquivo_encontrado:
+            st.image(arquivo_encontrado, use_container_width=True)
+        else:
+            st.info(f"*(Imagem não encontrada na pasta 'imagens' para este passo)*")
+        st.markdown("---")
