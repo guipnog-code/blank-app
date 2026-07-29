@@ -21,7 +21,7 @@ def preencher_documentos_oficiais(dados):
     pdf_procuracao_bytes = None
     pdf_termo_bytes = None
 
-    # Preenchendo a Procuração com base no PDF de referência
+    # Preenchendo a Procuração com as coordenadas exatas
     if os.path.exists(caminho_procuracao):
         doc_proc = fitz.open(caminho_procuracao)
         pag_proc = doc_proc[0]
@@ -41,7 +41,7 @@ def preencher_documentos_oficiais(dados):
         pdf_procuracao_bytes = doc_proc.tobytes()
         doc_proc.close()
 
-    # Preenchendo o Termo com base no PDF de referência
+    # Preenchendo o Termo com as coordenadas exatas
     if os.path.exists(caminho_termo):
         doc_termo = fitz.open(caminho_termo)
         pag_termo = doc_termo[0]
@@ -128,3 +128,17 @@ if st.session_state.pdf_proc or st.session_state.pdf_termo:
                 file_name="Termo_Preenchido.pdf",
                 mime="application/pdf"
             )
+
+    # Seção do Tutorial para Assinatura Digital
+    st.markdown("---")
+    st.markdown("## 📖 Tutorial para Assinar Digitalmente")
+    st.write("Siga o passo a passo ilustrado abaixo para realizar a assinatura digital dos seus documentos:")
+
+    # Exemplo de exibição estruturada das etapas do tutorial
+    # (Se você quiser salvar as imagens na pasta do projeto, basta chamá-las aqui via st.image)
+    with st.expander("Ver Passo a Passo Detalhado (Tutorial)"):
+        st.write("1. Clique nos botões acima para baixar a Procuração e o Termo.")
+        st.write("2. Abra o aplicativo oficial do Gov.br no seu celular.")
+        st.write("3. Selecione a opção **'Assinar documentos digitalmente'**.")
+        st.write("4. Escolha os arquivos baixados e posicione a assinatura nos campos indicados.")
+        st.write("5. Autorize com o código enviado e baixe os arquivos assinados para enviá-los ao jurídico.")
