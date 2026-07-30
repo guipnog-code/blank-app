@@ -136,16 +136,35 @@ if st.session_state.pdf_proc or st.session_state.pdf_termo:
                 mime="application/pdf"
             )
 
+    # Adicionando os Botões de Upload logo abaixo dos botões de download
+    st.markdown("### 📤 Enviar Documentos Assinados Digitalmente")
+    
+    col_up1, col_up2 = st.columns(2)
+    
+    with col_up1:
+        upload_proc_assinada = st.file_uploader("Enviar Procuração Assinada", type=["pdf"], key="upload_proc")
+        if upload_proc_assinada is not None:
+            st.success("Procuração assinada enviada com sucesso!")
+            
+    with col_up2:
+        upload_termo_assinado = st.file_uploader("Enviar Termo Assinado", type=["pdf"], key="upload_termo")
+        if upload_termo_assinado is not None:
+            st.success("Termo assinado enviado com sucesso!")
+
     st.markdown("---")
     
     st.markdown("<h2 style='margin-bottom: 0px;'>📖 Tutorial: Como Assinar Digitalmente e Enviar</h2>", unsafe_allow_html=True)
     st.markdown("<p style='margin-top: 5px; margin-bottom: 10px;'>Siga o passo a passo ilustrado abaixo:</p>", unsafe_allow_html=True)
 
-    if os.path.exists("Audio_tutorial.mp4"):
-        st.video("Audio_tutorial.mp4")
+    audio_path = "Audio_tutorial.mp4"
+    if not os.path.exists(audio_path) and os.path.exists("WhatsApp Audio 2026-07-29 at 12.18.46.mp4"):
+        audio_path = "WhatsApp Audio 2026-07-29 at 12.18.46.mp4"
+
+    if os.path.exists(audio_path):
+        st.video(audio_path)
         st.caption("🎧 *Dica: Você pode reproduzir o guia em áudio/vídeo e acompanhar o passo a passo.*")
     else:
-        st.info("💡 *(Envie o arquivo 'Audio_tutorial.mp4' para a pasta raiz do projeto para exibi-lo aqui)*")
+        st.info("💡 *(Arquivo de áudio/vídeo do tutorial não encontrado na raiz do projeto)*")
 
     passos = [
         ("Passo 1: Baixar os documentos gerados", "passo_01"),
@@ -176,14 +195,17 @@ if st.session_state.pdf_proc or st.session_state.pdf_termo:
         st.subheader(titulo)
         
         arquivo_encontrado = None
-        for ext in [".jpeg", ".jpg", ".JPEG", ".JPG"]:
-            caminho_teste = os.path.join("imagens", nome_base + ext)
-            if os.path.exists(caminho_teste):
-                arquivo_encontrado = caminho_teste
+        for pasta in ["Imagens", "imagens"]:
+            for ext in [".jpeg", ".jpg", ".JPEG", ".JPG"]:
+                caminho_teste = os.path.join(pasta, nome_base + ext)
+                if os.path.exists(caminho_teste):
+                    arquivo_encontrado = caminho_teste
+                    break
+            if arquivo_encontrado:
                 break
                 
         if arquivo_encontrado:
             st.image(arquivo_encontrado, width=400)
         else:
-            st.info(f"*(Imagem não encontrada na pasta 'imagens' para este passo)*")
+            st.info(f"*(Imagem '{nome_base}.jpeg' não encontrada)*")
         st.markdown("---")
