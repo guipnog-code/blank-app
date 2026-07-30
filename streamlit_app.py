@@ -24,7 +24,6 @@ def enviar_para_google_forms(dados, files_data_form1=None, files_data_form2=None
     }
 
     # 2. Ação Geral - Correção Monetária (URL 2)
-    # Incluindo o campo de e-mail e o parâmetro de aceite do Google Forms ("Enviar por e-mail")
     url_form_2 = "https://docs.google.com/forms/d/e/1FAIpQLScFHB1lA_2cTeg-ANSa0TK3I4LwwMTa6T9cMnxQiWmbBD6XOw/formResponse"
     payload_2 = {
         "entry.336229460": dados['Nome'],
@@ -38,21 +37,17 @@ def enviar_para_google_forms(dados, files_data_form1=None, files_data_form2=None
         "entry.1919228175": dados['CEP'],
         "entry.1147940036": dados['Telefone'],
         "entry.737384383": dados['E-mail'],
-        "emailReceipt": "true"  # Equivalente a marcar a caixa de registro de e-mail
+        "emailReceipt": "true"
     }
 
     headers = {"User-Agent": "Mozilla/5.0"}
     
     try:
-        # Envio para o Termo de Consentimento
         requests.post(url_form_1, data=payload_1, headers=headers)
-
-        # Envio para a Ação Geral (com os documentos pessoais se houver)
         if files_data_form2:
             requests.post(url_form_2, data=payload_2, files=files_data_form2, headers=headers)
         else:
             requests.post(url_form_2, data=payload_2, headers=headers)
-            
     except Exception as e:
         print(f"Erro ao enviar para os formulários: {e}")
 
@@ -111,6 +106,7 @@ if "pdf_proc" not in st.session_state:
 if "pdf_termo" not in st.session_state:
     st.session_state.pdf_termo = None
 
+# Formulário apenas com os dados cadastrais (sem os uploads)
 with st.form("form_cadastro"):
     st.subheader("Dados Profissionais")
     matricula = st.text_input("Matrícula (SIAPE)")
@@ -129,10 +125,6 @@ with st.form("form_cadastro"):
     endereco = st.text_input("Endereço")
     municipio = st.text_input("Município")
     estado = st.text_input("Estado (UF)")
-
-    st.subheader("Documentos Adicionais")
-    doc_identidade = st.file_uploader("Documento de Identidade com Foto", type=["pdf", "jpg", "jpeg", "png"], key="up_identidade")
-    comprovante_residencia = st.file_uploader("Comprovante de Residência Atualizado", type=["pdf", "jpg", "jpeg", "png"], key="up_residencia")
 
     submitted = st.form_submit_button("Salvar e Gerar Documentos")
 
@@ -155,21 +147,14 @@ if submitted:
     }
     
     salvar_no_excel(dados_usuario)
-
-    # Preparando arquivos para o formulário principal (Ação Geral)
-    arquivos_envio_form2 = {}
-    if doc_identidade is not None:
-        arquivos_envio_form2["entry.1823246775"] = (doc_identidade.name, doc_identidade.getvalue(), doc_identidade.type)
-    if comprovante_residencia is not None:
-        arquivos_envio_form2["entry.97304745"] = (comprovante_residencia.name, comprovante_residencia.getvalue(), comprovante_residencia.type)
-
-    enviar_para_google_forms(dados_usuario, files_data_form2=arquivos_envio_form2 if arquivos_envio_form2 else None)
-    
-    st.success("Dados salvos com sucesso e enviados para os formulários!")
+    st.session_state.dados_usuario = dados_usuario
+    st.success("Dados salvos com sucesso!")
 
     st.session_state.pdf_proc, st.session_state.pdf_termo = preencher_documentos_oficiais(dados_usuario)
 
+# Se os documentos foram gerados, exibe as opções na parte de baixo
 if st.session_state.pdf_proc or st.session_state.pdf_termo:
+    st.markdown("---")
     st.markdown("### 📥 Baixar Documentos Gerados")
     
     col1, col2 = st.columns(2)
@@ -192,30 +177,50 @@ if st.session_state.pdf_proc or st.session_state.pdf_termo:
                 mime="application/pdf"
             )
 
-    # Botões de Upload dos documentos assinados
-    st.markdown("### 📤 Enviar Documentos Assinados Digitalmente")
+    # Seção de Upload dos Documentos Adicionais e Assinados na parte inferior
+    st.markdown("---")
+    st.markdown("### 📤 Anexo de Documentos e Envio")
+    
+    st.write("Envie os documentos originais solicitados e os arquivos já assinados digitalmente:")
     
     col_up1, col_up2 = st.columns(2)
-    
     with col_up1:
-        upload_proc_assinada = st.file_uploader("Enviar Procuração Assinada", type=["pdf"], key="upload_proc")
-        if upload_proc_assinada is not None:
-            st.success("Procuração assinada enviada com sucesso!")
-            
+        doc_identidade = st.file_uploader("Documento de Identidade com Foto", type=["pdf", "jpg", "jpeg", "png"], key="up_identidade")
     with col_up2:
+        comprovante_residencia = st.file_uploader("Comprovante de Residência Atualizado", type=["pdf", "jpg", "jpeg", "png"], key="up_residencia")
+
+    col_up3, col_up4 = st.columns(2)
+    with col_up3:
+        upload_proc_assinada = st.file_uploader("Enviar Procuração Assinada", type=["pdf"], key="upload_proc")
+    with col_up4:
         upload_termo_assinado = st.file_uploader("Enviar Termo Assinado", type=["pdf"], key="upload_termo")
-        if upload_termo_assinado is not None:
-            st.success("Termo assinado enviado com sucesso!")
-            # Enviando o termo assinado direto para o Google Forms do Termo de Consentimento
-            try:
-                dados_aux = {"Nome": nome, "Matrícula": matricula}
-                arquivo_termo_envio = {
-                    "entry.1145226915": (upload_termo_assinado.name, upload_termo_assinado.getvalue(), upload_termo_assinado.type)
-                }
-                enviar_para_google_forms(dados_aux, files_data_form1=arquivo_termo_envio)
-                st.success("Termo assinado enviado automaticamente para o Google Forms do Termo!")
-            except Exception as e:
-                st.error(f"Erro ao enviar termo assinado: {e}")
+
+    # Botão único na parte de baixo para disparar o envio integrado aos Google Forms
+    if st.button("🚀 Enviar Dados e Documentos para os Formulários"):
+        if "dados_usuario" in st.session_state:
+            dados_envio = st.session_state.dados_usuario
+            
+            arquivos_envio_form2 = {}
+            if doc_identidade is not None:
+                arquivos_envio_form2["entry.1823246775"] = (doc_identidade.name, doc_identidade.getvalue(), doc_identidade.type)
+            if comprovante_residencia is not None:
+                arquivos_envio_form2["entry.97304745"] = (comprovante_residencia.name, comprovante_residencia.getvalue(), comprovante_residencia.type)
+
+            enviar_para_google_forms(dados_envio, files_data_form2=arquivos_envio_form2 if arquivos_envio_form2 else None)
+
+            if upload_termo_assinado is not None:
+                try:
+                    dados_aux = {"Nome": dados_envio["Nome"], "Matrícula": dados_envio["Matrícula"]}
+                    arquivo_termo_envio = {
+                        "entry.1145226915": (upload_termo_assinado.name, upload_termo_assinado.getvalue(), upload_termo_assinado.type)
+                    }
+                    enviar_para_google_forms(dados_aux, files_data_form1=arquivo_termo_envio)
+                except Exception as e:
+                    st.error(f"Erro ao enviar termo assinado: {e}")
+
+            st.success("Tudo enviado com sucesso para os Google Forms!")
+        else:
+            st.warning("Por favor, preencha e salve os dados cadastrais primeiro.")
 
     st.markdown("---")
     
