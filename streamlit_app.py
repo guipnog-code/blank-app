@@ -106,7 +106,6 @@ if "pdf_proc" not in st.session_state:
 if "pdf_termo" not in st.session_state:
     st.session_state.pdf_termo = None
 
-# Formulário apenas com os dados cadastrais (sem os uploads)
 with st.form("form_cadastro"):
     st.subheader("Dados Profissionais")
     matricula = st.text_input("Matrícula (SIAPE)")
@@ -152,7 +151,6 @@ if submitted:
 
     st.session_state.pdf_proc, st.session_state.pdf_termo = preencher_documentos_oficiais(dados_usuario)
 
-# Se os documentos foram gerados, exibe as opções na parte de baixo
 if st.session_state.pdf_proc or st.session_state.pdf_termo:
     st.markdown("---")
     st.markdown("### 📥 Baixar Documentos Gerados")
@@ -177,11 +175,8 @@ if st.session_state.pdf_proc or st.session_state.pdf_termo:
                 mime="application/pdf"
             )
 
-    # Seção de Upload dos Documentos Adicionais e Assinados na parte inferior
     st.markdown("---")
     st.markdown("### 📤 Anexo de Documentos e Envio")
-    
-    st.write("Envie os documentos originais solicitados e os arquivos já assinados digitalmente:")
     
     col_up1, col_up2 = st.columns(2)
     with col_up1:
@@ -195,7 +190,6 @@ if st.session_state.pdf_proc or st.session_state.pdf_termo:
     with col_up4:
         upload_termo_assinado = st.file_uploader("Enviar Termo Assinado", type=["pdf"], key="upload_termo")
 
-    # Botão único na parte de baixo para disparar o envio integrado aos Google Forms
     if st.button("🚀 Enviar Dados e Documentos para os Formulários"):
         if "dados_usuario" in st.session_state:
             dados_envio = st.session_state.dados_usuario
@@ -224,59 +218,5 @@ if st.session_state.pdf_proc or st.session_state.pdf_termo:
 
     st.markdown("---")
     
-    st.markdown("<h2 style='margin-bottom: 0px;'>📖 Tutorial: Como Assinar Digitalmente e Enviar</h2>", unsafe_allow_html=True)
-    st.markdown("<p style='margin-top: 5px; margin-bottom: 10px;'>Siga o passo a passo ilustrado abaixo:</p>", unsafe_allow_html=True)
-
-    audio_path = "Audio_tutorial.mp4"
-    if not os.path.exists(audio_path) and os.path.exists("WhatsApp Audio 2026-07-29 at 12.18.46.mp4"):
-        audio_path = "WhatsApp Audio 2026-07-29 at 12.18.46.mp4"
-
-    if os.path.exists(audio_path):
-        st.video(audio_path)
-        st.caption("🎧 *Dica: Você pode reproduzir o guia em áudio/vídeo e acompanhar o passo a passo.*")
-    else:
-        st.info("💡 *(Arquivo de áudio/vídeo do tutorial não encontrado na raiz do projeto)*")
-
-    passos = [
-        ("Passo 1: Baixar os documentos gerados", "passo_01"),
-        ("Passo 2: Abrir o aplicativo Gov.br", "passo_02"),
-        ("Passo 3: Localizar o serviço", "passo_03"),
-        ("Passo 4: Selecionar 'Assinar documentos digitalmente'", "passo_04"),
-        ("Passo 5: Clicar em 'Escolher arquivo'", "passo_05"),
-        ("Passo 6: Selecionar os PDFs recentes", "passo_06"),
-        ("Passo 7: Visualizar o documento carregado", "passo_07"),
-        ("Passo 8: Arrastar o quadrado para a área de assinatura", "passo_08"),
-        ("Passo 9: Confirmar a assinatura", "passo_09"),
-        ("Passo 10: Opção de carregar outro documento", "passo_10"),
-        ("Passo 11: Iniciar o processo de assinar ambos", "passo_11"),
-        ("Passo 12: Autorização via notificação", "passo_12"),
-        ("Passo 13: Digitar o código recebido", "passo_13"),
-        ("Passo 14: Clicar em Autorizar", "passo_14"),
-        ("Passo 15: Concluir etapa de assinatura", "passo_15"),
-        ("Passo 16: Baixar arquivos assinados", "passo_16"),
-        ("Passo 17: Menu de opções do navegador", "passo_17"),
-        ("Passo 18: Abrir no navegador Chrome", "passo_18"),
-        ("Passo 19: Retornar às opções", "passo_19"),
-        ("Passo 20: Acessar pasta de Transferências", "passo_20"),
-        ("Passo 21: Localizar os arquivos assinados", "passo_21"),
-        ("Passo 22: Compartilhar os documentos via WhatsApp", "passo_22"),
-    ]
-
-    for titulo, nome_base in passos:
-        st.subheader(titulo)
-        
-        arquivo_encontrado = None
-        for pasta in ["Imagens", "imagens"]:
-            for ext in [".jpeg", ".jpg", ".JPEG", ".JPG"]:
-                caminho_teste = os.path.join(pasta, nome_base + ext)
-                if os.path.exists(caminho_teste):
-                    arquivo_encontrado = caminho_teste
-                    break
-            if arquivo_encontrado:
-                break
-                
-        if arquivo_encontrado:
-            st.image(arquivo_encontrado, width=400)
-        else:
-            st.info(f"*(Imagem '{nome_base}.jpeg' não encontrada)*")
-        st.markdown("---")
+    # Texto solicitado no lugar do tutorial detalhado
+    st.markdown("### Tutorial para envio dos documentos")
