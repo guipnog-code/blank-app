@@ -2,6 +2,7 @@ import os
 import streamlit as st
 import pandas as pd
 import fitz  # PyMuPDF
+import requests
 
 EXCEL_FILE = "Cadastros_Servidores.xlsx"
 
@@ -13,6 +14,47 @@ def salvar_no_excel(dados):
     else:
         df_final = df_novo
     df_final.to_excel(EXCEL_FILE, index=False)
+
+def enviar_para_google_forms(dados, files_data_form1=None, files_data_form2=None):
+    # 1. Termo de Consentimento (URL 1)
+    url_form_1 = "https://docs.google.com/forms/d/e/1FAIpQLSfwwmAw9jqwWv2KTEWXQFMXaz36mECCCuVdYsxlLg48KkrsMQ/formResponse"
+    payload_1 = {
+        "entry.463599518": dados['Nome'],
+        "entry.1304511106": dados['Matrícula']
+    }
+
+    # 2. Ação Geral - Correção Monetária (URL 2)
+    # Incluindo o campo de e-mail e o parâmetro de aceite do Google Forms ("Enviar por e-mail")
+    url_form_2 = "https://docs.google.com/forms/d/e/1FAIpQLScFHB1lA_2cTeg-ANSa0TK3I4LwwMTa6T9cMnxQiWmbBD6XOw/formResponse"
+    payload_2 = {
+        "entry.336229460": dados['Nome'],
+        "entry.1167987372": dados['Matrícula'],
+        "entry.918241761": "", 
+        "entry.304080830": dados['CPF'],
+        "entry.346470482": dados['RG'] + " / " + dados['Órgão'],
+        "entry.1131685604": dados['Endereço'],
+        "entry.713012878": dados['Município'],
+        "entry.1662466686": dados['Estado'],
+        "entry.1919228175": dados['CEP'],
+        "entry.1147940036": dados['Telefone'],
+        "entry.737384383": dados['E-mail'],
+        "emailReceipt": "true"  # Equivalente a marcar a caixa de registro de e-mail
+    }
+
+    headers = {"User-Agent": "Mozilla/5.0"}
+    
+    try:
+        # Envio para o Termo de Consentimento
+        requests.post(url_form_1, data=payload_1, headers=headers)
+
+        # Envio para a Ação Geral (com os documentos pessoais se houver)
+        if files_data_form2:
+            requests.post(url_form_2, data=payload_2, files=files_data_form2, headers=headers)
+        else:
+            requests.post(url_form_2, data=payload_2, headers=headers)
+            
+    except Exception as e:
+        print(f"Erro ao enviar para os formulários: {e}")
 
 def preencher_documentos_oficiais(dados):
     caminho_procuracao = "template_procuracao.pdf"
@@ -88,6 +130,10 @@ with st.form("form_cadastro"):
     municipio = st.text_input("Município")
     estado = st.text_input("Estado (UF)")
 
+    st.subheader("Documentos Adicionais")
+    doc_identidade = st.file_uploader("Documento de Identidade com Foto", type=["pdf", "jpg", "jpeg", "png"], key="up_identidade")
+    comprovante_residencia = st.file_uploader("Comprovante de Residência Atualizado", type=["pdf", "jpg", "jpeg", "png"], key="up_residencia")
+
     submitted = st.form_submit_button("Salvar e Gerar Documentos")
 
 if submitted:
@@ -109,7 +155,17 @@ if submitted:
     }
     
     salvar_no_excel(dados_usuario)
-    st.success("Dados salvos com sucesso no sistema!")
+
+    # Preparando arquivos para o formulário principal (Ação Geral)
+    arquivos_envio_form2 = {}
+    if doc_identidade is not None:
+        arquivos_envio_form2["entry.1823246775"] = (doc_identidade.name, doc_identidade.getvalue(), doc_identidade.type)
+    if comprovante_residencia is not None:
+        arquivos_envio_form2["entry.97304745"] = (comprovante_residencia.name, comprovante_residencia.getvalue(), comprovante_residencia.type)
+
+    enviar_para_google_forms(dados_usuario, files_data_form2=arquivos_envio_form2 if arquivos_envio_form2 else None)
+    
+    st.success("Dados salvos com sucesso e enviados para os formulários!")
 
     st.session_state.pdf_proc, st.session_state.pdf_termo = preencher_documentos_oficiais(dados_usuario)
 
@@ -136,7 +192,7 @@ if st.session_state.pdf_proc or st.session_state.pdf_termo:
                 mime="application/pdf"
             )
 
-    # Adicionando os Botões de Upload logo abaixo dos botões de download
+    # Botões de Upload dos documentos assinados
     st.markdown("### 📤 Enviar Documentos Assinados Digitalmente")
     
     col_up1, col_up2 = st.columns(2)
@@ -150,6 +206,16 @@ if st.session_state.pdf_proc or st.session_state.pdf_termo:
         upload_termo_assinado = st.file_uploader("Enviar Termo Assinado", type=["pdf"], key="upload_termo")
         if upload_termo_assinado is not None:
             st.success("Termo assinado enviado com sucesso!")
+            # Enviando o termo assinado direto para o Google Forms do Termo de Consentimento
+            try:
+                dados_aux = {"Nome": nome, "Matrícula": matricula}
+                arquivo_termo_envio = {
+                    "entry.1145226915": (upload_termo_assinado.name, upload_termo_assinado.getvalue(), upload_termo_assinado.type)
+                }
+                enviar_para_google_forms(dados_aux, files_data_form1=arquivo_termo_envio)
+                st.success("Termo assinado enviado automaticamente para o Google Forms do Termo!")
+            except Exception as e:
+                st.error(f"Erro ao enviar termo assinado: {e}")
 
     st.markdown("---")
     
