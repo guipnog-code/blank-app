@@ -218,5 +218,10 @@ if st.session_state.pdf_proc or st.session_state.pdf_termo:
 
     st.markdown("---")
     
-    # Texto solicitado no lugar do tutorial detalhado
+    # Seção com o texto do tutorial e a legenda logo abaixo
     st.markdown("### Tutorial para envio dos documentos")
+    st.info(
+        "Como enviar os documentos, o termo e a procuração devem estar assinados "
+        "(tutorial está no link da aba lateral do site), o restante dos documentos "
+        "devem estar legíveis e digitalizados, também visível na aba de tutorial."
+    )
