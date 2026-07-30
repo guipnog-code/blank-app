@@ -218,7 +218,7 @@ if st.session_state.pdf_proc or st.session_state.pdf_termo:
 
     st.markdown("---")
     
-    # Seção do Tutorial com Título, Legenda e a Foto Adicionada
+    # Seção do Tutorial apontando para a pasta 'imagens' e arquivos '.png'
     st.markdown("### Tutorial para envio dos documentos (Nesse site)")
     st.info(
         "Como enviar os documentos, o termo e a procuração devem estar assinados "
@@ -226,15 +226,22 @@ if st.session_state.pdf_proc or st.session_state.pdf_termo:
         "devem estar legíveis e digitalizados, também visível na aba de tutorial."
     )
     
-    # Exibindo a foto enviada
-    caminho_foto = None
-    for pasta in ["Imagens", "imagens", "."]:
-        teste = os.path.join(pasta, "Design sem nome.png")
-        if os.path.exists(teste):
-            caminho_foto = teste
-            break
-            
-    if caminho_foto:
-        st.image(caminho_foto, width=500)
-    else:
-        st.info("💡 *(A imagem 'Design sem nome.png' não foi encontrada na pasta Imagens)*")
+    passos_tutorial = [
+        ("Passo 1", "1.png"),
+        ("Passo 2", "2.png"),
+        ("Passo 3", "3.png"),
+        ("Passo 4", "4.png"),
+        ("Passo 5", "5.png"),
+        ("Passo 6", "6.png")
+    ]
+    
+    for titulo_passo, nome_arquivo in passos_tutorial:
+        st.subheader(titulo_passo)
+        
+        caminho_img = os.path.join("imagens", nome_arquivo)
+        
+        if os.path.exists(caminho_img):
+            st.image(caminho_img, width=500)
+        else:
+            st.warning(f"*(Imagem '{nome_arquivo}' não encontrada dentro da pasta 'imagens')*")
+        st.markdown("---")
