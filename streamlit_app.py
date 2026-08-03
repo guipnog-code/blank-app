@@ -157,7 +157,7 @@ with st.sidebar:
         elif chave_input:
             st.error("❌ Incorreta.")
 
-aba_novo, aba_salvos = st.tabs(["➕ Novo Cadastro", "📂 Servidores Já Cadastrados (Preenchimento Rápido)"])
+aba_novo, aba_salvos, aba_tutorial = st.tabs(["➕ Novo Cadastro", "📂 Servidores Já Cadastrados", "📖 Tutorial"])
 
 with aba_salvos:
     st.subheader("🔍 Pesquisar e Selecionar Servidor da Planilha")
@@ -202,7 +202,6 @@ with aba_salvos:
                     with st.container(border=True):
                         st.markdown("##### **Links Preenchidos**")
                         
-                        # 1. Termo de Consentimento
                         base_form_geral = "https://docs.google.com/forms/d/e/1FAIpQLSfwwmAw9jqwWv2KTEWXQFMXaz36mECCCuVdYsxlLg48KkrsMQ/viewform"
                         params_geral = {
                             "entry.463599518": limpar_valor(dados_linha.get("Nome", "")),
@@ -219,7 +218,6 @@ with aba_salvos:
                             unsafe_allow_html=True
                         )
 
-                        # 2. Forms Correção Monetária
                         base_form_url = "https://docs.google.com/forms/d/e/1FAIpQLScFHB1lA_2cTeg-ANSa0TK3I4LwwMTa6T9cMnxQiWmbBD6XOw/viewform"
                         str_data = limpar_valor(dados_linha.get("Data de Ingresso", ""))
                         ano, mes, dia = "", "", ""
@@ -371,18 +369,49 @@ with aba_novo:
                 else:
                     st.warning("⚠️ Nenhum arquivo anexado.")
 
-    st.markdown("---")
-    st.subheader("📖 Tutorial para Envio dos Documentos")
-    st.info(
-        "Consulte abaixo o passo a passo ilustrado para realizar o preenchimento, "
-        "as devidas assinaturas e o envio correto dos documentos."
+# ABA DE TUTORIAL REFORMULADA COM OS BOTÕES DE SELEÇÃO
+with aba_tutorial:
+    st.subheader("📖 Tutorial de Utilização do Sistema")
+    st.info("Selecione abaixo o dispositivo que você está utilizando para visualizar o tutorial correspondente:")
+
+    # Botões de seleção (Computador / Celular) usando st.radio em formato horizontal ou st.segmented_control
+    tipo_tutorial = st.radio(
+        "Escolha a plataforma:",
+        ["💻 Tutorial Computador", "📱 Tutorial Celular"],
+        horizontal=True,
+        label_visibility="collapsed"
     )
 
-    for i in range(1, 7):
-        with st.expander(f"Passo {i} — Clique para visualizar a orientação"):
-            caminho_img = os.path.join("imagens", f"{i}.png")
-            if os.path.exists(caminho_img):
-                st.image(caminho_img, width=700)
-            else:
-                st.warning(f"*(A imagem explicativa '{i}.png' não foi encontrada dentro da pasta 'imagens')*")
-            st.markdown("---")
+    st.markdown("---")
+
+    if tipo_tutorial == "💻 Tutorial Computador":
+        st.markdown("### 🖥️ Passo a Passo para Computador")
+        st.write("Assista ao vídeo explicativo ou siga o guia detalhado para realizar o processo pelo computador:")
+        
+        # Exemplo de incorporação de vídeo (substitua o link do YouTube pelo seu link real se houver)
+        # st.video("https://www.youtube.com/watch?v=SEU_LINK_COMPUTADOR")
+        st.info("💡 *(Espaço reservado para o Vídeo do Tutorial no Computador)*")
+
+        for i in range(1, 4):
+            with st.expander(f"Passo {i} (Computador) — Clique para visualizar a orientação"):
+                caminho_img = os.path.join("imagens", f"pc_{i}.png")
+                if os.path.exists(caminho_img):
+                    st.image(caminho_img, width=700)
+                else:
+                    st.warning(f"*(A imagem explicativa 'pc_{i}.png' não foi encontrada na pasta 'imagens')*")
+
+    else:
+        st.markdown("### 📱 Passo a Passo para Celular")
+        st.write("Assista ao vídeo explicativo ou siga o guia detalhado para realizar o processo pelo celular:")
+        
+        # Exemplo de incorporação de vídeo (substitua o link do YouTube pelo seu link real se houver)
+        # st.video("https://www.youtube.com/watch?v=SEU_LINK_CELULAR")
+        st.info("💡 *(Espaço reservado para o Vídeo do Tutorial no Celular)*")
+
+        for i in range(1, 4):
+            with st.expander(f"Passo {i} (Celular) — Clique para visualizar a orientação"):
+                caminho_img = os.path.join("imagens", f"cel_{i}.png")
+                if os.path.exists(caminho_img):
+                    st.image(caminho_img, width=700)
+                else:
+                    st.warning(f"*(A imagem explicativa 'cel_{i}.png' não foi encontrada na pasta 'imagens')*")
