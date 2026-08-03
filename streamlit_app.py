@@ -52,7 +52,7 @@ def verificar_admin():
         return False
 
 def carregar_servidores_cadastrados():
-    """Lê a planilha considerando cada linha como um cadastro individual"""
+    """Lê a planilha mantendo todo o histórico acumulado por linha"""
     if os.path.exists(EXCEL_FILE):
         try:
             df = pd.read_excel(EXCEL_FILE)
@@ -63,6 +63,7 @@ def carregar_servidores_cadastrados():
     return pd.DataFrame()
 
 def salvar_no_excel(dados):
+    """Adiciona o novo cadastro preservando obrigatoriamente os dados anteriores"""
     df_novo = pd.DataFrame([dados])
     if os.path.exists(EXCEL_FILE):
         df_existente = pd.read_excel(EXCEL_FILE)
@@ -123,7 +124,6 @@ def preencher_documentos_oficiais(dados):
 
     return pdf_procuracao_bytes, pdf_termo_bytes
 
-# Inicialização de variáveis no session_state
 if "nome_servidor" not in st.session_state:
     st.session_state.nome_servidor = None
 if "pdf_proc" not in st.session_state:
