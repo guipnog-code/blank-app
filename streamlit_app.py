@@ -26,6 +26,22 @@ st.markdown("""
             color: white;
         }
         .stButton>button:hover { background-color: #0b5ed7; color: white; }
+        
+        /* Animação de destaque para o texto de ajuda do menu */
+        @keyframes piscar-seta {
+            0% { opacity: 0.3; transform: translateX(0px); }
+            50% { opacity: 1; transform: translateX(-5px); }
+            100% { opacity: 0.3; transform: translateX(0px); }
+        }
+        .aviso-menu {
+            display: inline-block;
+            font-weight: bold;
+            color: #ff4b4b;
+            animation: piscar-seta 1.2s infinite ease-in-out;
+            font-size: 16px;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
     </style>
 """, unsafe_allow_html=True)
 
@@ -146,7 +162,14 @@ if "pdf_proc" not in st.session_state:
 if "pdf_termo" not in st.session_state:
     st.session_state.pdf_termo = None
 
-st.title("⚖️ Sistema de Cadastro e Gestão de Documentos")
+# Exibe o título principal junto com a animação interativa com a seta primeiro e depois o texto
+st.markdown("""
+    <div style="display: flex; align-items: center; flex-wrap: wrap;">
+        <h1 style="margin: 0; padding-right: 15px;">⚖️ Sistema de Cadastro e Gestão de Documentos</h1>
+        <div class="aviso-menu">⬅️ clique aqui</div>
+    </div>
+""", unsafe_allow_html=True)
+
 st.markdown("##### **Ação de Correção Monetária de Exercícios Anteriores**")
 st.markdown("---")
 
@@ -196,7 +219,7 @@ with aba_salvos:
                 with col_b2:
                     st.markdown("---")
                     
-                    # 1. Botão Termo de Consentimento (Com E-mail incluído)
+                    # 1. Botão Termo de Consentimento
                     st.markdown("##### **Termo de Consentimento**")
                     base_form_geral = "https://docs.google.com/forms/d/e/1FAIpQLSfwwmAw9jqwWv2KTEWXQFMXaz36mECCCuVdYsxlLg48KkrsMQ/viewform"
                     params_geral = {
