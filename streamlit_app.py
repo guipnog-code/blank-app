@@ -27,34 +27,32 @@ st.markdown("""
         }
         .stButton>button:hover { background-color: #0b5ed7; color: white; }
         
-        /* Animação e posicionamento exato ao lado do ícone >> no topo esquerdo */
+        /* Animação e posicionamento limpo (sem fundo) ao lado do ícone >> no topo esquerdo */
         @keyframes piscar-seta-topo {
             0% { opacity: 0.3; transform: translateX(0px); }
-            50% { opacity: 1; transform: translateX(5px); }
+            50% { opacity: 1; transform: translateX(-5px); }
             100% { opacity: 0.3; transform: translateX(0px); }
         }
         .aviso-topo-esquerdo {
             position: fixed;
-            top: 10px;
-            left: 55px;
+            top: 12px;
+            left: 52px;
             z-index: 999999;
             font-weight: bold;
             color: #ff4b4b;
-            background-color: rgba(255, 255, 255, 0.9);
-            padding: 2px 8px;
-            border-radius: 4px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            background-color: transparent;
             animation: piscar-seta-topo 1.2s infinite ease-in-out;
-            font-size: 13px;
+            font-size: 14px;
             display: flex;
             align-items: center;
             gap: 4px;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
         }
     </style>
     
-    <!-- Elemento flutuante injetado no topo esquerdo ao lado do >> -->
+    <!-- Elemento flutuante limpo no topo esquerdo apontando para a esquerda com a seta ⬅️ -->
     <div class="aviso-topo-esquerdo">
-        <span>➡️</span> <span>clique aqui</span>
+        <span>⬅️</span> <span>clique aqui</span>
     </div>
 """, unsafe_allow_html=True)
 
