@@ -41,40 +41,43 @@ def preencher_documentos_oficiais(dados):
     pdf_procuracao_bytes = None
     pdf_termo_bytes = None
 
-    def preencher_form_pdf(caminho_template, campos_valores):
-        if not os.path.exists(caminho_template):
-            return None
-        doc = fitz.open(caminho_template)
-        for pagina in doc:
-            for widget in pagina.widgets():
-                nome_campo = widget.field_name
-                if nome_campo in campos_valores:
-                    widget.field_value = str(campos_valores[nome_campo])
-                    widget.update()
-        bytes_pdf = doc.tobytes()
-        doc.close()
-        return bytes_pdf
+    # Preenchimento da Procuração por coordenadas exatas
+    if os.path.exists(caminho_procuracao):
+        doc_proc = fitz.open(caminho_procuracao)
+        pag_proc = doc_proc[0]
+        pag_proc.insert_text((92, 184), dados['Nome'], fontsize=9, color=(0,0,0))
+        pag_proc.insert_text((83, 200), dados['CPF'], fontsize=9, color=(0,0,0))
+        pag_proc.insert_text((223, 200), dados['RG'], fontsize=9, color=(0,0,0))
+        pag_proc.insert_text((368, 200), dados['Cargo'], fontsize=9, color=(0,0,0))
+        pag_proc.insert_text((94, 216), dados['Órgão'], fontsize=8, color=(0,0,0))
+        pag_proc.insert_text((284, 216), dados['Data de Ingresso'], fontsize=9, color=(0,0,0))
+        pag_proc.insert_text((428, 216), dados['Estado Civil'], fontsize=9, color=(0,0,0))
+        pag_proc.insert_text((109, 230), dados['Telefone'], fontsize=9, color=(0,0,0))
+        pag_proc.insert_text((253, 230), dados['E-mail'], fontsize=9, color=(0,0,0))
+        pag_proc.insert_text((116, 245), dados['Endereço'], fontsize=9, color=(0,0,0))
+        pag_proc.insert_text((99, 260), dados['Município'], fontsize=9, color=(0,0,0))
+        pag_proc.insert_text((392, 260), dados['Estado'], fontsize=9, color=(0,0,0))
+        pag_proc.insert_text((457, 260), dados['CEP'], fontsize=9, color=(0,0,0))
+        pdf_procuracao_bytes = doc_proc.tobytes()
+        doc_proc.close()
 
-    mapeamento_procuracao = {
-        'Nome': dados['Nome'], 'CPF': dados['CPF'], 'RG': dados['RG'],
-        'Cargo': dados['Cargo'], 'Órgão': dados['Órgão'], 'Data de Ingresso': dados['Data de Ingresso'],
-        'Estado Civil': dados['Estado Civil'], 'Telefone': dados['Telefone'], 'E-mail': dados['E-mail'],
-        'Endereço': dados['Endereço'], 'Município': dados['Município'], 'Estado': dados['Estado'], 'CEP': dados['CEP']
-    }
-
-    mapeamento_termo = {
-        'Nome': dados['Nome'], 'CPF': dados['CPF'], 'Matrícula': dados['Matrícula'], 'Cargo': dados['Cargo']
-    }
-
-    pdf_procuracao_bytes = preencher_form_pdf(caminho_procuracao, mapeamento_procuracao)
-    pdf_termo_bytes = preencher_form_pdf(caminho_termo, mapeamento_termo)
+    # Preenchimento do Termo por coordenadas exatas
+    if os.path.exists(caminho_termo):
+        doc_termo = fitz.open(caminho_termo)
+        pag_termo = doc_termo[0]
+        pag_termo.insert_text((125, 145), dados['Nome'], fontsize=9, color=(0,0,0))
+        pag_termo.insert_text((82, 170), dados['CPF'], fontsize=9, color=(0,0,0))
+        pag_termo.insert_text((265, 170), dados['Matrícula'], fontsize=9, color=(0,0,0))
+        pag_termo.insert_text((377, 169), dados['Cargo'], fontsize=9, color=(0,0,0))
+        pdf_termo_bytes = doc_termo.tobytes()
+        doc_termo.close()
 
     return pdf_procuracao_bytes, pdf_termo_bytes
 
 # --- INTERFACE DO STREAMLIT ---
 st.title("📋 Cadastro e Preenchimento de Documentos")
 st.info("ℹ️ **Esses dados serão direcionados a uma planilha e salvos no Google Drive.**")
-st.write("Preencha os dados abaixo para cadastrar e gerar os documentos em PDF mantendo os campos editáveis.")
+st.write("Preencha os dados abaixo para cadastrar e gerar os documentos em PDF nas coordenadas corretas.")
 
 with st.sidebar:
     st.header("💡 Dica Importante")
@@ -121,7 +124,7 @@ if st.button("Salvar e Gerar Documentos"):
         st.session_state.dados_usuario = dados_usuario
         st.session_state.nome_servidor = nome.strip()
         
-        # Gera os PDFs preservando a editabilidade dos campos
+        # Gera os PDFs posicionando os textos nas coordenadas exatas
         st.session_state.pdf_proc, st.session_state.pdf_termo = preencher_documentos_oficiais(dados_usuario)
         st.success(f"Dados salvos e documentos gerados para '{st.session_state.nome_servidor}' com sucesso!")
 
@@ -130,7 +133,7 @@ if "nome_servidor" in st.session_state or st.session_state.pdf_proc or st.sessio
         st.session_state.nome_servidor = nome.strip() if nome.strip() else "Servidor_Sem_Nome"
 
     st.markdown("---")
-    st.markdown("### 📥 Baixar Documentos Gerados (Editáveis)")
+    st.markdown("### 📥 Baixar Documentos Gerados")
     col1, col2 = st.columns(2)
     
     if st.session_state.pdf_proc:
@@ -184,7 +187,7 @@ if "nome_servidor" in st.session_state or st.session_state.pdf_proc or st.sessio
             with st.spinner("Enviando arquivos para o Google Drive..."):
                 sucesso = enviar_para_google_drive(nome_pasta, lista_arquivos_payload)
                 if sucesso:
-                    st.success(f"🎉 Sucesso! A pasta '{nome_pasta}' foi criada dentro de 'Ação Correção Monetária de Exercícios Anteriores' no Google Drive.")
+                    st.success(f"🎉 Sucesso! A pasta '{nome_pasta}' foi criada dentro de 'Ação Correção Monetária de Exercícios Anteriores' no Google Drive com os dados posicionados corretamente.")
                 else:
                     st.error("Houve um erro ao enviar os arquivos para o Google Drive.")
         else:
