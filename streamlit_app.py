@@ -27,20 +27,18 @@ st.markdown("""
         }
         .stButton>button:hover { background-color: #0b5ed7; color: white; }
         
-        /* Animação de destaque para o texto de ajuda do menu */
-        @keyframes piscar-seta {
-            0% { opacity: 0.3; transform: translateX(0px); }
-            50% { opacity: 1; transform: translateX(-5px); }
-            100% { opacity: 0.3; transform: translateX(0px); }
+        /* Animação de destaque na barra lateral */
+        @keyframes piscar-seta-lateral {
+            0% { opacity: 0.3; transform: translateY(0px); }
+            50% { opacity: 1; transform: translateY(3px); }
+            100% { opacity: 0.3; transform: translateY(0px); }
         }
-        .aviso-menu {
-            display: inline-block;
+        .aviso-menu-lateral {
             font-weight: bold;
             color: #ff4b4b;
-            animation: piscar-seta 1.2s infinite ease-in-out;
-            font-size: 16px;
-            margin-left: 10px;
-            vertical-align: middle;
+            animation: piscar-seta-lateral 1.2s infinite ease-in-out;
+            font-size: 15px;
+            margin-bottom: 10px;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -51,6 +49,9 @@ GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz8lQ3xhchTyl2
 CHAVE_ADMIN = "Sindicatojus"
 
 def verificar_admin():
+    # Aviso animado na barra lateral apontando para cima (para o canto superior esquerdo onde fica o menu do Streamlit)
+    st.sidebar.markdown('<div class="aviso-menu-lateral">⬆️ clique aqui</div>', unsafe_allow_html=True)
+    
     st.sidebar.markdown("### 🔐 Acesso Restrito")
     st.sidebar.markdown("*(Exclusivo para preenchimento rápido)*")
     
@@ -162,14 +163,7 @@ if "pdf_proc" not in st.session_state:
 if "pdf_termo" not in st.session_state:
     st.session_state.pdf_termo = None
 
-# Exibe o título principal junto com a animação interativa com a seta primeiro e depois o texto
-st.markdown("""
-    <div style="display: flex; align-items: center; flex-wrap: wrap;">
-        <h1 style="margin: 0; padding-right: 15px;">⚖️ Sistema de Cadastro e Gestão de Documentos</h1>
-        <div class="aviso-menu">⬅️ clique aqui</div>
-    </div>
-""", unsafe_allow_html=True)
-
+st.title("⚖️ Sistema de Cadastro e Gestão de Documentos")
 st.markdown("##### **Ação de Correção Monetária de Exercícios Anteriores**")
 st.markdown("---")
 
