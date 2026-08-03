@@ -27,7 +27,7 @@ st.markdown("""
         }
         .stButton>button:hover { background-color: #0b5ed7; color: white; }
         
-        /* Animação, alinhamento exato, fonte branca e posicionamento abaixado */
+        /* Animação e estilo do aviso no topo esquerdo */
         @keyframes piscar-seta-topo {
             0% { opacity: 0.3; transform: translateX(0px); }
             50% { opacity: 1; transform: translateX(-5px); }
@@ -47,13 +47,33 @@ st.markdown("""
             align-items: center;
             gap: 4px;
             text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+            pointer-events: none;
         }
     </style>
     
-    <!-- Elemento flutuante alinhado, abaixado e com fonte branca -->
-    <div class="aviso-topo-esquerdo">
+    <!-- Elemento flutuante que aparece apenas quando a sidebar está fechada -->
+    <div id="aviso-menu-flutuante" class="aviso-topo-esquerdo">
         <span>⬅️</span> <span>clique aqui</span>
     </div>
+
+    <script>
+    // Script para ocultar o aviso se a barra lateral estiver aberta e mostrar se estiver fechada
+    const observer = new MutationObserver(() => {
+        const doc = window.parent.document;
+        const sidebar = doc.querySelector('section[data-testid="stSidebar"]');
+        const aviso = doc.getElementById('aviso-menu-flutuante');
+        if (sidebar && aviso) {
+            // Verifica se a largura da sidebar é menor que 50px (considerada fechada)
+            const rect = sidebar.getBoundingClientRect();
+            if (rect.width > 50) {
+                aviso.style.display = 'none';
+            } else {
+                aviso.style.display = 'flex';
+            }
+        }
+    });
+    observer.observe(window.parent.document.body, { childList: true, subtree: true, attributes: true });
+    </script>
 """, unsafe_allow_html=True)
 
 EXCEL_FILE = "Cadastros_Servidores.xlsx"
