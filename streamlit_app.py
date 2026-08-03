@@ -91,7 +91,7 @@ def preencher_documentos_oficiais(dados):
 
 st.title("📋 Cadastro e Preenchimento de Documentos")
 
-# Mensagem inicial solicitada
+# Mensagem solicitada no início
 st.info("ℹ️ **Esses dados serão direcionados a uma planilha, para preenchimento de dados.**")
 
 st.write("Preencha os dados abaixo para cadastrar e gerar os documentos em PDF.")
@@ -250,7 +250,7 @@ if st.session_state.pdf_proc or st.session_state.pdf_termo:
 
     st.markdown("---")
     
-    # Seção do Tutorial com imagens aumentadas (width=700)
+    # Seção do Tutorial com imagens ampliadas (width=700)
     st.markdown("### Tutorial para envio dos documentos (Nesse site)")
     st.info(
         "Como enviar os documentos, o termo e a procuração devem estar assinados "
