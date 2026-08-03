@@ -26,6 +26,17 @@ st.markdown("""
             color: white;
         }
         .stButton>button:hover { background-color: #0b5ed7; color: white; }
+        
+        /* Estilo para o botão chamativo de tutorial */
+        .btn-tutorial>button {
+            background-color: #ffc107 !important;
+            color: #000 !important;
+            border: 2px solid #ffca2c !important;
+        }
+        .btn-tutorial>button:hover {
+            background-color: #ffca2c !important;
+            color: #000 !important;
+        }
     </style>
 """, unsafe_allow_html=True)
 
@@ -128,6 +139,10 @@ if "pdf_proc" not in st.session_state:
 if "pdf_termo" not in st.session_state:
     st.session_state.pdf_termo = None
 
+# Gerenciamento dinâmico da aba ativa no Session State
+if "aba_ativa" not in st.session_state:
+    st.session_state.aba_ativa = "➕ Novo Cadastro"
+
 # Cabeçalho Principal com Métricas Rápidas
 col_cab1, col_cab2 = st.columns([3, 1])
 with col_cab1:
@@ -157,9 +172,24 @@ with st.sidebar:
         elif chave_input:
             st.error("❌ Incorreta.")
 
-aba_novo, aba_salvos, aba_tutorial = st.tabs(["➕ Novo Cadastro", "📂 Servidores Já Cadastrados", "📖 Tutorial"])
+# Sistema de abas dinâmicas controladas via session_state
+abas_nomes = ["➕ Novo Cadastro", "📂 Servidores Já Cadastrados", "📖 Tutorial"]
 
-with aba_salvos:
+# Seção de seleção das abas utilizando rádio em formato de barra horizontal para sincronia com o session_state
+aba_selecionada = st.radio(
+    "Navegação do Sistema:",
+    abas_nomes,
+    index=abas_nomes.index(st.session_state.aba_ativa) if st.session_state.aba_ativa in abas_nomes else 0,
+    horizontal=True,
+    label_visibility="collapsed",
+    key="radio_navegacao"
+)
+
+# Atualiza a aba ativa caso o usuário clique diretamente no menu superior
+st.session_state.aba_ativa = aba_selecionada
+st.markdown("---")
+
+if st.session_state.aba_ativa == "📂 Servidores Já Cadastrados":
     st.subheader("🔍 Pesquisar e Selecionar Servidor da Planilha")
     
     if usuario_autorizado:
@@ -254,8 +284,17 @@ with aba_salvos:
     else:
         st.warning("🔒 **Conteúdo Restrito.** Abra a **Área do Administrador** na barra lateral e insira a chave de acesso correta.")
 
-with aba_novo:
-    st.subheader("📝 Preenchimento de Dados Cadastrais (Livre para Uso)")
+elif st.session_state.aba_ativa == "➕ Novo Cadastro":
+    # Cabeçalho da aba com o Botão Chamativo de Tutorial alinhado à direita
+    col_sub_1, col_sub_2 = st.columns([3, 1])
+    with col_sub_1:
+        st.subheader("📝 Preenchimento de Dados Cadastrais (Livre para Uso)")
+    with col_sub_2:
+        st.markdown('<div class="btn-tutorial">', unsafe_allow_html=True)
+        if st.button("💡 Ver Tutorial de Ajuda", key="btn_ir_tutorial"):
+            st.session_state.aba_ativa = "📖 Tutorial"
+            st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
 
     with st.container(border=True):
         col_p1, col_p2 = st.columns(2)
@@ -369,7 +408,7 @@ with aba_novo:
                 else:
                     st.warning("⚠️ Nenhum arquivo anexado.")
 
-with aba_tutorial:
+elif st.session_state.aba_ativa == "📖 Tutorial":
     st.subheader("📖 Tutorial de Utilização do Sistema")
     st.info("Selecione abaixo o dispositivo que você está utilizando para visualizar o tutorial correspondente:")
 
