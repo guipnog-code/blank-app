@@ -52,9 +52,45 @@ st.markdown("""
     </style>
     
     <!-- Elemento flutuante no topo esquerdo -->
-    <div class="aviso-topo-esquerdo">
+    <div id="aviso-clique-aqui" class="aviso-topo-esquerdo">
         <span>⬅️</span> <span>clique aqui</span>
     </div>
+
+    <script>
+    // Script inteligente para monitorar e ocultar o aviso quando o menu for aberto
+    function atualizarVisibilidadeAviso() {
+        try {
+            const doc = window.parent.document;
+            const aviso = doc.getElementById('aviso-clique-aqui');
+            const sidebar = doc.querySelector('[data-testid="stSidebar"]');
+            
+            if (aviso && sidebar) {
+                // Obtém o atributo aria-expanded ou calcula a largura real da sidebar
+                const expanded = sidebar.getAttribute('aria-expanded');
+                const rect = sidebar.getBoundingClientRect();
+                
+                // Se estiver expandido (aberto) ou com largura maior que 80px, oculta o aviso
+                if (expanded === 'true' || rect.width > 80) {
+                    aviso.style.display = 'none';
+                } else {
+                    aviso.style.display = 'flex';
+                }
+            }
+        } catch (e) {
+            // Ignora erros de cross-origin se houver restrição
+        }
+    }
+
+    // Executa em tempo real a cada clique e mudança de estado na página
+    const observer = new MutationObserver(atualizarVisibilidadeAviso);
+    if (window.parent.document.body) {
+        observer.observe(window.parent.document.body, { attributes: true, subtree: true, childList: true });
+    }
+    window.parent.document.addEventListener('click', () => {
+        setTimeout(atualizarVisibilidadeAviso, 50);
+    });
+    setInterval(atualizarVisibilidadeAviso, 200);
+    </script>
 """, unsafe_allow_html=True)
 
 EXCEL_FILE = "Cadastros_Servidores.xlsx"
