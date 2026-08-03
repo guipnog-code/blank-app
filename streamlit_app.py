@@ -369,12 +369,10 @@ with aba_novo:
                 else:
                     st.warning("⚠️ Nenhum arquivo anexado.")
 
-# ABA DE TUTORIAL REFORMULADA COM OS BOTÕES DE SELEÇÃO
 with aba_tutorial:
     st.subheader("📖 Tutorial de Utilização do Sistema")
     st.info("Selecione abaixo o dispositivo que você está utilizando para visualizar o tutorial correspondente:")
 
-    # Botões de seleção (Computador / Celular) usando st.radio em formato horizontal ou st.segmented_control
     tipo_tutorial = st.radio(
         "Escolha a plataforma:",
         ["💻 Tutorial Computador", "📱 Tutorial Celular"],
@@ -387,9 +385,6 @@ with aba_tutorial:
     if tipo_tutorial == "💻 Tutorial Computador":
         st.markdown("### 🖥️ Passo a Passo para Computador")
         st.write("Assista ao vídeo explicativo ou siga o guia detalhado para realizar o processo pelo computador:")
-        
-        # Exemplo de incorporação de vídeo (substitua o link do YouTube pelo seu link real se houver)
-        # st.video("https://www.youtube.com/watch?v=SEU_LINK_COMPUTADOR")
         st.info("💡 *(Espaço reservado para o Vídeo do Tutorial no Computador)*")
 
         for i in range(1, 4):
@@ -403,9 +398,6 @@ with aba_tutorial:
     else:
         st.markdown("### 📱 Passo a Passo para Celular")
         st.write("Assista ao vídeo explicativo ou siga o guia detalhado para realizar o processo pelo celular:")
-        
-        # Exemplo de incorporação de vídeo (substitua o link do YouTube pelo seu link real se houver)
-        # st.video("https://www.youtube.com/watch?v=SEU_LINK_CELULAR")
         st.info("💡 *(Espaço reservado para o Vídeo do Tutorial no Celular)*")
 
         for i in range(1, 4):
