@@ -1,4 +1,3 @@
-import urllib.parse
 import os
 import streamlit as st
 import pandas as pd
@@ -6,6 +5,7 @@ import fitz  # PyMuPDF
 import requests
 import base64
 import json
+import urllib.parse
 
 st.set_page_config(
     page_title="Sistema - Ação Correção Monetária",
@@ -158,11 +158,42 @@ with aba_salvos:
                 st.write("📋 **Dados carregados da planilha:**")
                 st.json(dados_linha)
                 
-                if st.button("📄 Gerar Documentos para este Servidor"):
-                    st.session_state.dados_usuario = dados_linha
-                    st.session_state.nome_servidor = str(dados_linha.get("Nome", "")).strip()
-                    st.session_state.pdf_proc, st.session_state.pdf_termo = preencher_documentos_oficiais(dados_linha)
-                    st.success(f"Documentos gerados com sucesso para {st.session_state.nome_servidor}!")
+                col_b1, col_b2 = st.columns(2)
+                
+                with col_b1:
+                    if st.button("📄 Gerar Documentos para este Servidor"):
+                        st.session_state.dados_usuario = dados_linha
+                        st.session_state.nome_servidor = str(dados_linha.get("Nome", "")).strip()
+                        st.session_state.pdf_proc, st.session_state.pdf_termo = preencher_documentos_oficiais(dados_linha)
+                        st.success(f"Documentos gerados com sucesso para {st.session_state.nome_servidor}!")
+
+                with col_b2:
+                    # Link pré-preenchido do Google Forms
+                    base_form_url = "https://docs.google.com/forms/d/e/1FAIpQLScFHB1lA_2cTeg-ANSa0TK3I4LwwMTa6T9cMnxQiWmbBD6XOw/viewform"
+                    
+                    params = {
+                        "entry.1093556091": dados_linha.get("Nome", ""),
+                        "entry.1340456107": dados_linha.get("Matrícula", ""),
+                        "entry.1472583690": dados_linha.get("CPF", ""),
+                        "entry.9876543210": dados_linha.get("RG", ""),
+                        "entry.1122334455": dados_linha.get("Endereço", ""),
+                        "entry.2233445566": dados_linha.get("Município", ""),
+                        "entry.3344556677": dados_linha.get("Estado", ""),
+                        "entry.4455667788": dados_linha.get("CEP", ""),
+                        "entry.5566778899": dados_linha.get("Telefone", ""),
+                        "entry.6677889900": dados_linha.get("E-mail", "")
+                    }
+                    
+                    url_preenchida = f"{base_form_url}?{urllib.parse.urlencode(params)}"
+                    
+                    st.markdown(
+                        f"""<a href="{url_preenchida}" target="_blank">
+                            <button style="width:100%; border-radius:6px; font-weight:bold; height:3em; background-color:#198754; color:white; border:none; cursor:pointer;">
+                                📝 Abrir Google Forms Preenchido
+                            </button>
+                        </a>""",
+                        unsafe_allow_html=True
+                    )
     else:
         st.warning("🔒 **Conteúdo Restrito.** Insira a chave de acesso correta na barra lateral para visualizar o menu de preenchimento rápido.")
 
