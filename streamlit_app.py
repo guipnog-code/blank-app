@@ -31,28 +31,27 @@ EXCEL_FILE = "Cadastros_Servidores.xlsx"
 GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz8lQ3xhchTyl2QrvmIYr9qVZIFsx_8I2hIb0-jBqHOX63G8OzExrHPr2OlROfn_hSZ/exec"
 
 # ==========================================
-# LISTA DE GMAILs LIBERADOS PELO ADMINISTRADOR
+# CHAVE DE ACESSO DEFINIDA PELO ADMINISTRADOR
 # ==========================================
-EMAILS_LIBERADOS = [
-    "guipnog@gmail.com",  # Insira aqui o seu e-mail de administrador
-    # "outro_email_permitido@gmail.com"  # Adicione outros se precisar
-]
+CHAVE_ADMIN = "Sindicatojus"
 
 def verificar_admin():
-    """Valida se o e-mail digitado na barra lateral está na lista de liberados"""
-    st.sidebar.markdown("### 🔐 Acesso Administrativo")
-    st.sidebar.markdown("*(Restrito ao preenchimento rápido)*")
-    email_input = st.sidebar.text_input("Digite o e-mail de acesso:", type="default")
+    """Valida se a chave de acesso digitada na barra lateral está correta"""
+    st.sidebar.markdown("### 🔐 Acesso Restrito")
+    st.sidebar.markdown("*(Exclusivo para preenchimento rápido)*")
     
-    if not email_input:
-        st.sidebar.info("💡 Insira seu e-mail para desbloquear a aba de Servidores Cadastrados.")
+    # Campo de senha para esconder o texto digitado
+    chave_input = st.sidebar.text_input("Digite a chave de acesso:", type="password")
+    
+    if not chave_input:
+        st.sidebar.info("💡 Insira a chave para desbloquear a aba de Servidores Cadastrados.")
         return False
     
-    if email_input.strip().lower() in [e.lower() for e in EMAILS_LIBERADOS]:
+    if chave_input.strip() == CHAVE_ADMIN:
         st.sidebar.success("✅ Acesso Liberado!")
         return True
     else:
-        st.sidebar.error("❌ E-mail não autorizado.")
+        st.sidebar.error("❌ Chave incorreta.")
         return False
 
 def carregar_servidores_cadastrados():
@@ -130,7 +129,7 @@ st.title("⚖️ Sistema de Cadastro e Gestão de Documentos")
 st.markdown("##### **Ação de Correção Monetária de Exercícios Anteriores**")
 st.markdown("---")
 
-# Barra lateral com opção de esconder e campo de login restrito para o preenchimento rápido
+# Barra lateral com opção de esconder e chave de acesso restrito
 with st.sidebar:
     st.header("💡 Ajuda e Navegação")
     st.info(
@@ -165,7 +164,7 @@ with aba_salvos:
                     st.session_state.pdf_proc, st.session_state.pdf_termo = preencher_documentos_oficiais(dados_linha)
                     st.success(f"Documentos gerados com sucesso para {st.session_state.nome_servidor}!")
     else:
-        st.warning("🔒 **Conteúdo Restrito.** Insira um e-mail de administrador válido na barra lateral para visualizar o menu de preenchimento rápido.")
+        st.warning("🔒 **Conteúdo Restrito.** Insira a chave de acesso correta na barra lateral (ícone de seta no canto superior esquerdo) para visualizar o menu de preenchimento rápido.")
 
 with aba_novo:
     st.subheader("📝 Preenchimento de Dados Cadastrais (Livre para Uso)")
@@ -280,7 +279,7 @@ if "nome_servidor" in st.session_state or "pdf_proc" in st.session_state:
         else:
             st.warning("⚠️ Nenhum arquivo anexado.")
 
-# --- SEÇÃO DE TUTORIAL REINTRODUZIDA ---
+# --- SEÇÃO DE TUTORIAL ---
 st.markdown("---")
 st.subheader("📖 Tutorial para Envio dos Documentos")
 st.info(
