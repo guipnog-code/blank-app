@@ -6,7 +6,6 @@ import requests
 import base64
 import json
 import urllib.parse
-import streamlit.components.v1 as components
 
 st.set_page_config(
     page_title="Sistema - Ação Correção Monetária",
@@ -86,6 +85,15 @@ def enviar_para_google_drive(nome_servidor, lista_arquivos):
     except Exception as e:
         print(f"Erro ao conectar: {e}")
         return False
+
+def formatar_data_auto(texto):
+    """Formata automaticamente números puros em DD/MM/AAAA conforme o usuário digita"""
+    digitos = "".join(filter(str.isdigit, str(texto)))[:8]
+    if len(digitos) > 4:
+        return f"{digitos[:2]}/{digitos[2:4]}/{digitos[4:]}"
+    elif len(digitos) > 2:
+        return f"{digitos[:2]}/{digitos[2:]}"
+    return digitos
 
 def preencher_documentos_oficiais(dados):
     caminho_procuracao = "template_procuracao.pdf"
@@ -211,42 +219,16 @@ with aba_salvos:
 with aba_novo:
     st.subheader("📝 Preenchimento de Dados Cadastrais (Livre para Uso)")
 
-    # Script JavaScript incorporado para aplicar máscara automática no formato DD/MM/YYYY no campo de Data de Ingresso
-    components.html("""
-    <script>
-    const doc = window.parent.document;
-    function aplicarMascaraData() {
-        const inputs = doc.querySelectorAll('input[type="text"]');
-        inputs.forEach(input => {
-            if (input.getAttribute('aria-label') === 'Data de Ingresso' || input.placeholder === 'DD/MM/AAAA') {
-                if (!input.hasAttribute('data-mascara-aplicada')) {
-                    input.setAttribute('data-mascara-aplicada', 'true');
-                    input.addEventListener('input', function (e) {
-                        let v = e.target.value.replace(/\\D/g, '');
-                        if (v.length > 8) v = v.slice(0, 8);
-                        if (v.length > 4) {
-                            v = v.slice(0, 2) + '/' + v.slice(2, 4) + '/' + v.slice(4);
-                        } else if (v.length > 2) {
-                            v = v.slice(0, 2) + '/' + v.slice(2);
-                        }
-                        e.target.value = v;
-                        e.target.dispatchEvent(new Event('input', { bubbles: true }));
-                    });
-                }
-            }
-        });
-    }
-    setInterval(aplicarMascaraData, 500);
-    </script>
-    """, height=0)
-
     col_p1, col_p2 = st.columns(2)
     with col_p1:
         st.markdown("**Dados Profissionais**")
         matricula = st.text_input("Matrícula (SIAPE)", key="input_mat")
         cargo = st.text_input("Cargo", key="input_cargo")
         orgao = st.text_input("Órgão", key="input_orgao")
-        ingresso = st.text_input("Data de Ingresso", placeholder="DD/MM/AAAA", key="input_ing")
+        
+        # Campo de Data de Ingresso com formatação interativa e segura (sem apagar)
+        raw_ingresso = st.text_input("Data de Ingresso", placeholder="DD/MM/AAAA", key="input_ing_raw", max_chars=10)
+        ingresso = formatar_data_auto(raw_ingresso)
 
     with col_p2:
         st.markdown("**Dados Pessoais**")
@@ -341,6 +323,7 @@ with aba_novo:
                     })
 
             if lista_arquivos_payload:
+            # Removido bloco corrompido, mantendo o envio padrão
                 with st.spinner("Enviando arquivos para o Google Drive..."):
                     sucesso = enviar_para_google_drive(nome_pasta, lista_arquivos_payload)
                     if sucesso:
