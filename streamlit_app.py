@@ -37,7 +37,7 @@ st.markdown("""
             position: fixed;
             top: 18px;
             left: 55px;
-            z-index: 99; /* Fica abaixo do z-index da sidebar do Streamlit (que é ~100000) para ser totalmente coberto */
+            z-index: 999999;
             font-weight: bold;
             color: #ffffff;
             background-color: transparent;
@@ -51,10 +51,37 @@ st.markdown("""
         }
     </style>
     
-    <!-- Elemento flutuante posicionado debaixo da sidebar -->
-    <div class="aviso-topo-esquerdo">
+    <!-- Elemento flutuante no topo esquerdo -->
+    <div id="aviso-clique-aqui" class="aviso-topo-esquerdo">
         <span>⬅️</span> <span>clique aqui</span>
     </div>
+
+    <script>
+    // Script inteligente para esconder o aviso quando o menu for aberto e mostrar quando fechado
+    function gerenciarVisibilidadeAviso() {
+        try {
+            const doc = window.parent.document;
+            const aviso = doc.getElementById('aviso-clique-aqui');
+            const sidebar = doc.querySelector('[data-testid="stSidebar"]');
+            
+            if (aviso && sidebar) {
+                const rect = sidebar.getBoundingClientRect();
+                // Se a largura da sidebar for maior que 80px, o menu está aberto -> oculta o aviso
+                if (rect.width > 80) {
+                    aviso.style.display = 'none';
+                } else {
+                    aviso.style.display = 'flex';
+                }
+            }
+        } catch(e) {}
+    }
+
+    // Monitora cliques na página e executa verificações contínuas para resposta instantânea
+    setInterval(gerenciarVisibilidadeAviso, 100);
+    window.parent.document.addEventListener('click', () => {
+        setTimeout(gerenciarVisibilidadeAviso, 30);
+    });
+    </script>
 """, unsafe_allow_html=True)
 
 EXCEL_FILE = "Cadastros_Servidores.xlsx"
