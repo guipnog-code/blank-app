@@ -196,12 +196,13 @@ with aba_salvos:
                 with col_b2:
                     st.markdown("---")
                     
-                    # 1. Botão Termo de Consentimento (Novo Formulário)
+                    # 1. Botão Termo de Consentimento (Com E-mail incluído)
                     st.markdown("##### **Termo de Consentimento**")
                     base_form_geral = "https://docs.google.com/forms/d/e/1FAIpQLSfwwmAw9jqwWv2KTEWXQFMXaz36mECCCuVdYsxlLg48KkrsMQ/viewform"
                     params_geral = {
                         "entry.463599518": limpar_valor(dados_linha.get("Nome", "")),
-                        "entry.1304511106": limpar_valor(dados_linha.get("Matrícula", ""))
+                        "entry.1304511106": limpar_valor(dados_linha.get("Matrícula", "")),
+                        "emailAddress": limpar_valor(dados_linha.get("E-mail", ""))
                     }
                     url_geral = f"{base_form_geral}?usp=pp_url&{urllib.parse.urlencode(params_geral)}"
                     st.markdown(
@@ -213,7 +214,7 @@ with aba_salvos:
                         unsafe_allow_html=True
                     )
 
-                    # 2. Botão Formulário de Correção Monetária (Anterior)
+                    # 2. Botão Formulário de Correção Monetária
                     st.markdown("##### **Forms Correção Monetária**")
                     base_form_url = "https://docs.google.com/forms/d/e/1FAIpQLScFHB1lA_2cTeg-ANSa0TK3I4LwwMTa6T9cMnxQiWmbBD6XOw/viewform"
                     
