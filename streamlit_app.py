@@ -6,6 +6,7 @@ import requests
 import base64
 import json
 import urllib.parse
+from datetime import datetime
 
 st.set_page_config(
     page_title="Sistema - Ação Correção Monetária",
@@ -96,7 +97,6 @@ def formatar_data_callback():
     st.session_state.input_ing_raw = formatado
 
 def limpar_valor(val):
-    """Remove valores nulos, vazios ou 'nan' do Excel para não corromper o link"""
     if val is None or pd.isna(val) or str(val).strip().lower() == "nan":
         return ""
     return str(val).strip()
@@ -196,10 +196,21 @@ with aba_salvos:
                 with col_b2:
                     base_form_url = "https://docs.google.com/forms/d/e/1FAIpQLScFHB1lA_2cTeg-ANSa0TK3I4LwwMTa6T9cMnxQiWmbBD6XOw/viewform"
                     
-                    # IDs mapeados com base no HTML real fornecido do seu Google Forms
+                    # Tratamento da data para o formato de calendário do Forms (ano, mês, dia)
+                    str_data = limpar_valor(dados_linha.get("Data de Ingresso", ""))
+                    ano, mes, dia = "", "", ""
+                    try:
+                        dt_obj = datetime.strptime(str_data, "%d/%m/%Y")
+                        ano, mes, dia = str(dt_obj.year), str(dt_obj.month), str(dt_obj.day)
+                    except Exception:
+                        pass
+
                     params = {
                         "entry.336229460": limpar_valor(dados_linha.get("Nome", "")),
                         "entry.1167987372": limpar_valor(dados_linha.get("Matrícula", "")),
+                        "entry.918241761_year": ano,
+                        "entry.918241761_month": mes,
+                        "entry.918241761_day": dia,
                         "entry.304080830": limpar_valor(dados_linha.get("CPF", "")),
                         "entry.346470482": limpar_valor(dados_linha.get("RG", "")),
                         "entry.1131685604": limpar_valor(dados_linha.get("Endereço", "")),
