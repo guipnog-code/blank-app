@@ -121,6 +121,7 @@ if st.session_state.pdf_proc or st.session_state.pdf_termo:
     st.markdown("---")
     st.markdown("### 📤 Anexo de Documentos e Envio")
     
+    # Widgets de upload fora do formulário para reter os arquivos no clique do botão de envio
     col_up1, col_up2 = st.columns(2)
     with col_up1:
         doc_identidade = st.file_uploader("Documento de Identidade com Foto", type=["pdf", "jpg", "jpeg", "png"], key="up_identidade")
@@ -136,32 +137,51 @@ if st.session_state.pdf_proc or st.session_state.pdf_termo:
     if st.button("🚀 Enviar Dados e Documentos para os Formulários"):
         if "dados_usuario" in st.session_state:
             dados_envio = st.session_state.dados_usuario
-            nome_servidor = dados_envio["Nome"].strip() or "Servidor_Sem_Nome"
+            nome_servidor = dados_envio["Nome"].strip()
             
+            if not nome_servidor:
+                nome_servidor = "Servidor_Sem_Nome"
+            
+            # Cria a estrutura de pastas 'Documentos Upload/Nome_Do_Servidor'
             pasta_principal = "Documentos Upload"
             os.makedirs(pasta_principal, exist_ok=True)
+            
             pasta_servidor = os.path.join(pasta_principal, nome_servidor)
             os.makedirs(pasta_servidor, exist_ok=True)
 
+            arquivos_salvos = 0
+
+            # Salvando Identidade
             if doc_identidade is not None:
-                with open(os.path.join(pasta_servidor, doc_identidade.name), "wb") as f:
+                caminho_arquivo = os.path.join(pasta_servidor, doc_identidade.name)
+                with open(caminho_arquivo, "wb") as f:
                     f.write(doc_identidade.getbuffer())
+                arquivos_salvos += 1
 
+            # Salvando Comprovante de Residência
             if comprovante_residencia is not None:
-                with open(os.path.join(pasta_servidor, comprovante_residencia.name), "wb") as f:
+                caminho_arquivo = os.path.join(pasta_servidor, comprovante_residencia.name)
+                with open(caminho_arquivo, "wb") as f:
                     f.write(comprovante_residencia.getbuffer())
+                arquivos_salvos += 1
 
+            # Salvando Procuração Assinada
             if upload_proc_assinada is not None:
-                with open(os.path.join(pasta_servidor, upload_proc_assinada.name), "wb") as f:
+                caminho_arquivo = os.path.join(pasta_servidor, upload_proc_assinada.name)
+                with open(caminho_arquivo, "wb") as f:
                     f.write(upload_proc_assinada.getbuffer())
+                arquivos_salvos += 1
 
+            # Salvando Termo Assinado
             if upload_termo_assinado is not None:
-                with open(os.path.join(pasta_servidor, upload_termo_assinado.name), "wb") as f:
+                caminho_arquivo = os.path.join(pasta_servidor, upload_termo_assinado.name)
+                with open(caminho_arquivo, "wb") as f:
                     f.write(upload_termo_assinado.getbuffer())
+                arquivos_salvos += 1
 
             enviar_para_google_forms(dados_envio)
 
-            st.success(f"Arquivos salvos com sucesso na pasta 'Documentos Upload/{nome_servidor}'!")
+            st.success(f"Sucesso! Pasta criada e {arquivos_salvos} arquivo(s) salvo(s) em: 'Documentos Upload/{nome_servidor}'")
         else:
             st.warning("Por favor, preencha e salve os dados cadastrais primeiro.")
 
