@@ -36,7 +36,7 @@ st.markdown("""
         .aviso-topo-esquerdo {
             position: fixed;
             top: 18px;
-            left: 55px;
+            left: 65px;
             z-index: 999999;
             font-weight: bold;
             color: #ffffff;
@@ -51,28 +51,32 @@ st.markdown("""
         }
     </style>
     
-    <!-- Elemento flutuante que aparece apenas quando a sidebar está fechada -->
+    <!-- Elemento flutuante de aviso -->
     <div id="aviso-menu-flutuante" class="aviso-topo-esquerdo">
         <span>⬅️</span> <span>clique aqui</span>
     </div>
 
     <script>
-    // Script para ocultar o aviso se a barra lateral estiver aberta e mostrar se estiver fechada
-    const observer = new MutationObserver(() => {
+    // Script robusto para ocultar o aviso quando a barra lateral estiver aberta
+    function verificarSidebar() {
         const doc = window.parent.document;
         const sidebar = doc.querySelector('section[data-testid="stSidebar"]');
         const aviso = doc.getElementById('aviso-menu-flutuante');
+        
         if (sidebar && aviso) {
-            // Verifica se a largura da sidebar é menor que 50px (considerada fechada)
             const rect = sidebar.getBoundingClientRect();
-            if (rect.width > 50) {
+            // Se a largura da sidebar for maior que 80px, ela está aberta
+            if (rect.width > 80) {
                 aviso.style.display = 'none';
             } else {
                 aviso.style.display = 'flex';
             }
         }
-    });
-    observer.observe(window.parent.document.body, { childList: true, subtree: true, attributes: true });
+    }
+
+    // Executa periodicamente e escuta cliques na página para atualizar o estado instantaneamente
+    setInterval(verificarSidebar, 200);
+    window.parent.document.addEventListener('click', verificarSidebar);
     </script>
 """, unsafe_allow_html=True)
 
