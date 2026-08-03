@@ -154,7 +154,6 @@ with aba_salvos:
         if df_servidores.empty:
             st.info("ℹ️ Nenhum servidor cadastrado na planilha até o momento.")
         else:
-            # Cria uma lista de opções formatadas identificando cada linha unicamente por Índice + Nome + CPF
             opcoes_servidores = []
             mapa_linhas = {}
             
@@ -165,8 +164,7 @@ with aba_salvos:
                 opcoes_servidores.append(rotulo)
                 mapa_linhas[rotulo] = row.to_dict()
 
-            # Campo st.selectbox permite pesquisar digitando diretamente o nome/cpf
-            selecao = st.selectbox("Pesquise digitando o nome ou CPF:", ["-- Selecione --"] + opcoes_servidores)
+            selecao = st.selectbox("Pesquise digitando o nome ou CPF:", ["-- Selecione --"] + opcoes_servidores, key="selectbox_servidor")
             
             if selecao != "-- Selecione --":
                 dados_linha = mapa_linhas[selecao]
@@ -198,7 +196,8 @@ with aba_salvos:
                         "entry.6677889900": dados_linha.get("E-mail", "")
                     }
                     
-                    url_preenchida = f"{base_form_url}?{urllib.parse.urlencode(params)}"
+                    # URL com usp=pp_url ativado para pré-preenchimento
+                    url_preenchida = f"{base_form_url}?usp=pp_url&{urllib.parse.urlencode(params)}"
                     
                     st.markdown(
                         f"""<a href="{url_preenchida}" target="_blank">
@@ -217,28 +216,28 @@ with aba_novo:
     col_p1, col_p2 = st.columns(2)
     with col_p1:
         st.markdown("**Dados Profissionais**")
-        matricula = st.text_input("Matrícula (SIAPE)")
-        cargo = st.text_input("Cargo")
-        orgao = st.text_input("Órgão")
-        ingresso = st.text_input("Data de Ingresso", placeholder="DD/MM/AAAA")
+        matricula = st.text_input("Matrícula (SIAPE)", key="input_mat")
+        cargo = st.text_input("Cargo", key="input_cargo")
+        orgao = st.text_input("Órgão", key="input_orgao")
+        ingresso = st.text_input("Data de Ingresso", placeholder="DD/MM/AAAA", key="input_ing")
 
     with col_p2:
         st.markdown("**Dados Pessoais**")
-        nome = st.text_input("Nome Completo")
-        cpf = st.text_input("CPF")
-        rg = st.text_input("RG")
-        email = st.text_input("E-mail")
+        nome = st.text_input("Nome Completo", key="input_nome")
+        cpf = st.text_input("CPF", key="input_cpf")
+        rg = st.text_input("RG", key="input_rg")
+        email = st.text_input("E-mail", key="input_email")
 
     col_p3, col_p4, col_p5 = st.columns(3)
     with col_p3:
-        telefone = st.text_input("Telefone")
-        estado_civil = st.text_input("Estado Civil")
+        telefone = st.text_input("Telefone", key="input_tel")
+        estado_civil = st.text_input("Estado Civil", key="input_ec")
     with col_p4:
-        cep = st.text_input("CEP")
-        endereco = st.text_input("Endereço")
+        cep = st.text_input("CEP", key="input_cep")
+        endereco = st.text_input("Endereço", key="input_end")
     with col_p5:
-        municipio = st.text_input("Município")
-        estado = st.text_input("Estado (UF)")
+        municipio = st.text_input("Município", key="input_mun")
+        estado = st.text_input("Estado (UF)", key="input_uf")
 
     st.markdown("")
     col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
@@ -289,7 +288,7 @@ with aba_novo:
         with col_env2:
             btn_enviar_drive = st.button("🚀 Enviar Arquivos para o Google Drive", key="btn_enviar_drive")
 
-        if btn_enviar_drive:
+        if btn_env_drive:
             nome_pasta = st.session_state.get("nome_servidor", "Servidor")
             lista_arquivos_payload = []
 
