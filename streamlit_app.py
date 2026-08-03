@@ -31,6 +31,7 @@ st.markdown("""
 EXCEL_FILE = "Cadastros_Servidores.xlsx"
 GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz8lQ3xhchTyl2QrvmIYr9qVZIFsx_8I2hIb0-jBqHOX63G8OzExrHPr2OlROfn_hSZ/exec"
 
+# Chave de acesso do administrador
 CHAVE_ADMIN = "Sindicatojus"
 
 def verificar_admin():
@@ -122,6 +123,7 @@ def preencher_documentos_oficiais(dados):
 
     return pdf_procuracao_bytes, pdf_termo_bytes
 
+# Inicialização de variáveis no session_state
 if "nome_servidor" not in st.session_state:
     st.session_state.nome_servidor = None
 if "pdf_proc" not in st.session_state:
@@ -179,17 +181,18 @@ with aba_salvos:
                 with col_b2:
                     base_form_url = "https://docs.google.com/forms/d/e/1FAIpQLScFHB1lA_2cTeg-ANSa0TK3I4LwwMTa6T9cMnxQiWmbBD6XOw/viewform"
                     
+                    # Parâmetros mapeados com os IDs reais extraídos do formulário
                     params = {
-                        "entry.1093556091": dados_linha.get("Nome", ""),
-                        "entry.1340456107": dados_linha.get("Matrícula", ""),
-                        "entry.1472583690": dados_linha.get("CPF", ""),
-                        "entry.9876543210": dados_linha.get("RG", ""),
-                        "entry.1122334455": dados_linha.get("Endereço", ""),
-                        "entry.2233445566": dados_linha.get("Município", ""),
-                        "entry.3344556677": dados_linha.get("Estado", ""),
-                        "entry.4455667788": dados_linha.get("CEP", ""),
-                        "entry.5566778899": dados_linha.get("Telefone", ""),
-                        "entry.6677889900": dados_linha.get("E-mail", "")
+                        "entry.336229460": dados_linha.get("Nome", ""),
+                        "entry.1167987372": dados_linha.get("Matrícula", ""),
+                        "entry.304080830": dados_linha.get("CPF", ""),
+                        "entry.346470482": dados_linha.get("RG", ""),
+                        "entry.1131685604": dados_linha.get("Endereço", ""),
+                        "entry.713012878": dados_linha.get("Município", ""),
+                        "entry.1662466686": dados_linha.get("Estado", ""),
+                        "entry.1919228175": dados_linha.get("CEP", ""),
+                        "entry.1147940036": dados_linha.get("Telefone", ""),
+                        "entry.737384383": dados_linha.get("E-mail", "")
                     }
                     
                     url_preenchida = f"{base_form_url}?usp=pp_url&{urllib.parse.urlencode(params)}"
