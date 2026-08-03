@@ -27,6 +27,14 @@ st.markdown("""
         }
         .stButton>button:hover { background-color: #0b5ed7; color: white; }
         
+        /* Transforma a sidebar em uma camada flutuante por cima da página inicial */
+        [data-testid="stSidebar"] {
+            position: fixed !important;
+            z-index: 999999 !important;
+            height: 100vh !important;
+            box-shadow: 5px 0px 15px rgba(0,0,0,0.3);
+        }
+
         /* Animação e posicionamento exato no topo esquerdo ao lado do ícone >> */
         @keyframes piscar-seta-topo {
             0% { opacity: 0.3; transform: translateX(0px); }
@@ -37,7 +45,7 @@ st.markdown("""
             position: fixed;
             top: 18px;
             left: 55px;
-            z-index: 9; /* Mantém abaixo da sidebar para ser coberto */
+            z-index: 99999; /* Fica abaixo da sidebar para ser perfeitamente coberto por ela */
             font-weight: bold;
             color: #ffffff;
             background-color: transparent;
@@ -52,36 +60,9 @@ st.markdown("""
     </style>
     
     <!-- Elemento flutuante no topo esquerdo -->
-    <div id="aviso-clique-aqui" class="aviso-topo-esquerdo">
+    <div class="aviso-topo-esquerdo">
         <span>⬅️</span> <span>clique aqui</span>
     </div>
-
-    <script>
-    // Script infalível para ocultar o aviso quando a sidebar estiver aberta
-    function ajustarVisibilidadeAviso() {
-        try {
-            const doc = window.parent.document;
-            const aviso = doc.getElementById('aviso-clique-aqui');
-            const sidebar = doc.querySelector('[data-testid="stSidebar"]');
-            
-            if (aviso && sidebar) {
-                const rect = sidebar.getBoundingClientRect();
-                // Se a sidebar estiver aberta (largura maior que 50px), esconde totalmente
-                if (rect.width > 50) {
-                    aviso.style.display = 'none';
-                } else {
-                    aviso.style.display = 'flex';
-                }
-            }
-        } catch(e) {}
-    }
-
-    // Executa verificações contínuas e em eventos de clique
-    setInterval(ajustarVisibilidadeAviso, 80);
-    window.parent.document.addEventListener('click', () => {
-        setTimeout(ajustarVisibilidadeAviso, 20);
-    });
-    </script>
 """, unsafe_allow_html=True)
 
 EXCEL_FILE = "Cadastros_Servidores.xlsx"
