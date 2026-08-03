@@ -27,59 +27,23 @@ st.markdown("""
         }
         .stButton>button:hover { background-color: #0b5ed7; color: white; }
         
-        /* Animação e posicionamento exato no topo esquerdo ao lado do ícone >> */
-        @keyframes piscar-seta-topo {
+        /* Animação suave para o aviso dentro da barra lateral */
+        @keyframes piscar-seta-lateral {
             0% { opacity: 0.3; transform: translateX(0px); }
-            50% { opacity: 1; transform: translateX(-5px); }
+            50% { opacity: 1; transform: translateX(-4px); }
             100% { opacity: 0.3; transform: translateX(0px); }
         }
-        .aviso-topo-esquerdo {
-            position: fixed;
-            top: 18px;
-            left: 55px;
-            z-index: 999999;
+        .aviso-menu-sidebar {
             font-weight: bold;
             color: #ffffff;
-            background-color: transparent;
-            animation: piscar-seta-topo 1.2s infinite ease-in-out;
+            animation: piscar-seta-lateral 1.2s infinite ease-in-out;
             font-size: 14px;
+            margin-bottom: 10px;
             display: flex;
             align-items: center;
-            gap: 4px;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
-            pointer-events: none;
+            gap: 6px;
         }
     </style>
-    
-    <!-- Elemento flutuante no topo esquerdo -->
-    <div id="aviso-clique-aqui" class="aviso-topo-esquerdo">
-        <span>⬅️</span> <span>clique aqui</span>
-    </div>
-
-    <script>
-    // Script otimizado para ocultar o aviso quando a sidebar estiver aberta
-    function controlarAviso() {
-        try {
-            const doc = window.parent.document;
-            const aviso = doc.getElementById('aviso-clique-aqui');
-            const sidebar = doc.querySelector('[data-testid="stSidebar"]');
-            
-            if (aviso && sidebar) {
-                const rect = sidebar.getBoundingClientRect();
-                // Se a sidebar estiver aberta (largura visível maior que 50px), esconde o aviso
-                if (rect.width > 50) {
-                    aviso.style.display = 'none';
-                } else {
-                    aviso.style.display = 'flex';
-                }
-            }
-        } catch(e) {}
-    }
-
-    // Executa continuamente e escuta cliques na página para ocultar instantaneamente ao abrir o menu
-    setInterval(controlarAviso, 100);
-    window.parent.document.addEventListener('click', () => setTimeout(controlarAviso, 30));
-    </script>
 """, unsafe_allow_html=True)
 
 EXCEL_FILE = "Cadastros_Servidores.xlsx"
@@ -88,6 +52,9 @@ GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz8lQ3xhchTyl2
 CHAVE_ADMIN = "Sindicatojus"
 
 def verificar_admin():
+    # O aviso fica no topo absoluto da sidebar, sendo coberto perfeitamente ao abrir o menu
+    st.sidebar.markdown('<div class="aviso-menu-sidebar">⬅️ clique aqui</div>', unsafe_allow_html=True)
+    
     st.sidebar.markdown("### 🔐 Acesso Restrito")
     st.sidebar.markdown("*(Exclusivo para preenchimento rápido)*")
     
