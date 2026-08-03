@@ -27,7 +27,7 @@ st.markdown("""
         }
         .stButton>button:hover { background-color: #0b5ed7; color: white; }
         
-        /* Animação e posicionamento exato ao lado do ícone >> no topo esquerdo */
+        /* Animação e posicionamento exato no topo esquerdo ao lado do ícone >> */
         @keyframes piscar-seta-topo {
             0% { opacity: 0.3; transform: translateX(0px); }
             50% { opacity: 1; transform: translateX(-5px); }
@@ -37,7 +37,7 @@ st.markdown("""
             position: fixed;
             top: 18px;
             left: 55px;
-            z-index: 999999;
+            z-index: 9; /* Mantém abaixo da sidebar para ser coberto */
             font-weight: bold;
             color: #ffffff;
             background-color: transparent;
@@ -57,8 +57,8 @@ st.markdown("""
     </div>
 
     <script>
-    // Script inteligente para esconder o aviso quando o menu for aberto e mostrar quando fechado
-    function gerenciarVisibilidadeAviso() {
+    // Script infalível para ocultar o aviso quando a sidebar estiver aberta
+    function ajustarVisibilidadeAviso() {
         try {
             const doc = window.parent.document;
             const aviso = doc.getElementById('aviso-clique-aqui');
@@ -66,8 +66,8 @@ st.markdown("""
             
             if (aviso && sidebar) {
                 const rect = sidebar.getBoundingClientRect();
-                // Se a largura da sidebar for maior que 80px, o menu está aberto -> oculta o aviso
-                if (rect.width > 80) {
+                // Se a sidebar estiver aberta (largura maior que 50px), esconde totalmente
+                if (rect.width > 50) {
                     aviso.style.display = 'none';
                 } else {
                     aviso.style.display = 'flex';
@@ -76,10 +76,10 @@ st.markdown("""
         } catch(e) {}
     }
 
-    // Monitora cliques na página e executa verificações contínuas para resposta instantânea
-    setInterval(gerenciarVisibilidadeAviso, 100);
+    // Executa verificações contínuas e em eventos de clique
+    setInterval(ajustarVisibilidadeAviso, 80);
     window.parent.document.addEventListener('click', () => {
-        setTimeout(gerenciarVisibilidadeAviso, 30);
+        setTimeout(ajustarVisibilidadeAviso, 20);
     });
     </script>
 """, unsafe_allow_html=True)
