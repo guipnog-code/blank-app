@@ -6,19 +6,15 @@ import requests
 import base64
 import json
 
-# Configuração da página para ocupar melhor a largura e mudar o título da aba
 st.set_page_config(
     page_title="Cadastro - Ação Correção Monetária",
     page_icon="📋",
     layout="wide"
 )
 
-# Estilização visual customizada via CSS para deixar os botões e caixas mais modernos
 st.markdown("""
     <style>
-        .main {
-            background-color: #f8f9fa;
-        }
+        .main { background-color: #f8f9fa; }
         .stButton>button {
             width: 100%;
             border-radius: 6px;
@@ -27,10 +23,7 @@ st.markdown("""
             background-color: #0d6efd;
             color: white;
         }
-        .stButton>button:hover {
-            background-color: #0b5ed7;
-            color: white;
-        }
+        .stButton>button:hover { background-color: #0b5ed7; color: white; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -46,9 +39,10 @@ def salvar_no_excel(dados):
         df_final = df_novo
     df_final.to_excel(EXCEL_FILE, index=False)
 
-def enviar_para_google_drive(nome_servidor, lista_arquivos):
+def enviar_para_google_drive_e_forms(nome_servidor, dados_usuario, lista_arquivos):
     payload = {
         "nomeServidor": nome_servidor,
+        "formulario": dados_usuario,
         "arquivos": lista_arquivos
     }
     try:
@@ -57,7 +51,7 @@ def enviar_para_google_drive(nome_servidor, lista_arquivos):
         resultado = response.json()
         return resultado.get("status") == "sucesso"
     except Exception as e:
-        print(f"Erro ao conectar com o Google Drive: {e}")
+        print(f"Erro ao conectar: {e}")
         return False
 
 def preencher_documentos_oficiais(dados):
@@ -98,65 +92,59 @@ def preencher_documentos_oficiais(dados):
 
     return pdf_procuracao_bytes, pdf_termo_bytes
 
-# --- CABEÇALHO PRINCIPAL ---
 st.title("⚖️ Sistema de Cadastro e Gestão de Documentos")
 st.markdown("##### **Ação de Correção Monetária de Exercícios Anteriores**")
 st.markdown("---")
 
 with st.sidebar:
-    st.image("https://img.icons8.com/color/96/law.png", width=80)
     st.header("Navegação e Ajuda")
     st.info(
         "💡 **Dica:** Abra este link em outro aparelho para "
-        "visualizar o tutorial em vídeo/imagens sem sair desta tela:\n\n"
-        "🔗 [Acessar Tutorial Completo](https://blank-app-8vxh0tfzj3.streamlit.app/)"
+        "visualizar o tutorial sem sair desta tela:\n\n"
+        "🔗 [Acessar Tutorial](https://blank-app-8vxh0tfzj3.streamlit.app/)"
     )
-    st.markdown("---")
-    st.markdown("🔒 *Ambiente Seguro e Integrado ao Google Drive*")
 
 if "pdf_proc" not in st.session_state:
     st.session_state.pdf_proc = None
 if "pdf_termo" not in st.session_state:
     st.session_state.pdf_termo = None
 
-# --- FORMULÁRIO DE CADASTRO ORGANIZADO EM COLUNAS ---
-with st.container():
-    st.subheader("📝 1. Preenchimento de Dados Cadastrais")
-    
-    col_p1, col_p2 = st.columns(2)
-    with col_p1:
-        st.markdown("**Dados Profissionais**")
-        matricula = st.text_input("Matrícula (SIAPE)")
-        cargo = st.text_input("Cargo")
-        orgao = st.text_input("Órgão")
-        ingresso = st.text_input("Data de Ingresso", placeholder="DD/MM/AAAA")
+st.subheader("📝 1. Preenchimento de Dados Cadastrais")
 
-    with col_p2:
-        st.markdown("**Dados Pessoais**")
-        nome = st.text_input("Nome Completo")
-        cpf = st.text_input("CPF")
-        rg = st.text_input("RG")
-        email = st.text_input("E-mail")
+col_p1, col_p2 = st.columns(2)
+with col_p1:
+    st.markdown("**Dados Profissionais**")
+    matricula = st.text_input("Matrícula (SIAPE)")
+    cargo = st.text_input("Cargo")
+    orgao = st.text_input("Órgão")
+    ingresso = st.text_input("Data de Ingresso", placeholder="DD/MM/AAAA")
 
-    col_p3, col_p4, col_p5 = st.columns(3)
-    with col_p3:
-        telefone = st.text_input("Telefone")
-        estado_civil = st.text_input("Estado Civil")
-    with col_p4:
-        cep = st.text_input("CEP")
-        endereco = st.text_input("Endereço")
-    with col_p5:
-        municipio = st.text_input("Município")
-        estado = st.text_input("Estado (UF)")
+with col_p2:
+    st.markdown("**Dados Pessoais**")
+    nome = st.text_input("Nome Completo")
+    cpf = st.text_input("CPF")
+    rg = st.text_input("RG")
+    email = st.text_input("E-mail")
 
-    st.markdown("")
-    col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
-    with col_btn2:
-        btn_salvar = st.button("💾 Salvar e Gerar Documentos Oficiais")
+col_p3, col_p4, col_p5 = st.columns(3)
+with col_p3:
+    telefone = st.text_input("Telefone")
+    estado_civil = st.text_input("Estado Civil")
+with col_p4:
+    cep = st.text_input("CEP")
+    endereco = st.text_input("Endereço")
+with col_p5:
+    municipio = st.text_input("Município")
+    estado = st.text_input("Estado (UF)")
+
+st.markdown("")
+col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
+with col_btn2:
+    btn_salvar = st.button("💾 Salvar e Gerar Documentos Oficiais")
 
 if btn_salvar:
     if not nome.strip():
-        st.error("⚠️ Por favor, preencha o campo 'Nome Completo' antes de continuar.")
+        st.error("⚠️ Por favor, preencha o campo 'Nome Completo'.")
     else:
         dados_usuario = {
             "Matrícula": matricula, "Cargo": cargo, "Órgão": orgao, "Data de Ingresso": ingresso,
@@ -170,14 +158,12 @@ if btn_salvar:
         st.session_state.pdf_proc, st.session_state.pdf_termo = preencher_documentos_oficiais(dados_usuario)
         st.success(f"✨ Documentos gerados com sucesso para **{st.session_state.nome_servidor}**!")
 
-# --- SEÇÃO DE DOWNLOAD E UPLOAD (SÓ APARECE APÓS GERAR) ---
 if "nome_servidor" in st.session_state or st.session_state.pdf_proc or st.session_state.pdf_termo:
     if "nome_servidor" not in st.session_state:
         st.session_state.nome_servidor = nome.strip() if nome.strip() else "Servidor_Sem_Nome"
 
     st.markdown("---")
     st.subheader("📥 2. Download dos Documentos Preenchidos")
-    st.write("Baixe os arquivos abaixo, realize a conferência e as devidas assinaturas conforme o tutorial.")
     
     col_dl1, col_dl2 = st.columns(2)
     if st.session_state.pdf_proc:
@@ -188,8 +174,7 @@ if "nome_servidor" in st.session_state or st.session_state.pdf_proc or st.sessio
             st.download_button(label="📄 Baixar Termo Preenchido", data=st.session_state.pdf_termo, file_name="Termo_Preenchido.pdf", mime="application/pdf")
 
     st.markdown("---")
-    st.subheader("📤 3. Anexo de Documentos Digitalizados e Assinados")
-    st.write("Envie os arquivos digitalizados. O sistema organizará tudo automaticamente no Google Drive.")
+    st.subheader("📤 3. Anexo de Documentos e Envio Automatizado")
     
     col_up1, col_up2 = st.columns(2)
     with col_up1:
@@ -202,10 +187,11 @@ if "nome_servidor" in st.session_state or st.session_state.pdf_proc or st.sessio
     st.markdown("")
     col_env1, col_env2, col_env3 = st.columns([1, 2, 1])
     with col_env2:
-        btn_enviar_drive = st.button("🚀 Enviar Documentos Diretamente para o Google Drive")
+        btn_enviar_drive = st.button("🚀 Enviar para o Google Drive e Preencher Forms")
 
     if btn_enviar_drive:
         nome_pasta = st.session_state.nome_servidor
+        dados_form = st.session_state.get("dados_usuario", {})
         lista_arquivos_payload = []
 
         if st.session_state.pdf_proc:
@@ -230,24 +216,21 @@ if "nome_servidor" in st.session_state or st.session_state.pdf_proc or st.sessio
                 })
 
         if lista_arquivos_payload:
-            with st.spinner("Enviando arquivos com segurança para o Google Drive... Aguarde."):
-                sucesso = enviar_para_google_drive(nome_pasta, lista_arquivos_payload)
+            with st.spinner("Enviando arquivos para o Google Drive e disparando os dados para os formulários..."):
+                sucesso = enviar_para_google_drive_e_forms(nome_pasta, dados_form, lista_arquivos_payload)
                 if sucesso:
-                    st.success(f"🎉 Sucesso! A pasta de **{nome_pasta}** foi criada perfeitamente dentro de 'Ação Correção Monetária de Exercícios Anteriores' no Google Drive!")
+                    st.success(f"🎉 Sucesso! A pasta de **{nome_pasta}** foi organizada no Drive e os dados foram integrados aos formulários.")
                 else:
-                    st.error("❌ Ocorreu um erro ao conectar com o Google Drive. Verifique a URL do Web App.")
+                    st.error("❌ Ocorreu um erro na integração. Verifique a implantação do Apps Script.")
         else:
-            st.warning("⚠️ Nenhum arquivo foi anexado para envio.")
+            st.warning("⚠️ Nenhum arquivo foi anexado.")
 
-# --- TUTORIAL VISUAL AO FINAL ---
-st.markdown("---")
-st.subheader("📖 Passo a Passo para Envio dos Documentos")
-st.info("Consulte abaixo o guia visual detalhado para realizar o processo corretamente.")
-
-for i in range(1, 7):
-    with st.expander(f"Passo {i} — Clique para visualizar a orientação"):
-        caminho_img = os.path.join("imagens", f"{i}.png")
-        if os.path.exists(caminho_img):
-            st.image(caminho_img, width=700)
-        else:
-            st.warning(f"*(A imagem explicativa '{i}.png' não foi encontrada dentro da pasta 'imagens')*")
+    st.markdown("---")
+    st.subheader("📖 Tutorial")
+    for i in range(1, 7):
+        with st.expander(f"Passo {i}"):
+            caminho_img = os.path.join("imagens", f"{i}.png")
+            if os.path.exists(caminho_img):
+                st.image(caminho_img, width=700)
+            else:
+                st.warning(f"*(Imagem '{i}.png' não encontrada)*")
