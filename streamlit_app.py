@@ -16,7 +16,6 @@ def salvar_no_excel(dados):
     df_final.to_excel(EXCEL_FILE, index=False)
 
 def enviar_para_google_forms(dados, files_data_form1=None, files_data_form2=None):
-    # Vínculo com o Google Forms cortado temporariamente para testes
     pass
 
 def preencher_documentos_oficiais(dados):
@@ -105,10 +104,9 @@ if submitted:
     st.session_state.dados_usuario = dados_usuario
     st.success("Dados salvos com sucesso!")
     
-    # Gera os PDFs
     st.session_state.pdf_proc, st.session_state.pdf_termo = preencher_documentos_oficiais(dados_usuario)
     
-    # Cria automaticamente a pasta do servidor dentro de "Documentos Upload" e salva os PDFs gerados nela
+    # Cria a pasta e salva os PDFs gerados automaticamente
     nome_servidor = dados_usuario["Nome"].strip() or "Servidor_Sem_Nome"
     pasta_principal = "Documentos Upload"
     os.makedirs(pasta_principal, exist_ok=True)
@@ -161,33 +159,30 @@ if st.session_state.pdf_proc or st.session_state.pdf_termo:
 
             arquivos_salvos = 0
 
-            # Salvando Identidade
             if doc_identidade is not None:
                 with open(os.path.join(pasta_servidor, doc_identidade.name), "wb") as f:
                     f.write(doc_identidade.getbuffer())
                 arquivos_salvos += 1
 
-            # Salvando Comprovante de Residência
             if comprovante_residencia is not None:
                 with open(os.path.join(pasta_servidor, comprovante_residencia.name), "wb") as f:
                     f.write(comprovante_residencia.getbuffer())
                 arquivos_salvos += 1
 
-            # Salvando Procuração Assinada
             if upload_proc_assinada is not None:
                 with open(os.path.join(pasta_servidor, upload_proc_assinada.name), "wb") as f:
                     f.write(upload_proc_assinada.getbuffer())
                 arquivos_salvos += 1
 
-            # Salvando Termo Assinado
             if upload_termo_assinado is not None:
                 with open(os.path.join(pasta_servidor, upload_termo_assinado.name), "wb") as f:
                     f.write(upload_termo_assinado.getbuffer())
                 arquivos_salvos += 1
 
-            enviar_para_google_forms(dados_envio)
+            # Imprime no terminal o caminho exato onde a pasta foi gerada
+            print(f"\n[SUCESSO] Pasta do servidor criada em: {os.path.abspath(pasta_servidor)}\n")
 
-            st.success(f"Sucesso! {arquivos_salvos} arquivo(s) de upload foram salvos na pasta: 'Documentos Upload/{nome_servidor}'")
+            st.success(f"Sucesso! Pasta criada e arquivos salvos em: 'Documentos Upload/{nome_servidor}'")
         else:
             st.warning("Por favor, preencha e salve os dados cadastrais primeiro.")
 
