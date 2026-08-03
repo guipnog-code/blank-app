@@ -31,25 +31,7 @@ st.markdown("""
 
 EXCEL_FILE = "Cadastros_Servidores.xlsx"
 GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz8lQ3xhchTyl2QrvmIYr9qVZIFsx_8I2hIb0-jBqHOX63G8OzExrHPr2OlROfn_hSZ/exec"
-
 CHAVE_ADMIN = "Sindicatojus"
-
-def verificar_admin():
-    st.sidebar.markdown("### 🔐 Acesso Restrito")
-    st.sidebar.markdown("*(Exclusivo para preenchimento rápido)*")
-    
-    chave_input = st.sidebar.text_input("Digite a chave de acesso:", type="password", key="input_chave_admin")
-    
-    if not chave_input:
-        st.sidebar.info("💡 Insira a chave para desbloquear a aba de Servidores Cadastrados.")
-        return False
-    
-    if chave_input.strip() == CHAVE_ADMIN:
-        st.sidebar.success("✅ Acesso Liberado!")
-        return True
-    else:
-        st.sidebar.error("❌ Chave incorreta.")
-        return False
 
 def carregar_servidores_cadastrados():
     if os.path.exists(EXCEL_FILE):
@@ -85,7 +67,7 @@ def enviar_para_google_drive(nome_servidor, lista_arquivos):
         return False
 
 def formatar_data_callback():
-    val = st.session_state.input_ing_raw
+    val = st.session_state.get("input_ing_raw", "")
     digitos = "".join(filter(str.isdigit, str(val)))[:8]
     formatado = ""
     if len(digitos) > 4:
@@ -146,15 +128,34 @@ if "pdf_proc" not in st.session_state:
 if "pdf_termo" not in st.session_state:
     st.session_state.pdf_termo = None
 
-st.title("⚖️ Sistema de Cadastro e Gestão de Documentos")
-st.markdown("##### **Ação de Correção Monetária de Exercícios Anteriores**")
+# Cabeçalho Principal com Métricas Rápidas
+col_cab1, col_cab2 = st.columns([3, 1])
+with col_cab1:
+    st.title("⚖️ Sistema de Cadastro e Gestão de Documentos")
+    st.markdown("##### **Ação de Correção Monetária de Exercícios Anteriores**")
+
+with col_cab2:
+    df_geral = carregar_servidores_cadastrados()
+    total_cadastrados = len(df_geral) if not df_geral.empty else 0
+    st.metric(label="📊 Total Cadastrados", value=total_cadastrados)
+
 st.markdown("---")
 
+# Barra Lateral Otimizada
 with st.sidebar:
     st.header("💡 Ajuda e Navegação")
     st.info("🔗 [Acessar Tutorial Externo](https://blank-app-8vxh0tfzj3.streamlit.app/)")
     st.markdown("---")
-    usuario_autorizado = verificar_admin()
+    
+    usuario_autorizado = False
+    with st.expander("🔐 Área do Administrador"):
+        st.markdown("*(Exclusivo para preenchimento rápido)*")
+        chave_input = st.text_input("Chave de acesso:", type="password", key="input_chave_admin")
+        if chave_input.strip() == CHAVE_ADMIN:
+            st.success("✅ Liberado!")
+            usuario_autorizado = True
+        elif chave_input:
+            st.error("❌ Incorreta.")
 
 aba_novo, aba_salvos = st.tabs(["➕ Novo Cadastro", "📂 Servidores Já Cadastrados (Preenchimento Rápido)"])
 
@@ -181,108 +182,109 @@ with aba_salvos:
             
             if selecao != "-- Selecione --":
                 dados_linha = mapa_linhas[selecao]
-                st.write("📋 **Dados carregados da linha selecionada:**")
-                st.json(dados_linha)
+                
+                with st.container(border=True):
+                    st.write("📋 **Dados carregados da linha selecionada:**")
+                    st.json(dados_linha)
                 
                 col_b1, col_b2 = st.columns(2)
                 
                 with col_b1:
-                    if st.button("📄 Gerar Documentos para este Servidor", key="btn_gerar_salvo"):
-                        st.session_state.dados_usuario = dados_linha
-                        st.session_state.nome_servidor = str(dados_linha.get("Nome", "")).strip()
-                        st.session_state.pdf_proc, st.session_state.pdf_termo = preencher_documentos_oficiais(dados_linha)
-                        st.success(f"Documentos gerados com sucesso para {st.session_state.nome_servidor}!")
+                    with st.container(border=True):
+                        st.markdown("##### **Gerar Documentos**")
+                        if st.button("📄 Gerar Documentos para este Servidor", key="btn_gerar_salvo"):
+                            st.session_state.dados_usuario = dados_linha
+                            st.session_state.nome_servidor = str(dados_linha.get("Nome", "")).strip()
+                            st.session_state.pdf_proc, st.session_state.pdf_termo = preencher_documentos_oficiais(dados_linha)
+                            st.success(f"Documentos gerados com sucesso para {st.session_state.nome_servidor}!")
 
                 with col_b2:
-                    st.markdown("---")
-                    
-                    # 1. Botão Termo de Consentimento
-                    st.markdown("##### **Termo de Consentimento**")
-                    base_form_geral = "https://docs.google.com/forms/d/e/1FAIpQLSfwwmAw9jqwWv2KTEWXQFMXaz36mECCCuVdYsxlLg48KkrsMQ/viewform"
-                    params_geral = {
-                        "entry.463599518": limpar_valor(dados_linha.get("Nome", "")),
-                        "entry.1304511106": limpar_valor(dados_linha.get("Matrícula", "")),
-                        "emailAddress": limpar_valor(dados_linha.get("E-mail", ""))
-                    }
-                    url_geral = f"{base_form_geral}?usp=pp_url&{urllib.parse.urlencode(params_geral)}"
-                    st.markdown(
-                        f"""<a href="{url_geral}" target="_blank">
-                            <button style="width:100%; border-radius:6px; font-weight:bold; height:3em; background-color:#198754; color:white; border:none; cursor:pointer; margin-bottom: 10px;">
-                                📝 Abrir Termo de Consentimento Preenchido
-                            </button>
-                        </a>""",
-                        unsafe_allow_html=True
-                    )
+                    with st.container(border=True):
+                        st.markdown("##### **Links Preenchidos**")
+                        
+                        # 1. Termo de Consentimento
+                        base_form_geral = "https://docs.google.com/forms/d/e/1FAIpQLSfwwmAw9jqwWv2KTEWXQFMXaz36mECCCuVdYsxlLg48KkrsMQ/viewform"
+                        params_geral = {
+                            "entry.463599518": limpar_valor(dados_linha.get("Nome", "")),
+                            "entry.1304511106": limpar_valor(dados_linha.get("Matrícula", "")),
+                            "emailAddress": limpar_valor(dados_linha.get("E-mail", ""))
+                        }
+                        url_geral = f"{base_form_geral}?usp=pp_url&{urllib.parse.urlencode(params_geral)}"
+                        st.markdown(
+                            f"""<a href="{url_geral}" target="_blank">
+                                <button style="width:100%; border-radius:6px; font-weight:bold; height:2.5em; background-color:#198754; color:white; border:none; cursor:pointer; margin-bottom: 8px;">
+                                    📝 Termo de Consentimento
+                                </button>
+                            </a>""",
+                            unsafe_allow_html=True
+                        )
 
-                    # 2. Botão Formulário de Correção Monetária
-                    st.markdown("##### **Forms Correção Monetária**")
-                    base_form_url = "https://docs.google.com/forms/d/e/1FAIpQLScFHB1lA_2cTeg-ANSa0TK3I4LwwMTa6T9cMnxQiWmbBD6XOw/viewform"
-                    
-                    str_data = limpar_valor(dados_linha.get("Data de Ingresso", ""))
-                    ano, mes, dia = "", "", ""
-                    try:
-                        dt_obj = datetime.strptime(str_data, "%d/%m/%Y")
-                        ano, mes, dia = str(dt_obj.year), str(dt_obj.month), str(dt_obj.day)
-                    except Exception:
-                        pass
+                        # 2. Forms Correção Monetária
+                        base_form_url = "https://docs.google.com/forms/d/e/1FAIpQLScFHB1lA_2cTeg-ANSa0TK3I4LwwMTa6T9cMnxQiWmbBD6XOw/viewform"
+                        str_data = limpar_valor(dados_linha.get("Data de Ingresso", ""))
+                        ano, mes, dia = "", "", ""
+                        try:
+                            dt_obj = datetime.strptime(str_data, "%d/%m/%Y")
+                            ano, mes, dia = str(dt_obj.year), str(dt_obj.month), str(dt_obj.day)
+                        except Exception:
+                            pass
 
-                    params = {
-                        "entry.336229460": limpar_valor(dados_linha.get("Nome", "")),
-                        "entry.1167987372": limpar_valor(dados_linha.get("Matrícula", "")),
-                        "entry.918241761_year": ano,
-                        "entry.918241761_month": mes,
-                        "entry.918241761_day": dia,
-                        "entry.304080830": limpar_valor(dados_linha.get("CPF", "")),
-                        "entry.346470482": limpar_valor(dados_linha.get("RG", "")),
-                        "entry.1131685604": limpar_valor(dados_linha.get("Endereço", "")),
-                        "entry.713012878": limpar_valor(dados_linha.get("Município", "")),
-                        "entry.1662466686": limpar_valor(dados_linha.get("Estado", "")),
-                        "entry.1919228175": limpar_valor(dados_linha.get("CEP", "")),
-                        "entry.1147940036": limpar_valor(dados_linha.get("Telefone", "")),
-                        "entry.737384383": limpar_valor(dados_linha.get("E-mail", ""))
-                    }
-                    
-                    url_preenchida = f"{base_form_url}?usp=pp_url&{urllib.parse.urlencode(params)}"
-                    
-                    st.markdown(
-                        f"""<a href="{url_preenchida}" target="_blank">
-                            <button style="width:100%; border-radius:6px; font-weight:bold; height:3em; background-color:#0d6efd; color:white; border:none; cursor:pointer;">
-                                📝 Abrir Google Forms Preenchido
-                            </button>
-                        </a>""",
-                        unsafe_allow_html=True
-                    )
+                        params = {
+                            "entry.336229460": limpar_valor(dados_linha.get("Nome", "")),
+                            "entry.1167987372": limpar_valor(dados_linha.get("Matrícula", "")),
+                            "entry.918241761_year": ano,
+                            "entry.918241761_month": mes,
+                            "entry.918241761_day": dia,
+                            "entry.304080830": limpar_valor(dados_linha.get("CPF", "")),
+                            "entry.346470482": limpar_valor(dados_linha.get("RG", "")),
+                            "entry.1131685604": limpar_valor(dados_linha.get("Endereço", "")),
+                            "entry.713012878": limpar_valor(dados_linha.get("Município", "")),
+                            "entry.1662466686": limpar_valor(dados_linha.get("Estado", "")),
+                            "entry.1919228175": limpar_valor(dados_linha.get("CEP", "")),
+                            "entry.1147940036": limpar_valor(dados_linha.get("Telefone", "")),
+                            "entry.737384383": limpar_valor(dados_linha.get("E-mail", ""))
+                        }
+                        url_preenchida = f"{base_form_url}?usp=pp_url&{urllib.parse.urlencode(params)}"
+                        st.markdown(
+                            f"""<a href="{url_preenchida}" target="_blank">
+                                <button style="width:100%; border-radius:6px; font-weight:bold; height:2.5em; background-color:#0d6efd; color:white; border:none; cursor:pointer;">
+                                    📝 Forms Correção Monetária
+                                </button>
+                            </a>""",
+                            unsafe_allow_html=True
+                        )
     else:
-        st.warning("🔒 **Conteúdo Restrito.** Insira a chave de acesso correta na barra lateral para visualizar o menu de preenchimento rápido.")
+        st.warning("🔒 **Conteúdo Restrito.** Abra a **Área do Administrador** na barra lateral e insira a chave de acesso correta.")
 
 with aba_novo:
     st.subheader("📝 Preenchimento de Dados Cadastrais (Livre para Uso)")
 
-    col_p1, col_p2 = st.columns(2)
-    with col_p1:
-        st.markdown("**Dados Profissionais**")
-        matricula = st.text_input("Matrícula (SIAPE)", key="input_mat")
-        cargo = st.text_input("Cargo", key="input_cargo")
-        orgao = st.text_input("Órgão", key="input_orgao")
-        ingresso = st.text_input("Data de Ingresso", placeholder="DD/MM/AAAA", key="input_ing_raw", max_chars=10, on_change=formatar_data_callback)
+    with st.container(border=True):
+        col_p1, col_p2 = st.columns(2)
+        with col_p1:
+            st.markdown("**Dados Profissionais**")
+            matricula = st.text_input("Matrícula (SIAPE)", key="input_mat")
+            cargo = st.text_input("Cargo", key="input_cargo")
+            orgao = st.text_input("Órgão", key="input_orgao")
+            ingresso = st.text_input("Data de Ingresso", placeholder="DD/MM/AAAA", key="input_ing_raw", max_chars=10, on_change=formatar_data_callback)
 
-    with col_p2:
-        st.markdown("**Dados Pessoais**")
-        nome = st.text_input("Nome Completo", key="input_nome")
-        cpf = st.text_input("CPF", key="input_cpf")
-        rg = st.text_input("RG - Órgão de Expedição", key="input_rg")
-        email = st.text_input("E-mail", key="input_email")
+        with col_p2:
+            st.markdown("**Dados Pessoais**")
+            nome = st.text_input("Nome Completo", key="input_nome")
+            cpf = st.text_input("CPF", key="input_cpf")
+            rg = st.text_input("RG - Órgão de Expedição", key="input_rg")
+            email = st.text_input("E-mail", key="input_email")
 
-    col_p3, col_p4, col_p5 = st.columns(3)
-    with col_p3:
-        telefone = st.text_input("Telefone", key="input_tel")
-        estado_civil = st.text_input("Estado Civil", key="input_ec")
-    with col_p4:
-        cep = st.text_input("CEP", key="input_cep")
-        endereco = st.text_input("Endereço", key="input_end")
-    with col_p5:
-        municipio = st.text_input("Município", key="input_mun")
-        estado = st.text_input("Estado (UF)", key="input_uf")
+        col_p3, col_p4, col_p5 = st.columns(3)
+        with col_p3:
+            telefone = st.text_input("Telefone", key="input_tel")
+            estado_civil = st.text_input("Estado Civil", key="input_ec")
+        with col_p4:
+            cep = st.text_input("CEP", key="input_cep")
+            endereco = st.text_input("Endereço", key="input_end")
+        with col_p5:
+            municipio = st.text_input("Município", key="input_mun")
+            estado = st.text_input("Estado (UF)", key="input_uf")
 
     st.markdown("")
     col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
@@ -307,66 +309,67 @@ with aba_novo:
 
     if st.session_state.get("nome_servidor") or st.session_state.get("pdf_proc"):
         st.markdown("---")
-        st.subheader(f"⚙️ Gestão de Arquivos para: {st.session_state.get('nome_servidor', '')}")
-        
-        col_dl1, col_dl2 = st.columns(2)
-        if st.session_state.get("pdf_proc"):
-            with col_dl1:
-                st.download_button(label="📄 Baixar Procuração Preenchida", data=st.session_state.pdf_proc, file_name="Procuracao_Preenchida.pdf", mime="application/pdf", key="dl_proc")
-        if st.session_state.get("pdf_termo"):
-            with col_dl2:
-                st.download_button(label="📄 Baixar Termo Preenchido", data=st.session_state.pdf_termo, file_name="Termo_Preenchido.pdf", mime="application/pdf", key="dl_termo")
+        with st.container(border=True):
+            st.subheader(f"⚙️ Gestão de Arquivos para: {st.session_state.get('nome_servidor', '')}")
+            
+            col_dl1, col_dl2 = st.columns(2)
+            if st.session_state.get("pdf_proc"):
+                with col_dl1:
+                    st.download_button(label="📄 Baixar Procuração Preenchida", data=st.session_state.pdf_proc, file_name="Procuracao_Preenchida.pdf", mime="application/pdf", key="dl_proc")
+            if st.session_state.get("pdf_termo"):
+                with col_dl2:
+                    st.download_button(label="📄 Baixar Termo Preenchido", data=st.session_state.pdf_termo, file_name="Termo_Preenchido.pdf", mime="application/pdf", key="dl_termo")
 
         st.markdown("---")
-        st.subheader("📤 Envio de Documentos para o Google Drive")
-        
-        col_up1, col_up2 = st.columns(2)
-        with col_up1:
-            doc_identidade = st.file_uploader("🪪 Documento de Identidade com Foto", type=["pdf", "jpg", "jpeg", "png"], key="up_identidade")
-            upload_proc_assinada = st.file_uploader("✍️ Procuração Assinada", type=["pdf"], key="upload_proc")
-        with col_up2:
-            comprovante_residencia = st.file_uploader("🏠 Comprovante de Residência Atualizado", type=["pdf", "jpg", "jpeg", "png"], key="up_residencia")
-            upload_termo_assinado = st.file_uploader("✍️ Termo Assinado", type=["pdf"], key="upload_termo")
+        with st.container(border=True):
+            st.subheader("📤 Envio de Documentos para o Google Drive")
+            
+            col_up1, col_up2 = st.columns(2)
+            with col_up1:
+                doc_identidade = st.file_uploader("🪪 Documento de Identidade com Foto", type=["pdf", "jpg", "jpeg", "png"], key="up_identidade")
+                upload_proc_assinada = st.file_uploader("✍️ Procuração Assinada", type=["pdf"], key="upload_proc")
+            with col_up2:
+                comprovante_residencia = st.file_uploader("🏠 Comprovante de Residência Atualizado", type=["pdf", "jpg", "jpeg", "png"], key="up_residencia")
+                upload_termo_assinado = st.file_uploader("✍️ Termo Assinado", type=["pdf"], key="upload_termo")
 
-        st.markdown("")
-        col_env1, col_env2, col_env3 = st.columns([1, 2, 1])
-        with col_env2:
-            btn_enviar_drive = st.button("🚀 Enviar Arquivos para o Google Drive", key="btn_enviar_drive")
+            col_env1, col_env2, col_env3 = st.columns([1, 2, 1])
+            with col_env2:
+                btn_enviar_drive = st.button("🚀 Enviar Arquivos para o Google Drive", key="btn_enviar_drive")
 
-        if btn_enviar_drive:
-            nome_pasta = st.session_state.get("nome_servidor", "Servidor")
-            lista_arquivos_payload = []
+            if btn_enviar_drive:
+                nome_pasta = st.session_state.get("nome_servidor", "Servidor")
+                lista_arquivos_payload = []
 
-            if st.session_state.get("pdf_proc"):
-                lista_arquivos_payload.append({
-                    "nome": "Procuracao_Preenchida.pdf",
-                    "conteudo": base64.b64encode(st.session_state.pdf_proc).decode('utf-8'),
-                    "mimeType": "application/pdf"
-                })
-            if st.session_state.get("pdf_termo"):
-                lista_arquivos_payload.append({
-                    "nome": "Termo_Preenchido.pdf",
-                    "conteudo": base64.b64encode(st.session_state.pdf_termo).decode('utf-8'),
-                    "mimeType": "application/pdf"
-                })
-
-            for arquivo_up in [doc_identidade, comprovante_residencia, upload_proc_assinada, upload_termo_assinado]:
-                if arquivo_up is not None:
+                if st.session_state.get("pdf_proc"):
                     lista_arquivos_payload.append({
-                        "nome": arquivo_up.name,
-                        "conteudo": base64.b64encode(arquivo_up.getbuffer()).decode('utf-8'),
-                        "mimeType": arquivo_up.type
+                        "nome": "Procuracao_Preenchida.pdf",
+                        "conteudo": base64.b64encode(st.session_state.pdf_proc).decode('utf-8'),
+                        "mimeType": "application/pdf"
+                    })
+                if st.session_state.get("pdf_termo"):
+                    lista_arquivos_payload.append({
+                        "nome": "Termo_Preenchido.pdf",
+                        "conteudo": base64.b64encode(st.session_state.pdf_termo).decode('utf-8'),
+                        "mimeType": "application/pdf"
                     })
 
-            if lista_arquivos_payload:
-                with st.spinner("Enviando arquivos para o Google Drive..."):
-                    sucesso = enviar_para_google_drive(nome_pasta, lista_arquivos_payload)
-                    if sucesso:
-                        st.success(f"🎉 Sucesso! A pasta de **{nome_pasta}** foi atualizada no Google Drive.")
-                    else:
-                        st.error("❌ Erro ao enviar para o Google Drive.")
-            else:
-                st.warning("⚠️ Nenhum arquivo anexado.")
+                for arquivo_up in [doc_identidade, comprovante_residencia, upload_proc_assinada, upload_termo_assinado]:
+                    if arquivo_up is not None:
+                        lista_arquivos_payload.append({
+                            "nome": arquivo_up.name,
+                            "conteudo": base64.b64encode(arquivo_up.getbuffer()).decode('utf-8'),
+                            "mimeType": arquivo_up.type
+                        })
+
+                if lista_arquivos_payload:
+                    with st.spinner("Enviando arquivos para o Google Drive..."):
+                        sucesso = enviar_para_google_drive(nome_pasta, lista_arquivos_payload)
+                        if sucesso:
+                            st.success(f"🎉 Sucesso! A pasta de **{nome_pasta}** foi atualizada no Google Drive.")
+                        else:
+                            st.error("❌ Erro ao enviar para o Google Drive.")
+                else:
+                    st.warning("⚠️ Nenhum arquivo anexado.")
 
     st.markdown("---")
     st.subheader("📖 Tutorial para Envio dos Documentos")
