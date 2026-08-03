@@ -6,6 +6,14 @@ import requests
 
 EXCEL_FILE = "Cadastros_Servidores.xlsx"
 
+# Garante que a pasta principal "Documentos Upload" e um arquivo de texto inicial existam para aparecer no explorador
+PASTA_PRINCIPAL = "Documentos Upload"
+os.makedirs(PASTA_PRINCIPAL, exist_ok=True)
+readme_path = os.path.join(PASTA_PRINCIPAL, "README.txt")
+if not os.path.exists(readme_path):
+    with open(readme_path, "w", encoding="utf-8") as f:
+        f.write("Pasta destinada ao armazenamento dos documentos enviados pelos servidores.")
+
 def salvar_no_excel(dados):
     df_novo = pd.DataFrame([dados])
     if os.path.exists(EXCEL_FILE):
@@ -95,31 +103,31 @@ with st.form("form_cadastro"):
     submitted = st.form_submit_button("Salvar e Gerar Documentos")
 
 if submitted:
-    dados_usuario = {
-        "Matrícula": matricula, "Cargo": cargo, "Órgão": orgao, "Data de Ingresso": ingresso,
-        "Nome": nome, "CPF": cpf, "E-mail": email, "RG": rg, "Telefone": telefone,
-        "Estado Civil": estado_civil, "CEP": cep, "Endereço": endereco, "Município": municipio, "Estado": estado
-    }
-    salvar_no_excel(dados_usuario)
-    st.session_state.dados_usuario = dados_usuario
-    st.success("Dados salvos com sucesso!")
-    
-    st.session_state.pdf_proc, st.session_state.pdf_termo = preencher_documentos_oficiais(dados_usuario)
-    
-    # Cria a pasta e salva os PDFs gerados automaticamente
-    nome_servidor = dados_usuario["Nome"].strip() or "Servidor_Sem_Nome"
-    pasta_principal = "Documentos Upload"
-    os.makedirs(pasta_principal, exist_ok=True)
-    pasta_servidor = os.path.join(pasta_principal, nome_servidor)
-    os.makedirs(pasta_servidor, exist_ok=True)
+    if not nome.strip():
+        st.error("Por favor, preencha o campo 'Nome Completo' antes de salvar.")
+    else:
+        dados_usuario = {
+            "Matrícula": matricula, "Cargo": cargo, "Órgão": orgao, "Data de Ingresso": ingresso,
+            "Nome": nome, "CPF": cpf, "E-mail": email, "RG": rg, "Telefone": telefone,
+            "Estado Civil": estado_civil, "CEP": cep, "Endereço": endereco, "Município": municipio, "Estado": estado
+        }
+        salvar_no_excel(dados_usuario)
+        st.session_state.dados_usuario = dados_usuario
+        st.success("Dados salvos com sucesso!")
+        
+        st.session_state.pdf_proc, st.session_state.pdf_termo = preencher_documentos_oficiais(dados_usuario)
+        
+        # Cria a pasta do servidor imediatamente e salva os PDFs gerados nela
+        pasta_servidor = os.path.join(PASTA_PRINCIPAL, nome.strip())
+        os.makedirs(pasta_servidor, exist_ok=True)
 
-    if st.session_state.pdf_proc:
-        with open(os.path.join(pasta_servidor, "Procuracao_Preenchida.pdf"), "wb") as f:
-            f.write(st.session_state.pdf_proc)
-            
-    if st.session_state.pdf_termo:
-        with open(os.path.join(pasta_servidor, "Termo_Preenchido.pdf"), "wb") as f:
-            f.write(st.session_state.pdf_termo)
+        if st.session_state.pdf_proc:
+            with open(os.path.join(pasta_servidor, "Procuracao_Preenchida.pdf"), "wb") as f:
+                f.write(st.session_state.pdf_proc)
+                
+        if st.session_state.pdf_termo:
+            with open(os.path.join(pasta_servidor, "Termo_Preenchido.pdf"), "wb") as f:
+                f.write(st.session_state.pdf_termo)
 
 if st.session_state.pdf_proc or st.session_state.pdf_termo:
     st.markdown("---")
@@ -153,8 +161,7 @@ if st.session_state.pdf_proc or st.session_state.pdf_termo:
             dados_envio = st.session_state.dados_usuario
             nome_servidor = dados_envio["Nome"].strip() or "Servidor_Sem_Nome"
             
-            pasta_principal = "Documentos Upload"
-            pasta_servidor = os.path.join(pasta_principal, nome_servidor)
+            pasta_servidor = os.path.join(PASTA_PRINCIPAL, nome_servidor)
             os.makedirs(pasta_servidor, exist_ok=True)
 
             arquivos_salvos = 0
@@ -179,10 +186,9 @@ if st.session_state.pdf_proc or st.session_state.pdf_termo:
                     f.write(upload_termo_assinado.getbuffer())
                 arquivos_salvos += 1
 
-            # Imprime no terminal o caminho exato onde a pasta foi gerada
-            print(f"\n[SUCESSO] Pasta do servidor criada em: {os.path.abspath(pasta_servidor)}\n")
+            enviar_para_google_forms(dados_envio)
 
-            st.success(f"Sucesso! Pasta criada e arquivos salvos em: 'Documentos Upload/{nome_servidor}'")
+            st.success(f"🎉 Sucesso! Pasta criada e arquivos salvos com sucesso na pasta: **Documentos Upload/{nome_servidor}**")
         else:
             st.warning("Por favor, preencha e salve os dados cadastrais primeiro.")
 
