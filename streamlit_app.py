@@ -18,10 +18,10 @@ st.set_page_config(
 if "fechou_sidebar" not in st.session_state:
     st.session_state.fechou_sidebar = False
 
-st.markdown(f"""
+st.markdown("""
     <style>
-        .main {{ background-color: #f8f9fa; }}
-        .stButton>button {{
+        .main { background-color: #f8f9fa; }
+        .stButton>button {
             width: 100%;
             border-radius: 6px;
             font-weight: bold;
@@ -29,14 +29,14 @@ st.markdown(f"""
             background-color: #0d6efd;
             color: white;
         }
-        .stButton>button:hover {{ background-color: #0b5ed7; color: white; }}
+        .stButton>button:hover { background-color: #0b5ed7; color: white; }
         
-        @keyframes piscar-seta-topo {{
-            0% {{ opacity: 0.3; transform: translateX(0px); }}
-            50% {{ opacity: 1; transform: translateX(-5px); }}
-            100% {{ opacity: 0.3; transform: translateX(0px); }}
-        }}
-        .aviso-topo-esquerdo {{
+        @keyframes piscar-seta-topo {
+            0% { opacity: 0.3; transform: translateX(0px); }
+            50% { opacity: 1; transform: translateX(-5px); }
+            100% { opacity: 0.3; transform: translateX(0px); }
+        }
+        .aviso-topo-esquerdo {
             position: fixed;
             top: 18px;
             left: 55px;
@@ -46,7 +46,6 @@ st.markdown(f"""
             background-color: transparent;
             animation: piscar-seta-topo 1.2s infinite ease-in-out;
             font-size: 14px;
-            display: {'none' if st.session_state.fechou_sidebar else 'flex'};
             align-items: center;
             gap: 4px;
             text-shadow: 0 1px 2px rgba(0,0,0,0.8);
@@ -54,7 +53,7 @@ st.markdown(f"""
         }
     </style>
     
-    <div id="aviso-clique-aqui" class="aviso-topo-esquerdo">
+    <div id="aviso-clique-aqui" class="aviso-topo-esquerdo" style="display: flex;">
         <span>⬅️</span> <span>clique aqui</span>
     </div>
 
@@ -82,12 +81,6 @@ st.markdown(f"""
     setInterval(monitorarCliqueMenu, 200);
     </script>
 """, unsafe_allow_html=True)
-
-try:
-    if "sidebar_aberto" in st.query_params:
-        st.session_state.fechou_sidebar = True
-except Exception:
-    pass
 
 EXCEL_FILE = "Cadastros_Servidores.xlsx"
 GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz8lQ3xhchTyl2QrvmIYr9qVZIFsx_8I2hIb0-jBqHOX63G8OzExrHPr2OlROfn_hSZ/exec"
