@@ -27,7 +27,7 @@ st.markdown("""
         }
         .stButton>button:hover { background-color: #0b5ed7; color: white; }
         
-        /* Animação e posicionamento limpo (sem fundo) ao lado do ícone >> no topo esquerdo */
+        /* Animação, alinhamento exato, fonte branca e posicionamento abaixado */
         @keyframes piscar-seta-topo {
             0% { opacity: 0.3; transform: translateX(0px); }
             50% { opacity: 1; transform: translateX(-5px); }
@@ -35,22 +35,22 @@ st.markdown("""
         }
         .aviso-topo-esquerdo {
             position: fixed;
-            top: 12px;
-            left: 52px;
+            top: 18px;
+            left: 55px;
             z-index: 999999;
             font-weight: bold;
-            color: #ff4b4b;
+            color: #ffffff;
             background-color: transparent;
             animation: piscar-seta-topo 1.2s infinite ease-in-out;
             font-size: 14px;
             display: flex;
             align-items: center;
             gap: 4px;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
         }
     </style>
     
-    <!-- Elemento flutuante limpo no topo esquerdo apontando para a esquerda com a seta ⬅️ -->
+    <!-- Elemento flutuante alinhado, abaixado e com fonte branca -->
     <div class="aviso-topo-esquerdo">
         <span>⬅️</span> <span>clique aqui</span>
     </div>
