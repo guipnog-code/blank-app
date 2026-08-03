@@ -16,38 +16,8 @@ def salvar_no_excel(dados):
     df_final.to_excel(EXCEL_FILE, index=False)
 
 def enviar_para_google_forms(dados, files_data_form1=None, files_data_form2=None):
-    url_form_1 = "https://docs.google.com/forms/d/e/1FAIpQLSfwwmAw9jqwWv2KTEWXQFMXaz36mECCCuVdYsxlLg48KkrsMQ/formResponse"
-    payload_1 = {
-        "entry.463599518": dados['Nome'],
-        "entry.1304511106": dados['Matrícula']
-    }
-
-    url_form_2 = "https://docs.google.com/forms/d/e/1FAIpQLScFHB1lA_2cTeg-ANSa0TK3I4LwwMTa6T9cMnxQiWmbBD6XOw/formResponse"
-    payload_2 = {
-        "entry.336229460": dados['Nome'],
-        "entry.1167987372": dados['Matrícula'],
-        "entry.918241761": "", 
-        "entry.304080830": dados['CPF'],
-        "entry.346470482": dados['RG'] + " / " + dados['Órgão'],
-        "entry.1131685604": dados['Endereço'],
-        "entry.713012878": dados['Município'],
-        "entry.1662466686": dados['Estado'],
-        "entry.1919228175": dados['CEP'],
-        "entry.1147940036": dados['Telefone'],
-        "entry.737384383": dados['E-mail'],
-        "emailReceipt": "true"
-    }
-
-    headers = {"User-Agent": "Mozilla/5.0"}
-    
-    try:
-        requests.post(url_form_1, data=payload_1, headers=headers)
-        if files_data_form2:
-            requests.post(url_form_2, data=payload_2, files=files_data_form2, headers=headers)
-        else:
-            requests.post(url_form_2, data=payload_2, headers=headers)
-    except Exception as e:
-        print(f"Erro ao enviar para os formulários: {e}")
+    # Vínculo com o Google Forms cortado temporariamente para testes
+    pass
 
 def preencher_documentos_oficiais(dados):
     caminho_procuracao = "template_procuracao.pdf"
@@ -173,34 +143,25 @@ if st.session_state.pdf_proc or st.session_state.pdf_termo:
             pasta_servidor = os.path.join(pasta_principal, nome_servidor)
             os.makedirs(pasta_servidor, exist_ok=True)
 
-            arquivos_envio_form2 = {}
             if doc_identidade is not None:
                 with open(os.path.join(pasta_servidor, doc_identidade.name), "wb") as f:
                     f.write(doc_identidade.getbuffer())
-                arquivos_envio_form2["entry.1823246775"] = (doc_identidade.name, doc_identidade.getvalue(), doc_identidade.type)
 
             if comprovante_residencia is not None:
                 with open(os.path.join(pasta_servidor, comprovante_residencia.name), "wb") as f:
                     f.write(comprovante_residencia.getbuffer())
-                arquivos_envio_form2["entry.97304745"] = (comprovante_residencia.name, comprovante_residencia.getvalue(), comprovante_residencia.type)
 
             if upload_proc_assinada is not None:
                 with open(os.path.join(pasta_servidor, upload_proc_assinada.name), "wb") as f:
                     f.write(upload_proc_assinada.getbuffer())
 
-            enviar_para_google_forms(dados_envio, files_data_form2=arquivos_envio_form2 if arquivos_envio_form2 else None)
-
             if upload_termo_assinado is not None:
-                try:
-                    with open(os.path.join(pasta_servidor, upload_termo_assinado.name), "wb") as f:
-                        f.write(upload_termo_assinado.getbuffer())
-                    dados_aux = {"Nome": dados_envio["Nome"], "Matrícula": dados_envio["Matrícula"]}
-                    arquivo_termo_envio = {"entry.1145226915": (upload_termo_assinado.name, upload_termo_assinado.getvalue(), upload_termo_assinado.type)}
-                    enviar_para_google_forms(dados_aux, files_data_form1=arquivo_termo_envio)
-                except Exception as e:
-                    st.error(f"Erro ao enviar termo assinado: {e}")
+                with open(os.path.join(pasta_servidor, upload_termo_assinado.name), "wb") as f:
+                    f.write(upload_termo_assinado.getbuffer())
 
-            st.success(f"Arquivos salvos na pasta 'Documentos Upload/{nome_servidor}' e enviados com sucesso!")
+            enviar_para_google_forms(dados_envio)
+
+            st.success(f"Arquivos salvos com sucesso na pasta 'Documentos Upload/{nome_servidor}'!")
         else:
             st.warning("Por favor, preencha e salve os dados cadastrais primeiro.")
 
