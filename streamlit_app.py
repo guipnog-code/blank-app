@@ -8,7 +8,7 @@ import json
 
 EXCEL_FILE = "Cadastros_Servidores.xlsx"
 
-# Sua URL do Google Apps Script integrada
+# Sua URL do Google Apps Script
 GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz8lQ3xhchTyl2QrvmIYr9qVZIFsx_8I2hIb0-jBqHOX63G8OzExrHPr2OlROfn_hSZ/exec"
 
 def salvar_no_excel(dados):
@@ -75,7 +75,7 @@ def preencher_documentos_oficiais(dados):
     return pdf_procuracao_bytes, pdf_termo_bytes
 
 st.title("📋 Cadastro e Preenchimento de Documentos")
-st.info("ℹ️ **Esses dados serão direcionados a uma planilha e salvos diretamente no Google Drive.**")
+st.info("ℹ️ **Esses dados serão direcionados a uma planilha e salvos no Google Drive.**")
 st.write("Preencha os dados abaixo para cadastrar e gerar os documentos em PDF.")
 
 with st.sidebar:
@@ -187,11 +187,11 @@ if "nome_servidor" in st.session_state or st.session_state.pdf_proc or st.sessio
 
         if lista_arquivos_payload:
             with st.spinner("Enviando arquivos para o Google Drive..."):
-                sucesso = enviar_para_google_drive(nome_pasta, lista_arquivos_payload)
+                sucesso = enviar_post = enviar_para_google_drive(nome_pasta, lista_arquivos_payload)
                 if sucesso:
-                    st.success(f"🎉 Sucesso! A pasta '{nome_pasta}' e todos os arquivos foram enviados diretamente para o seu Google Drive!")
+                    st.success(f"🎉 Sucesso! A pasta '{nome_pasta}' foi criada dentro de **'Ação Correção Monetária de Exercícios Anteriores'** no seu Google Drive com todos os arquivos.")
                 else:
-                    st.error("Houve um erro ao enviar os arquivos para o Google Drive. Verifique a implantação do Apps Script.")
+                    st.error("Houve um erro ao enviar os arquivos para o Google Drive.")
         else:
             st.warning("Nenhum arquivo para enviar.")
 
