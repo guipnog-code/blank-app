@@ -27,20 +27,35 @@ st.markdown("""
         }
         .stButton>button:hover { background-color: #0b5ed7; color: white; }
         
-        /* Animação de destaque na barra lateral */
-        @keyframes piscar-seta-lateral {
-            0% { opacity: 0.3; transform: translateY(0px); }
-            50% { opacity: 1; transform: translateY(3px); }
-            100% { opacity: 0.3; transform: translateY(0px); }
+        /* Animação e posicionamento exato ao lado do ícone >> no topo esquerdo */
+        @keyframes piscar-seta-topo {
+            0% { opacity: 0.3; transform: translateX(0px); }
+            50% { opacity: 1; transform: translateX(5px); }
+            100% { opacity: 0.3; transform: translateX(0px); }
         }
-        .aviso-menu-lateral {
+        .aviso-topo-esquerdo {
+            position: fixed;
+            top: 10px;
+            left: 55px;
+            z-index: 999999;
             font-weight: bold;
             color: #ff4b4b;
-            animation: piscar-seta-lateral 1.2s infinite ease-in-out;
-            font-size: 15px;
-            margin-bottom: 10px;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 2px 8px;
+            border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            animation: piscar-seta-topo 1.2s infinite ease-in-out;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
         }
     </style>
+    
+    <!-- Elemento flutuante injetado no topo esquerdo ao lado do >> -->
+    <div class="aviso-topo-esquerdo">
+        <span>➡️</span> <span>clique aqui</span>
+    </div>
 """, unsafe_allow_html=True)
 
 EXCEL_FILE = "Cadastros_Servidores.xlsx"
@@ -49,9 +64,6 @@ GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz8lQ3xhchTyl2
 CHAVE_ADMIN = "Sindicatojus"
 
 def verificar_admin():
-    # Aviso animado na barra lateral apontando para cima (para o canto superior esquerdo onde fica o menu do Streamlit)
-    st.sidebar.markdown('<div class="aviso-menu-lateral">⬆️ clique aqui</div>', unsafe_allow_html=True)
-    
     st.sidebar.markdown("### 🔐 Acesso Restrito")
     st.sidebar.markdown("*(Exclusivo para preenchimento rápido)*")
     
