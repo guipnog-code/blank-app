@@ -27,14 +27,11 @@ st.markdown("""
         }
         .stButton>button:hover { background-color: #0b5ed7; color: white; }
         
-        /* Transforma a sidebar em uma camada flutuante por cima da página inicial */
+        /* Força a sidebar a ficar sempre acima de tudo quando aberta */
         [data-testid="stSidebar"] {
-            position: fixed !important;
             z-index: 999999 !important;
-            height: 100vh !important;
-            box-shadow: 5px 0px 15px rgba(0,0,0,0.3);
         }
-
+        
         /* Animação e posicionamento exato no topo esquerdo ao lado do ícone >> */
         @keyframes piscar-seta-topo {
             0% { opacity: 0.3; transform: translateX(0px); }
@@ -45,7 +42,7 @@ st.markdown("""
             position: fixed;
             top: 18px;
             left: 55px;
-            z-index: 99999; /* Fica abaixo da sidebar para ser perfeitamente coberto por ela */
+            z-index: 1; /* Camada baixa para que a sidebar passe por cima e o cubra */
             font-weight: bold;
             color: #ffffff;
             background-color: transparent;
@@ -59,7 +56,7 @@ st.markdown("""
         }
     </style>
     
-    <!-- Elemento flutuante no topo esquerdo -->
+    <!-- Elemento flutuante no topo esquerdo que será coberto pela sidebar -->
     <div class="aviso-topo-esquerdo">
         <span>⬅️</span> <span>clique aqui</span>
     </div>
