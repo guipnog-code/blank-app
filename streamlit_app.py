@@ -57,7 +57,7 @@ st.markdown("""
     </div>
 
     <script>
-    // Script inteligente para alternar a visibilidade com base na abertura do menu
+    // Script otimizado para ocultar o aviso quando a sidebar estiver aberta
     function controlarAviso() {
         try {
             const doc = window.parent.document;
@@ -66,8 +66,8 @@ st.markdown("""
             
             if (aviso && sidebar) {
                 const rect = sidebar.getBoundingClientRect();
-                // Se o menu estiver aberto (largura visível maior que 60px), esconde o aviso
-                if (rect.width > 60) {
+                // Se a sidebar estiver aberta (largura visível maior que 50px), esconde o aviso
+                if (rect.width > 50) {
                     aviso.style.display = 'none';
                 } else {
                     aviso.style.display = 'flex';
@@ -76,9 +76,9 @@ st.markdown("""
         } catch(e) {}
     }
 
-    // Executa continuamente para garantir resposta imediata ao clicar no botão >>
+    // Executa continuamente e escuta cliques na página para ocultar instantaneamente ao abrir o menu
     setInterval(controlarAviso, 100);
-    window.parent.document.addEventListener('click', () => setTimeout(controlarAviso, 50));
+    window.parent.document.addEventListener('click', () => setTimeout(controlarAviso, 30));
     </script>
 """, unsafe_allow_html=True)
 
