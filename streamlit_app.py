@@ -26,66 +26,7 @@ st.markdown("""
             color: white;
         }
         .stButton>button:hover { background-color: #0b5ed7; color: white; }
-        
-        @keyframes piscar-seta-topo {
-            0% { opacity: 0.3; transform: translateX(0px); }
-            50% { opacity: 1; transform: translateX(-5px); }
-            100% { opacity: 0.3; transform: translateX(0px); }
-        }
-        .aviso-topo-esquerdo {
-            position: fixed;
-            top: 18px;
-            left: 55px;
-            z-index: 999999;
-            font-weight: bold;
-            color: #ffffff;
-            background-color: transparent;
-            animation: piscar-seta-topo 1.2s infinite ease-in-out;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
-            pointer-events: none;
-        }
     </style>
-    
-    <div id="aviso-clique-aqui" class="aviso-topo-esquerdo">
-        <span>⬅️</span> <span>clique aqui</span>
-    </div>
-
-    <script>
-    const doc = window.parent.document;
-
-    // Se já foi fechado antes nesta sessão do navegador, esconde imediatamente antes de renderizar
-    if (window.parent.sessionStorage.getItem('menu_foi_aberto') === 'true') {
-        const styleTag = doc.createElement('style');
-        styleTag.innerHTML = '#aviso-clique-aqui { display: none !important; }';
-        doc.head.appendChild(styleTag);
-    }
-    
-    function monitorarCliqueMenu() {
-        // Seleciona o botão de expandir/recolher do menu do Streamlit
-        const btnMenu = doc.querySelector('[data-testid="collapsedControl"]') || doc.querySelector('button[kind="header"]');
-        
-        if (btnMenu && !btnMenu.dataset.listenerConfigured) {
-            btnMenu.dataset.listenerConfigured = 'true';
-            btnMenu.addEventListener('click', () => {
-                // Salva no sessionStorage para manter sumido até atualizar a página (F5)
-                window.parent.sessionStorage.setItem('menu_foi_aberto', 'true');
-                
-                const aviso = doc.getElementById('aviso-clique-aqui');
-                if (aviso) {
-                    aviso.style.display = 'none';
-                    aviso.remove();
-                }
-            });
-        }
-    }
-
-    // Executa a verificação constantemente para capturar o botão assim que a página carregar
-    setInterval(monitorarCliqueMenu, 100);
-    </script>
 """, unsafe_allow_html=True)
 
 EXCEL_FILE = "Cadastros_Servidores.xlsx"
