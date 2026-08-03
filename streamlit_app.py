@@ -52,6 +52,7 @@ def verificar_admin():
         return False
 
 def carregar_servidores_cadastrados():
+    """Lê a planilha considerando cada linha como um cadastro individual"""
     if os.path.exists(EXCEL_FILE):
         try:
             df = pd.read_excel(EXCEL_FILE)
@@ -122,7 +123,7 @@ def preencher_documentos_oficiais(dados):
 
     return pdf_procuracao_bytes, pdf_termo_bytes
 
-# Inicializa variáveis de estado para persistir ao atualizar a página
+# Inicialização de variáveis no session_state
 if "nome_servidor" not in st.session_state:
     st.session_state.nome_servidor = None
 if "pdf_proc" not in st.session_state:
@@ -145,7 +146,7 @@ with st.sidebar:
 aba_novo, aba_salvos = st.tabs(["➕ Novo Cadastro", "📂 Servidores Já Cadastrados (Preenchimento Rápido)"])
 
 with aba_salvos:
-    st.subheader("🔍 Selecionar Servidor da Planilha")
+    st.subheader("🔍 Pesquisar e Selecionar Servidor da Planilha")
     
     if usuario_autorizado:
         df_servidores = carregar_servidores_cadastrados()
@@ -153,12 +154,23 @@ with aba_salvos:
         if df_servidores.empty:
             st.info("ℹ️ Nenhum servidor cadastrado na planilha até o momento.")
         else:
-            lista_nomes = df_servidores["Nome"].dropna().unique().tolist()
-            servidor_selecionado = st.selectbox("Escolha o Servidor:", ["-- Selecione --"] + lista_nomes)
+            # Cria uma lista de opções formatadas identificando cada linha unicamente por Índice + Nome + CPF
+            opcoes_servidores = []
+            mapa_linhas = {}
             
-            if servidor_selecionado != "-- Selecione --":
-                dados_linha = df_servidores[df_servidores["Nome"] == servidor_selecionado].iloc[0].to_dict()
-                st.write("📋 **Dados carregados da planilha:**")
+            for idx, row in df_servidores.iterrows():
+                nome_servidor = str(row.get("Nome", "Sem Nome"))
+                cpf_servidor = str(row.get("CPF", "Sem CPF"))
+                rotulo = f"[{idx}] {nome_servidor} - CPF: {cpf_servidor}"
+                opcoes_servidores.append(rotulo)
+                mapa_linhas[rotulo] = row.to_dict()
+
+            # Campo st.selectbox permite pesquisar digitando diretamente o nome/cpf
+            selecao = st.selectbox("Pesquise digitando o nome ou CPF:", ["-- Selecione --"] + opcoes_servidores)
+            
+            if selecao != "-- Selecione --":
+                dados_linha = mapa_linhas[selecao]
+                st.write("📋 **Dados carregados da linha selecionada:**")
                 st.json(dados_linha)
                 
                 col_b1, col_b2 = st.columns(2)
