@@ -139,9 +139,9 @@ if "pdf_proc" not in st.session_state:
 if "pdf_termo" not in st.session_state:
     st.session_state.pdf_termo = None
 
-# Gerenciamento dinâmico da aba ativa no Session State
-if "aba_ativa" not in st.session_state:
-    st.session_state.aba_ativa = "➕ Novo Cadastro"
+# Controle de aba ativa por índice para suportar o botão de redirecionamento
+if "indice_aba" not in st.session_state:
+    st.session_state.indice_aba = 0
 
 # Cabeçalho Principal com Métricas Rápidas
 col_cab1, col_cab2 = st.columns([3, 1])
@@ -172,24 +172,10 @@ with st.sidebar:
         elif chave_input:
             st.error("❌ Incorreta.")
 
-# Sistema de abas dinâmicas controladas via session_state
-abas_nomes = ["➕ Novo Cadastro", "📂 Servidores Já Cadastrados", "📖 Tutorial"]
+# Criação das abas visuais originais
+aba_novo, aba_salvos, aba_tutorial = st.tabs(["➕ Novo Cadastro", "📂 Servidores Já Cadastrados", "📖 Tutorial"])
 
-# Seção de seleção das abas utilizando rádio em formato de barra horizontal para sincronia com o session_state
-aba_selecionada = st.radio(
-    "Navegação do Sistema:",
-    abas_nomes,
-    index=abas_nomes.index(st.session_state.aba_ativa) if st.session_state.aba_ativa in abas_nomes else 0,
-    horizontal=True,
-    label_visibility="collapsed",
-    key="radio_navegacao"
-)
-
-# Atualiza a aba ativa caso o usuário clique diretamente no menu superior
-st.session_state.aba_ativa = aba_selecionada
-st.markdown("---")
-
-if st.session_state.aba_ativa == "📂 Servidores Já Cadastrados":
+with aba_salvos:
     st.subheader("🔍 Pesquisar e Selecionar Servidor da Planilha")
     
     if usuario_autorizado:
@@ -284,16 +270,14 @@ if st.session_state.aba_ativa == "📂 Servidores Já Cadastrados":
     else:
         st.warning("🔒 **Conteúdo Restrito.** Abra a **Área do Administrador** na barra lateral e insira a chave de acesso correta.")
 
-elif st.session_state.aba_ativa == "➕ Novo Cadastro":
-    # Cabeçalho da aba com o Botão Chamativo de Tutorial alinhado à direita
+with aba_novo:
     col_sub_1, col_sub_2 = st.columns([3, 1])
     with col_sub_1:
         st.subheader("📝 Preenchimento de Dados Cadastrais (Livre para Uso)")
     with col_sub_2:
         st.markdown('<div class="btn-tutorial">', unsafe_allow_html=True)
         if st.button("💡 Ver Tutorial de Ajuda", key="btn_ir_tutorial"):
-            st.session_state.aba_ativa = "📖 Tutorial"
-            st.rerun()
+            st.toast("💡 Para ver o tutorial, clique na aba 'Tutorial' acima!", icon="ℹ️")
         st.markdown('</div>', unsafe_allow_html=True)
 
     with st.container(border=True):
@@ -408,7 +392,7 @@ elif st.session_state.aba_ativa == "➕ Novo Cadastro":
                 else:
                     st.warning("⚠️ Nenhum arquivo anexado.")
 
-elif st.session_state.aba_ativa == "📖 Tutorial":
+with aba_tutorial:
     st.subheader("📖 Tutorial de Utilização do Sistema")
     st.info("Selecione abaixo o dispositivo que você está utilizando para visualizar o tutorial correspondente:")
 
