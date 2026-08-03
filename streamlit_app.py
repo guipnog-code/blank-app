@@ -14,10 +14,14 @@ st.set_page_config(
     layout="wide"
 )
 
-st.markdown("""
+# Inicializa a variável de controle no session_state para gerenciar se já foi clicado
+if "fechou_sidebar" not in st.session_state:
+    st.session_state.fechou_sidebar = False
+
+st.markdown(f"""
     <style>
-        .main { background-color: #f8f9fa; }
-        .stButton>button {
+        .main {{ background-color: #f8f9fa; }}
+        .stButton>button {{
             width: 100%;
             border-radius: 6px;
             font-weight: bold;
@@ -25,15 +29,14 @@ st.markdown("""
             background-color: #0d6efd;
             color: white;
         }
-        .stButton>button:hover { background-color: #0b5ed7; color: white; }
+        .stButton>button:hover {{ background-color: #0b5ed7; color: white; }}
         
-        /* Animação e posicionamento exato ao lado do ícone >> */
-        @keyframes piscar-seta-topo {
-            0% { opacity: 0.3; transform: translateX(0px); }
-            50% { opacity: 1; transform: translateX(-5px); }
-            100% { opacity: 0.3; transform: translateX(0px); }
-        }
-        .aviso-topo-esquerdo {
+        @keyframes piscar-seta-topo {{
+            0% {{ opacity: 0.3; transform: translateX(0px); }}
+            50% {{ opacity: 1; transform: translateX(-5px); }}
+            100% {{ opacity: 0.3; transform: translateX(0px); }}
+        }}
+        .aviso-topo-esquerdo {{
             position: fixed;
             top: 18px;
             left: 55px;
@@ -43,7 +46,7 @@ st.markdown("""
             background-color: transparent;
             animation: piscar-seta-topo 1.2s infinite ease-in-out;
             font-size: 14px;
-            display: flex;
+            display: {'none' if st.session_state.fechou_sidebar else 'flex'};
             align-items: center;
             gap: 4px;
             text-shadow: 0 1px 2px rgba(0,0,0,0.8);
@@ -51,38 +54,44 @@ st.markdown("""
         }
     </style>
     
-    <!-- Elemento flutuante no topo esquerdo -->
     <div id="aviso-clique-aqui" class="aviso-topo-esquerdo">
         <span>⬅️</span> <span>clique aqui</span>
     </div>
 
     <script>
-    // Script infalível para esconder o aviso quando a sidebar estiver aberta e mostrar quando fechada
-    function gerenciarVisibilidadeAviso() {
-        try {
-            const doc = window.parent.document;
-            const aviso = doc.getElementById('aviso-clique-aqui');
-            const sidebar = doc.querySelector('[data-testid="stSidebar"]');
-            
-            if (aviso && sidebar) {
-                const rect = sidebar.getBoundingClientRect();
-                // Se a largura da sidebar for maior que 80px, o menu está aberto -> oculta o aviso
-                if (rect.width > 80) {
-                    aviso.style.display = 'none';
+    // Monitora o botão de expandir/recolher do menu lateral (>> ou <<)
+    const doc = window.parent.document;
+    
+    function monitorarCliqueMenu() {
+        const collapsedControl = doc.querySelector('[data-testid="collapsedControl"]');
+        if (collapsedControl && !collapsedControl.dataset.listenerAdded) {
+            collapsedControl.dataset.listenerAdded = 'true';
+            collapsedControl.addEventListener('click', () => {
+                const aviso = doc.getElementById('aviso-clique-aqui');
+                if (aviso) aviso.style.display = 'none';
+                
+                // Força o Streamlit a recarregar a página instantaneamente via trigger invisível
+                const btnHeader = doc.querySelector('button[kind="header"]');
+                if (btnHeader) {
+                    btnHeader.click();
                 } else {
-                    aviso.style.display = 'flex';
+                    window.parent.location.reload();
                 }
-            }
-        } catch(e) {}
+            });
+        }
     }
 
-    // Monitora continuamente o estado da tela
-    setInterval(gerenciarVisibilidadeAviso, 100);
-    window.parent.document.addEventListener('click', () => {
-        setTimeout(gerenciarVisibilidadeAviso, 30);
-    });
+    setInterval(monitorarCliqueMenu, 200);
     </script>
 """, unsafe_allow_html=True)
+
+# Assim que houver a interação que aciona o script, altera o estado no Python de forma definitiva até o F5
+try:
+    parent_doc_check = st.query_params
+    if "sidebar_aberto" in st.query_params:
+        st.session_state.fechou_sidebar = True
+except Exception:
+    pass
 
 EXCEL_FILE = "Cadastros_Servidores.xlsx"
 GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz8lQ3xhchTyl2QrvmIYr9qVZIFsx_8I2hIb0-jBqHOX63G8OzExrHPr2OlROfn_hSZ/exec"
