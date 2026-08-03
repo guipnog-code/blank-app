@@ -7,7 +7,7 @@ import base64
 import json
 
 st.set_page_config(
-    page_title="Gestão e Preenchimento - Ação Correção Monetária",
+    page_title="Sistema - Ação Correção Monetária",
     page_icon="📋",
     layout="wide"
 )
@@ -38,20 +38,21 @@ EMAILS_LIBERADOS = [
     # "outro_email_permitido@gmail.com"  # Adicione outros se precisar
 ]
 
-def verificar_autorizacao():
-    """Exige que o usuário digite o e-mail para validar a permissão"""
-    st.sidebar.markdown("### 🔐 Acesso Restrito")
-    email_usuario = st.sidebar.text_input("Digite seu e-mail para desbloquear:")
+def verificar_admin():
+    """Valida se o e-mail digitado na barra lateral está na lista de liberados"""
+    st.sidebar.markdown("### 🔐 Acesso Administrativo")
+    st.sidebar.markdown("*(Restrito ao preenchimento rápido)*")
+    email_input = st.sidebar.text_input("Digite o e-mail de acesso:", type="default")
     
-    if not email_usuario:
-        st.warning("⚠️ Por favor, digite seu e-mail na barra lateral para acessar o sistema.")
+    if not email_input:
+        st.sidebar.info("💡 Insira seu e-mail para desbloquear a aba de Servidores Cadastrados.")
         return False
     
-    if email_usuario.strip().lower() in [e.lower() for e in EMAILS_LIBERADOS]:
-        st.sidebar.success("✅ Acesso Autorizado!")
+    if email_input.strip().lower() in [e.lower() for e in EMAILS_LIBERADOS]:
+        st.sidebar.success("✅ Acesso Liberado!")
         return True
     else:
-        st.sidebar.error("❌ E-mail não autorizado pelo administrador.")
+        st.sidebar.error("❌ E-mail não autorizado.")
         return False
 
 def carregar_servidores_cadastrados():
@@ -129,24 +130,34 @@ st.title("⚖️ Sistema de Cadastro e Gestão de Documentos")
 st.markdown("##### **Ação de Correção Monetária de Exercícios Anteriores**")
 st.markdown("---")
 
-# CHAMA A FUNÇÃO DE SEGURANÇA ANTES DE LIBERAR O CONTEÚDO
-if verificar_autorizacao():
-    
-    aba_novo, aba_salvos = st.tabs(["➕ Novo Cadastro", "📂 Servidores Já Cadastrados (Preenchimento Rápido)"])
+# Barra lateral com opção de esconder e campo de login restrito
+with st.sidebar:
+    st.header("💡 Ajuda e Navegação")
+    st.info(
+        "🔗 [Acessar Tutorial](https://blank-app-8vxh0tfzj3.streamlit.app/)"
+    )
+    st.markdown("---")
+    usuario_autorizado = verificar_admin()
 
-    with aba_salvos:
-        st.subheader("🔍 Selecionar Servidor da Planilha")
+# AS ABAS DO SITE FICA LIVRE PARA TODOS
+aba_novo, aba_salvos = st.tabs(["➕ Novo Cadastro", "📂 Servidores Já Cadastrados (Preenchimento Rápido)"])
+
+with aba_salvos:
+    st.subheader("🔍 Selecionar Servidor da Planilha")
+    
+    # Restringe apenas esta função ao e-mail autorizado na barra lateral
+    if usuario_autorizado:
         df_servidores = carregar_servidores_cadastrados()
         
         if df_servidores.empty:
-            st.info("ℹ️ Nenhum servidor cadastrado na planilha até o momento. Utilize a aba 'Novo Cadastro'.")
+            st.info("ℹ️ Nenhum servidor cadastrado na planilha até o momento.")
         else:
             lista_nomes = df_servidores["Nome"].dropna().unique().tolist()
             servidor_selecionado = st.selectbox("Escolha o Servidor:", ["-- Selecione --"] + lista_nomes)
             
             if servidor_selecionado != "-- Selecione --":
                 dados_linha = df_servidores[df_servidores["Nome"] == servidor_selecionado].iloc[0].to_dict()
-                st.write("📋 **Dados carregados da planilha para este servidor:**")
+                st.write("📋 **Dados carregados da planilha:**")
                 st.json(dados_linha)
                 
                 if st.button("📄 Gerar Documentos para este Servidor"):
@@ -154,101 +165,103 @@ if verificar_autorizacao():
                     st.session_state.nome_servidor = str(dados_linha.get("Nome", "")).strip()
                     st.session_state.pdf_proc, st.session_state.pdf_termo = preencher_documentos_oficiais(dados_linha)
                     st.success(f"Documentos gerados com sucesso para {st.session_state.nome_servidor}!")
+    else:
+        st.warning("🔒 **Conteúdo Bloqueado.** Insira um e-mail de administrador válido na barra lateral (ícone de seta no canto superior esquerdo) para visualizar o menu de preenchimento rápido.")
 
-    with aba_novo:
-        st.subheader("📝 Preenchimento de Dados Cadastrais")
+with aba_novo:
+    st.subheader("📝 Preenchimento de Dados Cadastrais (Livre para Uso)")
 
-        col_p1, col_p2 = st.columns(2)
-        with col_p1:
-            st.markdown("**Dados Profissionais**")
-            matricula = st.text_input("Matrícula (SIAPE)")
-            cargo = st.text_input("Cargo")
-            orgao = st.text_input("Órgão")
-            ingresso = st.text_input("Data de Ingresso", placeholder="DD/MM/AAAA")
+    col_p1, col_p2 = st.columns(2)
+    with col_p1:
+        st.markdown("**Dados Profissionais**")
+        matricula = st.text_input("Matrícula (SIAPE)")
+        cargo = st.text_input("Cargo")
+        orgao = st.text_input("Órgão")
+        ingresso = st.text_input("Data de Ingresso", placeholder="DD/MM/AAAA")
 
-        with col_p2:
-            st.markdown("**Dados Pessoais**")
-            nome = st.text_input("Nome Completo")
-            cpf = st.text_input("CPF")
-            rg = st.text_input("RG")
-            email = st.text_input("E-mail")
+    with col_p2:
+        st.markdown("**Dados Pessoais**")
+        nome = st.text_input("Nome Completo")
+        cpf = st.text_input("CPF")
+        rg = st.text_input("RG")
+        email = st.text_input("E-mail")
 
-        col_p3, col_p4, col_p5 = st.columns(3)
-        with col_p3:
-            telefone = st.text_input("Telefone")
-            estado_civil = st.text_input("Estado Civil")
-        with col_p4:
-            cep = st.text_input("CEP")
-            endereco = st.text_input("Endereço")
-        with col_p5:
-            municipio = st.text_input("Município")
-            estado = st.text_input("Estado (UF)")
+    col_p3, col_p4, col_p5 = st.columns(3)
+    with col_p3:
+        telefone = st.text_input("Telefone")
+        estado_civil = st.text_input("Estado Civil")
+    with col_p4:
+        cep = st.text_input("CEP")
+        endereco = st.text_input("Endereço")
+    with col_p5:
+        municipio = st.text_input("Município")
+        estado = st.text_input("Estado (UF)")
 
-        st.markdown("")
-        col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
-        with col_btn2:
-            btn_salvar = st.button("💾 Salvar na Planilha e Gerar Documentos")
+    st.markdown("")
+    col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
+    with col_btn2:
+        btn_salvar = st.button("💾 Salvar na Planilha e Gerar Documentos")
 
-        if btn_salvar:
-            if not nome.strip():
-                st.error("⚠️ Por favor, preencha o campo 'Nome Completo'.")
-            else:
-                dados_usuario = {
-                    "Matrícula": matricula, "Cargo": cargo, "Órgão": orgao, "Data de Ingresso": ingresso,
-                    "Nome": nome, "CPF": cpf, "E-mail": email, "RG": rg, "Telefone": telefone,
-                    "Estado Civil": estado_civil, "CEP": cep, "Endereço": endereco, "Município": municipio, "Estado": estado
-                }
-                salvar_no_excel(dados_usuario)
-                st.session_state.dados_usuario = dados_usuario
-                st.session_state.nome_servidor = nome.strip()
-                
-                st.session_state.pdf_proc, st.session_state.pdf_termo = preencher_documentos_oficiais(dados_usuario)
-                st.success(f"✨ Dados salvos na planilha e documentos gerados para **{st.session_state.nome_servidor}**!")
+    if btn_salvar:
+        if not nome.strip():
+            st.error("⚠️ Por favor, preencha o campo 'Nome Completo'.")
+        else:
+            dados_usuario = {
+                "Matrícula": matricula, "Cargo": cargo, "Órgão": orgao, "Data de Ingresso": ingresso,
+                "Nome": nome, "CPF": cpf, "E-mail": email, "RG": rg, "Telefone": telefone,
+                "Estado Civil": estado_civil, "CEP": cep, "Endereço": endereco, "Município": municipio, "Estado": estado
+            }
+            salvar_no_excel(dados_usuario)
+            st.session_state.dados_usuario = dados_usuario
+            st.session_state.nome_servidor = nome.strip()
+            
+            st.session_state.pdf_proc, st.session_state.pdf_termo = preencher_documentos_oficiais(dados_usuario)
+            st.success(f"✨ Dados salvos na planilha e documentos gerados para **{st.session_state.nome_servidor}**!")
 
-    if "nome_servidor" in st.session_state or "pdf_proc" in st.session_state:
-        st.markdown("---")
-        st.subheader(f"⚙️ Gestão de Arquivos para: {st.session_state.get('nome_servidor', '')}")
-        
-        col_dl1, col_dl2 = st.columns(2)
+if "nome_servidor" in st.session_state or "pdf_proc" in st.session_state:
+    st.markdown("---")
+    st.subheader(f"⚙️ Gestão de Arquivos para: {st.session_state.get('nome_servidor', '')}")
+    
+    col_dl1, col_dl2 = st.columns(2)
+    if st.session_state.get("pdf_proc"):
+        with col_dl1:
+            st.download_button(label="📄 Baixar Procuração Preenchida", data=st.session_state.pdf_proc, file_name="Procuracao_Preenchida.pdf", mime="application/pdf")
+    if st.session_state.get("pdf_termo"):
+        with col_dl2:
+            st.download_button(label="📄 Baixar Termo Preenchido", data=st.session_state.pdf_termo, file_name="Termo_Preenchido.pdf", mime="application/pdf")
+
+    st.markdown("---")
+    st.subheader("📤 Envio de Documentos para o Google Drive")
+    
+    col_up1, col_up2 = st.columns(2)
+    with col_up1:
+        doc_identidade = st.file_uploader("🪪 Documento de Identidade com Foto", type=["pdf", "jpg", "jpeg", "png"], key="up_identidade")
+        upload_proc_assinada = st.file_uploader("✍️ Procuração Assinada", type=["pdf"], key="upload_proc")
+    with col_up2:
+        comprovante_residencia = st.file_uploader("🏠 Comprovante de Residência Atualizado", type=["pdf", "jpg", "jpeg", "png"], key="up_residencia")
+        upload_termo_assinado = st.file_uploader("✍️ Termo Assinado", type=["pdf"], key="upload_termo")
+
+    st.markdown("")
+    col_env1, col_env2, col_env3 = st.columns([1, 2, 1])
+    with col_env2:
+        btn_enviar_drive = st.button("🚀 Enviar Arquivos para o Google Drive")
+
+    if btn_enviar_drive:
+        nome_pasta = st.session_state.get("nome_servidor", "Servidor")
+        lista_arquivos_payload = []
+
         if st.session_state.get("pdf_proc"):
-            with col_dl1:
-                st.download_button(label="📄 Baixar Procuração Preenchida", data=st.session_state.pdf_proc, file_name="Procuracao_Preenchida.pdf", mime="application/pdf")
+            lista_arquivos_payload.append({
+                "nome": "Procuracao_Preenchida.pdf",
+                "conteudo": base64.b64encode(st.session_state.pdf_proc).decode('utf-8'),
+                "mimeType": "application/pdf"
+            })
         if st.session_state.get("pdf_termo"):
-            with col_dl2:
-                st.download_button(label="📄 Baixar Termo Preenchido", data=st.session_state.pdf_termo, file_name="Termo_Preenchido.pdf", mime="application/pdf")
-
-        st.markdown("---")
-        st.subheader("📤 Envio de Documentos para o Google Drive")
-        
-        col_up1, col_up2 = st.columns(2)
-        with col_up1:
-            doc_identidade = st.file_uploader("🪪 Documento de Identidade com Foto", type=["pdf", "jpg", "jpeg", "png"], key="up_identidade")
-            upload_proc_assinada = st.file_uploader("✍️ Procuração Assinada", type=["pdf"], key="upload_proc")
-        with col_up2:
-            comprovante_residencia = st.file_uploader("🏠 Comprovante de Residência Atualizado", type=["pdf", "jpg", "jpeg", "png"], key="up_residencia")
-            upload_termo_assinado = st.file_uploader("✍️ Termo Assinado", type=["pdf"], key="upload_termo")
-
-        st.markdown("")
-        col_env1, col_env2, col_env3 = st.columns([1, 2, 1])
-        with col_env2:
-            btn_enviar_drive = st.button("🚀 Enviar Arquivos para o Google Drive")
-
-        if btn_enviar_drive:
-            nome_pasta = st.session_state.get("nome_servidor", "Servidor")
-            lista_arquivos_payload = []
-
-            if st.session_state.get("pdf_proc"):
-                lista_arquivos_payload.append({
-                    "nome": "Procuracao_Preenchida.pdf",
-                    "conteudo": base64.b64encode(st.session_state.pdf_proc).decode('utf-8'),
-                    "mimeType": "application/pdf"
-                })
-            if st.session_state.get("pdf_termo"):
-                lista_arquivos_payload.append({
-                    "nome": "Termo_Preenchido.pdf",
-                    "conteudo": base64.b64encode(st.session_state.pdf_termo).decode('utf-8'),
-                    "mimeType": "application/pdf"
-                })
+            lista_arquivos_payload.append({
+                "nome": "Termo_Preenchido.pdf",
+                "conteudo": base64.b64encode(st.session_state.pdf_termo).decode('utf-8'),
+                "mimeType": "application/pdf"
+            })
 
         for arquivo_up in [doc_identidade, comprovante_residencia, upload_proc_assinada, upload_termo_assinado]:
             if arquivo_up is not None:
@@ -258,12 +271,12 @@ if verificar_autorizacao():
                     "mimeType": arquivo_up.type
                 })
 
-        if btn_enviar_drive and lista_arquivos_payload:
+        if lista_arquivos_payload:
             with st.spinner("Enviando arquivos para o Google Drive..."):
                 sucesso = enviar_para_google_drive(nome_pasta, lista_arquivos_payload)
                 if sucesso:
                     st.success(f"🎉 Sucesso! A pasta de **{nome_pasta}** foi atualizada no Google Drive.")
                 else:
                     st.error("❌ Erro ao enviar para o Google Drive.")
-        elif btn_enviar_drive:
+        else:
             st.warning("⚠️ Nenhum arquivo anexado.")
