@@ -6,6 +6,7 @@ import requests
 import base64
 import json
 import urllib.parse
+import streamlit.components.v1 as components
 
 st.set_page_config(
     page_title="Sistema - Ação Correção Monetária",
@@ -209,6 +210,35 @@ with aba_salvos:
 
 with aba_novo:
     st.subheader("📝 Preenchimento de Dados Cadastrais (Livre para Uso)")
+
+    # Script JavaScript incorporado para aplicar máscara automática no formato DD/MM/YYYY no campo de Data de Ingresso
+    components.html("""
+    <script>
+    const doc = window.parent.document;
+    function aplicarMascaraData() {
+        const inputs = doc.querySelectorAll('input[type="text"]');
+        inputs.forEach(input => {
+            if (input.getAttribute('aria-label') === 'Data de Ingresso' || input.placeholder === 'DD/MM/AAAA') {
+                if (!input.hasAttribute('data-mascara-aplicada')) {
+                    input.setAttribute('data-mascara-aplicada', 'true');
+                    input.addEventListener('input', function (e) {
+                        let v = e.target.value.replace(/\\D/g, '');
+                        if (v.length > 8) v = v.slice(0, 8);
+                        if (v.length > 4) {
+                            v = v.slice(0, 2) + '/' + v.slice(2, 4) + '/' + v.slice(4);
+                        } else if (v.length > 2) {
+                            v = v.slice(0, 2) + '/' + v.slice(2);
+                        }
+                        e.target.value = v;
+                        e.target.dispatchEvent(new Event('input', { bubbles: true }));
+                    });
+                }
+            }
+        });
+    }
+    setInterval(aplicarMascaraData, 500);
+    </script>
+    """, height=0)
 
     col_p1, col_p2 = st.columns(2)
     with col_p1:
