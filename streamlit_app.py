@@ -16,14 +16,12 @@ def salvar_no_excel(dados):
     df_final.to_excel(EXCEL_FILE, index=False)
 
 def enviar_para_google_forms(dados, files_data_form1=None, files_data_form2=None):
-    # 1. Termo de Consentimento (URL 1)
     url_form_1 = "https://docs.google.com/forms/d/e/1FAIpQLSfwwmAw9jqwWv2KTEWXQFMXaz36mECCCuVdYsxlLg48KkrsMQ/formResponse"
     payload_1 = {
         "entry.463599518": dados['Nome'],
         "entry.1304511106": dados['Matrícula']
     }
 
-    # 2. Ação Geral - Correção Monetária (URL 2)
     url_form_2 = "https://docs.google.com/forms/d/e/1FAIpQLScFHB1lA_2cTeg-ANSa0TK3I4LwwMTa6T9cMnxQiWmbBD6XOw/formResponse"
     payload_2 = {
         "entry.336229460": dados['Nome'],
@@ -90,13 +88,9 @@ def preencher_documentos_oficiais(dados):
     return pdf_procuracao_bytes, pdf_termo_bytes
 
 st.title("📋 Cadastro e Preenchimento de Documentos")
-
-# Mensagem solicitada no início
 st.info("ℹ️ **Esses dados serão direcionados a uma planilha, para preenchimento de dados.**")
-
 st.write("Preencha os dados abaixo para cadastrar e gerar os documentos em PDF.")
 
-# Configuração da Barra Lateral (Sidebar) com o link oficial integrado
 with st.sidebar:
     st.header("💡 Dica Importante")
     st.info(
@@ -133,51 +127,26 @@ with st.form("form_cadastro"):
 
 if submitted:
     dados_usuario = {
-        "Matrícula": matricula,
-        "Cargo": cargo,
-        "Órgão": orgao,
-        "Data de Ingresso": ingresso,
-        "Nome": nome,
-        "CPF": cpf,
-        "E-mail": email,
-        "RG": rg,
-        "Telefone": telefone,
-        "Estado Civil": estado_civil,
-        "CEP": cep,
-        "Endereço": endereco,
-        "Município": municipio,
-        "Estado": estado
+        "Matrícula": matricula, "Cargo": cargo, "Órgão": orgao, "Data de Ingresso": ingresso,
+        "Nome": nome, "CPF": cpf, "E-mail": email, "RG": rg, "Telefone": telefone,
+        "Estado Civil": estado_civil, "CEP": cep, "Endereço": endereco, "Município": municipio, "Estado": estado
     }
-    
     salvar_no_excel(dados_usuario)
     st.session_state.dados_usuario = dados_usuario
     st.success("Dados salvos com sucesso!")
-
     st.session_state.pdf_proc, st.session_state.pdf_termo = preencher_documentos_oficiais(dados_usuario)
 
 if st.session_state.pdf_proc or st.session_state.pdf_termo:
     st.markdown("---")
     st.markdown("### 📥 Baixar Documentos Gerados")
-    
     col1, col2 = st.columns(2)
     
     if st.session_state.pdf_proc:
         with col1:
-            st.download_button(
-                label="📄 Baixar Procuração",
-                data=st.session_state.pdf_proc,
-                file_name="Procuracao_Preenchida.pdf",
-                mime="application/pdf"
-            )
-            
+            st.download_button(label="📄 Baixar Procuração", data=st.session_state.pdf_proc, file_name="Procuracao_Preenchida.pdf", mime="application/pdf")
     if st.session_state.pdf_termo:
         with col2:
-            st.download_button(
-                label="📄 Baixar Termo",
-                data=st.session_state.pdf_termo,
-                file_name="Termo_Preenchido.pdf",
-                mime="application/pdf"
-            )
+            st.download_button(label="📄 Baixar Termo", data=st.session_state.pdf_termo, file_name="Termo_Preenchido.pdf", mime="application/pdf")
 
     st.markdown("---")
     st.markdown("### 📤 Anexo de Documentos e Envio")
@@ -197,49 +166,36 @@ if st.session_state.pdf_proc or st.session_state.pdf_termo:
     if st.button("🚀 Enviar Dados e Documentos para os Formulários"):
         if "dados_usuario" in st.session_state:
             dados_envio = st.session_state.dados_usuario
-            nome_servidor = dados_envio["Nome"].strip()
+            nome_servidor = dados_envio["Nome"].strip() or "Servidor_Sem_Nome"
             
-            if not nome_servidor:
-                nome_servidor = "Servidor_Sem_Nome"
-            
-            # Cria a pasta específica do servidor DENTRO da pasta "Documentos Upload"
             pasta_principal = "Documentos Upload"
             os.makedirs(pasta_principal, exist_ok=True)
-            
             pasta_servidor = os.path.join(pasta_principal, nome_servidor)
             os.makedirs(pasta_servidor, exist_ok=True)
 
             arquivos_envio_form2 = {}
-            
             if doc_identidade is not None:
-                caminho_doc1 = os.path.join(pasta_servidor, doc_identidade.name)
-                with open(caminho_doc1, "wb") as f:
+                with open(os.path.join(pasta_servidor, doc_identidade.name), "wb") as f:
                     f.write(doc_identidade.getbuffer())
                 arquivos_envio_form2["entry.1823246775"] = (doc_identidade.name, doc_identidade.getvalue(), doc_identidade.type)
 
             if comprovante_residencia is not None:
-                caminho_doc2 = os.path.join(pasta_servidor, comprovante_residencia.name)
-                with open(caminho_doc2, "wb") as f:
+                with open(os.path.join(pasta_servidor, comprovante_residencia.name), "wb") as f:
                     f.write(comprovante_residencia.getbuffer())
                 arquivos_envio_form2["entry.97304745"] = (comprovante_residencia.name, comprovante_residencia.getvalue(), comprovante_residencia.type)
 
             if upload_proc_assinada is not None:
-                caminho_doc3 = os.path.join(pasta_servidor, upload_proc_assinada.name)
-                with open(caminho_doc3, "wb") as f:
+                with open(os.path.join(pasta_servidor, upload_proc_assinada.name), "wb") as f:
                     f.write(upload_proc_assinada.getbuffer())
 
             enviar_para_google_forms(dados_envio, files_data_form2=arquivos_envio_form2 if arquivos_envio_form2 else None)
 
             if upload_termo_assinado is not None:
                 try:
-                    caminho_doc4 = os.path.join(pasta_servidor, upload_termo_assinado.name)
-                    with open(caminho_doc4, "wb") as f:
+                    with open(os.path.join(pasta_servidor, upload_termo_assinado.name), "wb") as f:
                         f.write(upload_termo_assinado.getbuffer())
-
                     dados_aux = {"Nome": dados_envio["Nome"], "Matrícula": dados_envio["Matrícula"]}
-                    arquivo_termo_envio = {
-                        "entry.1145226915": (upload_termo_assinado.name, upload_termo_assinado.getvalue(), upload_termo_assinado.type)
-                    }
+                    arquivo_termo_envio = {"entry.1145226915": (upload_termo_assinado.name, upload_termo_assinado.getvalue(), upload_termo_assinado.type)}
                     enviar_para_google_forms(dados_aux, files_data_form1=arquivo_termo_envio)
                 except Exception as e:
                     st.error(f"Erro ao enviar termo assinado: {e}")
@@ -249,8 +205,6 @@ if st.session_state.pdf_proc or st.session_state.pdf_termo:
             st.warning("Por favor, preencha e salve os dados cadastrais primeiro.")
 
     st.markdown("---")
-    
-    # Seção do Tutorial com imagens ampliadas (width=700)
     st.markdown("### Tutorial para envio dos documentos (Nesse site)")
     st.info(
         "Como enviar os documentos, o termo e a procuração devem estar assinados "
@@ -258,22 +212,11 @@ if st.session_state.pdf_proc or st.session_state.pdf_termo:
         "devem estar legíveis e digitalizados, também visível na aba de tutorial."
     )
     
-    passos_tutorial = [
-        ("Passo 1", "1.png"),
-        ("Passo 2", "2.png"),
-        ("Passo 3", "3.png"),
-        ("Passo 4", "4.png"),
-        ("Passo 5", "5.png"),
-        ("Passo 6", "6.png")
-    ]
-    
-    for titulo_passo, nome_arquivo in passos_tutorial:
-        st.subheader(titulo_passo)
-        
-        caminho_img = os.path.join("imagens", nome_arquivo)
-        
+    for i in range(1, 7):
+        st.subheader(f"Passo {i}")
+        caminho_img = os.path.join("imagens", f"{i}.png")
         if os.path.exists(caminho_img):
             st.image(caminho_img, width=700)
         else:
-            st.warning(f"*(Imagem '{nome_arquivo}' não encontrada dentro da pasta 'imagens')*")
+            st.warning(f"*(Imagem '{i}.png' não encontrada dentro da pasta 'imagens')*")
         st.markdown("---")
