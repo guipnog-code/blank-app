@@ -84,7 +84,6 @@ def enviar_para_google_drive(nome_servidor, lista_arquivos):
         return False
 
 def formatar_data_callback():
-    """Formata automaticamente o valor digitado no campo de data adicionando as barras /"""
     val = st.session_state.input_ing_raw
     digitos = "".join(filter(str.isdigit, str(val)))[:8]
     formatado = ""
@@ -95,6 +94,12 @@ def formatar_data_callback():
     else:
         formatado = digitos
     st.session_state.input_ing_raw = formatado
+
+def limpar_valor(val):
+    """Remove valores nulos, vazios ou 'nan' do Excel para não corromper o link"""
+    if val is None or pd.isna(val) or str(val).strip().lower() == "nan":
+        return ""
+    return str(val).strip()
 
 def preencher_documentos_oficiais(dados):
     caminho_procuracao = "template_procuracao.pdf"
@@ -191,17 +196,18 @@ with aba_salvos:
                 with col_b2:
                     base_form_url = "https://docs.google.com/forms/d/e/1FAIpQLScFHB1lA_2cTeg-ANSa0TK3I4LwwMTa6T9cMnxQiWmbBD6XOw/viewform"
                     
+                    # IDs mapeados com base no HTML real fornecido do seu Google Forms
                     params = {
-                        "entry.336229460": dados_linha.get("Nome", ""),
-                        "entry.1167987372": dados_linha.get("Matrícula", ""),
-                        "entry.304080830": dados_linha.get("CPF", ""),
-                        "entry.346470482": dados_linha.get("RG", ""),
-                        "entry.1131685604": dados_linha.get("Endereço", ""),
-                        "entry.713012878": dados_linha.get("Município", ""),
-                        "entry.1662466686": dados_linha.get("Estado", ""),
-                        "entry.1919228175": dados_linha.get("CEP", ""),
-                        "entry.1147940036": dados_linha.get("Telefone", ""),
-                        "entry.737384383": dados_linha.get("E-mail", "")
+                        "entry.336229460": limpar_valor(dados_linha.get("Nome", "")),
+                        "entry.1167987372": limpar_valor(dados_linha.get("Matrícula", "")),
+                        "entry.304080830": limpar_valor(dados_linha.get("CPF", "")),
+                        "entry.346470482": limpar_valor(dados_linha.get("RG", "")),
+                        "entry.1131685604": limpar_valor(dados_linha.get("Endereço", "")),
+                        "entry.713012878": limpar_valor(dados_linha.get("Município", "")),
+                        "entry.1662466686": limpar_valor(dados_linha.get("Estado", "")),
+                        "entry.1919228175": limpar_valor(dados_linha.get("CEP", "")),
+                        "entry.1147940036": limpar_valor(dados_linha.get("Telefone", "")),
+                        "entry.737384383": limpar_valor(dados_linha.get("E-mail", ""))
                     }
                     
                     url_preenchida = f"{base_form_url}?usp=pp_url&{urllib.parse.urlencode(params)}"
@@ -226,15 +232,7 @@ with aba_novo:
         matricula = st.text_input("Matrícula (SIAPE)", key="input_mat")
         cargo = st.text_input("Cargo", key="input_cargo")
         orgao = st.text_input("Órgão", key="input_orgao")
-        
-        # Campo de Data de Ingresso com máscara interativa via callback
-        ingresso = st.text_input(
-            "Data de Ingresso", 
-            placeholder="DD/MM/AAAA", 
-            key="input_ing_raw", 
-            max_chars=10, 
-            on_change=formatar_data_callback
-        )
+        ingresso = st.text_input("Data de Ingresso", placeholder="DD/MM/AAAA", key="input_ing_raw", max_chars=10, on_change=formatar_data_callback)
 
     with col_p2:
         st.markdown("**Dados Pessoais**")
