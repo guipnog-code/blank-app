@@ -31,7 +31,6 @@ st.markdown("""
 EXCEL_FILE = "Cadastros_Servidores.xlsx"
 GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz8lQ3xhchTyl2QrvmIYr9qVZIFsx_8I2hIb0-jBqHOX63G8OzExrHPr2OlROfn_hSZ/exec"
 
-# Chave de acesso do administrador
 CHAVE_ADMIN = "Sindicatojus"
 
 def verificar_admin():
@@ -123,7 +122,6 @@ def preencher_documentos_oficiais(dados):
 
     return pdf_procuracao_bytes, pdf_termo_bytes
 
-# Inicialização de variáveis no session_state
 if "nome_servidor" not in st.session_state:
     st.session_state.nome_servidor = None
 if "pdf_proc" not in st.session_state:
@@ -137,9 +135,7 @@ st.markdown("---")
 
 with st.sidebar:
     st.header("💡 Ajuda e Navegação")
-    st.info(
-        "🔗 [Acessar Tutorial Externo](https://blank-app-8vxh0tfzj3.streamlit.app/)"
-    )
+    st.info("🔗 [Acessar Tutorial Externo](https://blank-app-8vxh0tfzj3.streamlit.app/)")
     st.markdown("---")
     usuario_autorizado = verificar_admin()
 
@@ -196,7 +192,6 @@ with aba_salvos:
                         "entry.6677889900": dados_linha.get("E-mail", "")
                     }
                     
-                    # URL com usp=pp_url ativado para pré-preenchimento
                     url_preenchida = f"{base_form_url}?usp=pp_url&{urllib.parse.urlencode(params)}"
                     
                     st.markdown(
@@ -288,7 +283,7 @@ with aba_novo:
         with col_env2:
             btn_enviar_drive = st.button("🚀 Enviar Arquivos para o Google Drive", key="btn_enviar_drive")
 
-        if btn_env_drive:
+        if btn_enviar_drive:
             nome_pasta = st.session_state.get("nome_servidor", "Servidor")
             lista_arquivos_payload = []
 
