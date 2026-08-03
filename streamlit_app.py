@@ -31,7 +31,6 @@ st.markdown("""
 EXCEL_FILE = "Cadastros_Servidores.xlsx"
 GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz8lQ3xhchTyl2QrvmIYr9qVZIFsx_8I2hIb0-jBqHOX63G8OzExrHPr2OlROfn_hSZ/exec"
 
-# Chave de acesso do administrador
 CHAVE_ADMIN = "Sindicatojus"
 
 def verificar_admin():
@@ -52,7 +51,6 @@ def verificar_admin():
         return False
 
 def carregar_servidores_cadastrados():
-    """Lê a planilha mantendo todo o histórico acumulado por linha"""
     if os.path.exists(EXCEL_FILE):
         try:
             df = pd.read_excel(EXCEL_FILE)
@@ -63,7 +61,6 @@ def carregar_servidores_cadastrados():
     return pd.DataFrame()
 
 def salvar_no_excel(dados):
-    """Adiciona o novo cadastro preservando obrigatoriamente os dados anteriores"""
     df_novo = pd.DataFrame([dados])
     if os.path.exists(EXCEL_FILE):
         df_existente = pd.read_excel(EXCEL_FILE)
@@ -86,14 +83,18 @@ def enviar_para_google_drive(nome_servidor, lista_arquivos):
         print(f"Erro ao conectar: {e}")
         return False
 
-def formatar_data_auto(texto):
-    """Formata automaticamente números puros em DD/MM/AAAA conforme o usuário digita"""
-    digitos = "".join(filter(str.isdigit, str(texto)))[:8]
+def formatar_data_callback():
+    """Formata automaticamente o valor digitado no campo de data adicionando as barras /"""
+    val = st.session_state.input_ing_raw
+    digitos = "".join(filter(str.isdigit, str(val)))[:8]
+    formatado = ""
     if len(digitos) > 4:
-        return f"{digitos[:2]}/{digitos[2:4]}/{digitos[4:]}"
+        formatado = f"{digitos[:2]}/{digitos[2:4]}/{digitos[4:]}"
     elif len(digitos) > 2:
-        return f"{digitos[:2]}/{digitos[2:]}"
-    return digitos
+        formatado = f"{digitos[:2]}/{digitos[2:]}"
+    else:
+        formatado = digitos
+    st.session_state.input_ing_raw = formatado
 
 def preencher_documentos_oficiais(dados):
     caminho_procuracao = "template_procuracao.pdf"
@@ -226,9 +227,14 @@ with aba_novo:
         cargo = st.text_input("Cargo", key="input_cargo")
         orgao = st.text_input("Órgão", key="input_orgao")
         
-        # Campo de Data de Ingresso com formatação interativa e segura (sem apagar)
-        raw_ingresso = st.text_input("Data de Ingresso", placeholder="DD/MM/AAAA", key="input_ing_raw", max_chars=10)
-        ingresso = formatar_data_auto(raw_ingresso)
+        # Campo de Data de Ingresso com máscara interativa via callback
+        ingresso = st.text_input(
+            "Data de Ingresso", 
+            placeholder="DD/MM/AAAA", 
+            key="input_ing_raw", 
+            max_chars=10, 
+            on_change=formatar_data_callback
+        )
 
     with col_p2:
         st.markdown("**Dados Pessoais**")
@@ -323,7 +329,6 @@ with aba_novo:
                     })
 
             if lista_arquivos_payload:
-            # Removido bloco corrompido, mantendo o envio padrão
                 with st.spinner("Enviando arquivos para o Google Drive..."):
                     sucesso = enviar_para_google_drive(nome_pasta, lista_arquivos_payload)
                     if sucesso:
