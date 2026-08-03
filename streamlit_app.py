@@ -76,28 +76,26 @@ if "pdf_proc" not in st.session_state:
 if "pdf_termo" not in st.session_state:
     st.session_state.pdf_termo = None
 
-with st.form("form_cadastro"):
-    st.subheader("Dados Profissionais")
-    matricula = st.text_input("Matrícula (SIAPE)")
-    cargo = st.text_input("Cargo")
-    orgao = st.text_input("Órgão")
-    ingresso = st.text_input("Data de Ingresso")
+# Campos de entrada
+st.subheader("Dados Profissionais")
+matricula = st.text_input("Matrícula (SIAPE)")
+cargo = st.text_input("Cargo")
+orgao = st.text_input("Órgão")
+ingresso = st.text_input("Data de Ingresso")
 
-    st.subheader("Dados Pessoais")
-    nome = st.text_input("Nome Completo")
-    cpf = st.text_input("CPF")
-    email = st.text_input("E-mail")
-    rg = st.text_input("RG")
-    telefone = st.text_input("Telefone")
-    estado_civil = st.text_input("Estado Civil")
-    cep = st.text_input("CEP")
-    endereco = st.text_input("Endereço")
-    municipio = st.text_input("Município")
-    estado = st.text_input("Estado (UF)")
+st.subheader("Dados Pessoais")
+nome = st.text_input("Nome Completo")
+cpf = st.text_input("CPF")
+email = st.text_input("E-mail")
+rg = st.text_input("RG")
+telefone = st.text_input("Telefone")
+estado_civil = st.text_input("Estado Civil")
+cep = st.text_input("CEP")
+endereco = st.text_input("Endereço")
+municipio = st.text_input("Município")
+estado = st.text_input("Estado (UF)")
 
-    submitted = st.form_submit_button("Salvar e Gerar Documentos")
-
-if submitted:
+if st.button("Salvar e Gerar Documentos"):
     if not nome.strip():
         st.error("Por favor, preencha o campo 'Nome Completo'.")
     else:
@@ -108,16 +106,15 @@ if submitted:
         }
         salvar_no_excel(dados_usuario)
         st.session_state.dados_usuario = dados_usuario
+        st.session_state.nome_servidor = nome.strip()
         
-        # Gera os PDFs oficiais
+        # Gera os PDFs
         st.session_state.pdf_proc, st.session_state.pdf_termo = preencher_documentos_oficiais(dados_usuario)
         
-        # Cria a pasta dedicada ao servidor imediatamente dentro de 'Documentos Upload'
-        nome_servidor = nome.strip()
-        pasta_servidor = os.path.join(PASTA_PRINCIPAL, nome_servidor)
+        # Cria a pasta do servidor IMEDIATAMENTE ao salvar
+        pasta_servidor = os.path.join(PASTA_PRINCIPAL, st.session_state.nome_servidor)
         os.makedirs(pasta_servidor, exist_ok=True)
 
-        # Salva os PDFs gerados na pasta do servidor
         if st.session_state.pdf_proc:
             with open(os.path.join(pasta_servidor, "Procuracao_Preenchida.pdf"), "wb") as f:
                 f.write(st.session_state.pdf_proc)
@@ -126,9 +123,14 @@ if submitted:
             with open(os.path.join(pasta_servidor, "Termo_Preenchido.pdf"), "wb") as f:
                 f.write(st.session_state.pdf_termo)
 
-        st.success(f"Dados salvos e pasta '{nome_servidor}' criada em 'Documentos Upload' com sucesso!")
+        st.success(f"Dados salvos e pasta '{st.session_state.nome_servidor}' criada com sucesso!")
 
-if st.session_state.pdf_proc or st.session_state.pdf_termo:
+# Se os dados já foram salvos ou gerados, exibe os botões e os uploads
+if "nome_servidor" in st.session_state or st.session_state.pdf_proc or st.session_state.pdf_termo:
+    
+    if "nome_servidor" not in st.session_state:
+        st.session_state.nome_servidor = nome.strip() if nome.strip() else "Servidor_Sem_Nome"
+
     st.markdown("---")
     st.markdown("### 📥 Baixar Documentos Gerados")
     col1, col2 = st.columns(2)
@@ -156,27 +158,23 @@ if st.session_state.pdf_proc or st.session_state.pdf_termo:
         upload_termo_assinado = st.file_uploader("Enviar Termo Assinado", type=["pdf"], key="upload_termo")
 
     if st.button("🚀 Enviar Dados e Documentos para os Formulários"):
+        nome_pasta = st.session_state.nome_servidor
+        pasta_servidor = os.path.join(PASTA_PRINCIPAL, nome_pasta)
+        os.makedirs(pasta_servidor, exist_ok=True)
+
+        arquivos_salvos = 0
+
+        for arquivo_up in [doc_identidade, comprovante_residencia, upload_proc_assinada, upload_termo_assinado]:
+            if arquivo_up is not None:
+                caminho_arquivo = os.path.join(pasta_servidor, arquivo_up.name)
+                with open(caminho_arquivo, "wb") as f:
+                    f.write(arquivo_up.getbuffer())
+                arquivos_salvos += 1
+
         if "dados_usuario" in st.session_state:
-            dados_envio = st.session_state.dados_usuario
-            nome_servidor = dados_envio["Nome"].strip()
-            pasta_servidor = os.path.join(PASTA_PRINCIPAL, nome_servidor)
-            os.makedirs(pasta_servidor, exist_ok=True)
+            enviar_para_google_forms(st.session_state.dados_usuario)
 
-            arquivos_salvos = 0
-
-            # Salva os documentos anexados pelo usuário na mesma pasta do servidor
-            for arquivo_up in [doc_identidade, comprovante_residencia, upload_proc_assinada, upload_termo_assinado]:
-                if arquivo_up is not None:
-                    caminho_arquivo = os.path.join(pasta_servidor, arquivo_up.name)
-                    with open(caminho_arquivo, "wb") as f:
-                        f.write(arquivo_up.getbuffer())
-                    arquivos_salvos += 1
-
-            enviar_para_google_forms(dados_envio)
-
-            st.success(f"Sucesso! {arquivos_salvos} documento(s) anexado(s) foram salvos na pasta: **Documentos Upload/{nome_servidor}**")
-        else:
-            st.warning("Por favor, preencha e salve os dados cadastrais primeiro.")
+        st.success(f"Sucesso! {arquivos_salvos} documento(s) foram salvos na pasta: **Documentos Upload/{nome_pasta}**")
 
     st.markdown("---")
     st.markdown("### Tutorial para envio dos documentos (Nesse site)")
