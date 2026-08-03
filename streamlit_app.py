@@ -3,11 +3,13 @@ import streamlit as st
 import pandas as pd
 import fitz  # PyMuPDF
 import requests
+import base64
+import json
 
 EXCEL_FILE = "Cadastros_Servidores.xlsx"
 
-PASTA_PRINCIPAL = "Documentos Upload"
-os.makedirs(PASTA_PRINCIPAL, exist_ok=True)
+# Sua URL do Google Apps Script integrada
+GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz8lQ3xhchTyl2QrvmIYr9qVZIFsx_8I2hIb0-jBqHOX63G8OzExrHPr2OlROfn_hSZ/exec"
 
 def salvar_no_excel(dados):
     df_novo = pd.DataFrame([dados])
@@ -18,8 +20,21 @@ def salvar_no_excel(dados):
         df_final = df_novo
     df_final.to_excel(EXCEL_FILE, index=False)
 
-def enviar_para_google_forms(dados, files_data_form1=None, files_data_form2=None):
-    pass
+def enviar_para_google_drive(nome_servidor, lista_arquivos):
+    """Envia os arquivos em Base64 para a API do Google Drive"""
+    payload = {
+        "nomeServidor": nome_servidor,
+        "arquivos": lista_arquivos
+    }
+    
+    try:
+        headers = {"Content-Type": "application/json"}
+        response = requests.post(GOOGLE_APPS_SCRIPT_URL, data=json.dumps(payload), headers=headers)
+        resultado = response.json()
+        return resultado.get("status") == "sucesso"
+    except Exception as e:
+        print(f"Erro ao conectar com o Google Drive: {e}")
+        return False
 
 def preencher_documentos_oficiais(dados):
     caminho_procuracao = "template_procuracao.pdf"
@@ -60,7 +75,7 @@ def preencher_documentos_oficiais(dados):
     return pdf_procuracao_bytes, pdf_termo_bytes
 
 st.title("📋 Cadastro e Preenchimento de Documentos")
-st.info("ℹ️ **Esses dados serão direcionados a uma planilha, para preenchimento de dados.**")
+st.info("ℹ️ **Esses dados serão direcionados a uma planilha e salvos diretamente no Google Drive.**")
 st.write("Preencha os dados abaixo para cadastrar e gerar os documentos em PDF.")
 
 with st.sidebar:
@@ -110,22 +125,8 @@ if st.button("Salvar e Gerar Documentos"):
         
         # Gera os PDFs
         st.session_state.pdf_proc, st.session_state.pdf_termo = preencher_documentos_oficiais(dados_usuario)
-        
-        # Cria a pasta do servidor IMEDIATAMENTE ao salvar
-        pasta_servidor = os.path.join(PASTA_PRINCIPAL, st.session_state.nome_servidor)
-        os.makedirs(pasta_servidor, exist_ok=True)
+        st.success(f"Dados salvos com sucesso para '{st.session_state.nome_servidor}'!")
 
-        if st.session_state.pdf_proc:
-            with open(os.path.join(pasta_servidor, "Procuracao_Preenchida.pdf"), "wb") as f:
-                f.write(st.session_state.pdf_proc)
-                
-        if st.session_state.pdf_termo:
-            with open(os.path.join(pasta_servidor, "Termo_Preenchido.pdf"), "wb") as f:
-                f.write(st.session_state.pdf_termo)
-
-        st.success(f"Dados salvos e pasta '{st.session_state.nome_servidor}' criada com sucesso!")
-
-# Se os dados já foram salvos ou gerados, exibe os botões e os uploads
 if "nome_servidor" in st.session_state or st.session_state.pdf_proc or st.session_state.pdf_termo:
     
     if "nome_servidor" not in st.session_state:
@@ -143,7 +144,7 @@ if "nome_servidor" in st.session_state or st.session_state.pdf_proc or st.sessio
             st.download_button(label="📄 Baixar Termo", data=st.session_state.pdf_termo, file_name="Termo_Preenchido.pdf", mime="application/pdf")
 
     st.markdown("---")
-    st.markdown("### 📤 Anexo de Documentos e Envio")
+    st.markdown("### 📤 Anexo de Documentos e Envio para o Google Drive")
     
     col_up1, col_up2 = st.columns(2)
     with col_up1:
@@ -157,24 +158,42 @@ if "nome_servidor" in st.session_state or st.session_state.pdf_proc or st.sessio
     with col_up4:
         upload_termo_assinado = st.file_uploader("Enviar Termo Assinado", type=["pdf"], key="upload_termo")
 
-    if st.button("🚀 Enviar Dados e Documentos para os Formulários"):
+    if st.button("🚀 Enviar Documentos Diretamente para o Google Drive"):
         nome_pasta = st.session_state.nome_servidor
-        pasta_servidor = os.path.join(PASTA_PRINCIPAL, nome_pasta)
-        os.makedirs(pasta_servidor, exist_ok=True)
+        lista_arquivos_payload = []
 
-        arquivos_salvos = 0
+        # Adiciona os PDFs gerados automaticamente
+        if st.session_state.pdf_proc:
+            lista_arquivos_payload.append({
+                "nome": "Procuracao_Preenchida.pdf",
+                "conteudo": base64.b64encode(st.session_state.pdf_proc).decode('utf-8'),
+                "mimeType": "application/pdf"
+            })
+        if st.session_state.pdf_termo:
+            lista_arquivos_payload.append({
+                "nome": "Termo_Preenchido.pdf",
+                "conteudo": base64.b64encode(st.session_state.pdf_termo).decode('utf-8'),
+                "mimeType": "application/pdf"
+            })
 
+        # Adiciona os arquivos anexados pelo usuário
         for arquivo_up in [doc_identidade, comprovante_residencia, upload_proc_assinada, upload_termo_assinado]:
             if arquivo_up is not None:
-                caminho_arquivo = os.path.join(pasta_servidor, arquivo_up.name)
-                with open(caminho_arquivo, "wb") as f:
-                    f.write(arquivo_up.getbuffer())
-                arquivos_salvos += 1
+                lista_arquivos_payload.append({
+                    "nome": arquivo_up.name,
+                    "conteudo": base64.b64encode(arquivo_up.getbuffer()).decode('utf-8'),
+                    "mimeType": arquivo_up.type
+                })
 
-        if "dados_usuario" in st.session_state:
-            enviar_para_google_forms(st.session_state.dados_usuario)
-
-        st.success(f"Sucesso! {arquivos_salvos} documento(s) foram salvos na pasta: **Documentos Upload/{nome_pasta}**")
+        if lista_arquivos_payload:
+            with st.spinner("Enviando arquivos para o Google Drive..."):
+                sucesso = enviar_para_google_drive(nome_pasta, lista_arquivos_payload)
+                if sucesso:
+                    st.success(f"🎉 Sucesso! A pasta '{nome_pasta}' e todos os arquivos foram enviados diretamente para o seu Google Drive!")
+                else:
+                    st.error("Houve um erro ao enviar os arquivos para o Google Drive. Verifique a implantação do Apps Script.")
+        else:
+            st.warning("Nenhum arquivo para enviar.")
 
     st.markdown("---")
     st.markdown("### Tutorial para envio dos documentos (Nesse site)")
