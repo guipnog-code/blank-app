@@ -194,9 +194,29 @@ with aba_salvos:
                         st.success(f"Documentos gerados com sucesso para {st.session_state.nome_servidor}!")
 
                 with col_b2:
+                    st.markdown("---")
+                    
+                    # 1. Botão Termo de Consentimento (Novo Formulário)
+                    st.markdown("##### **Termo de Consentimento**")
+                    base_form_geral = "https://docs.google.com/forms/d/e/1FAIpQLSfwwmAw9jqwWv2KTEWXQFMXaz36mECCCuVdYsxlLg48KkrsMQ/viewform"
+                    params_geral = {
+                        "entry.463599518": limpar_valor(dados_linha.get("Nome", "")),
+                        "entry.1304511106": limpar_valor(dados_linha.get("Matrícula", ""))
+                    }
+                    url_geral = f"{base_form_geral}?usp=pp_url&{urllib.parse.urlencode(params_geral)}"
+                    st.markdown(
+                        f"""<a href="{url_geral}" target="_blank">
+                            <button style="width:100%; border-radius:6px; font-weight:bold; height:3em; background-color:#198754; color:white; border:none; cursor:pointer; margin-bottom: 10px;">
+                                📝 Abrir Termo de Consentimento Preenchido
+                            </button>
+                        </a>""",
+                        unsafe_allow_html=True
+                    )
+
+                    # 2. Botão Formulário de Correção Monetária (Anterior)
+                    st.markdown("##### **Forms Correção Monetária**")
                     base_form_url = "https://docs.google.com/forms/d/e/1FAIpQLScFHB1lA_2cTeg-ANSa0TK3I4LwwMTa6T9cMnxQiWmbBD6XOw/viewform"
                     
-                    # Tratamento da data para o formato de calendário do Forms (ano, mês, dia)
                     str_data = limpar_valor(dados_linha.get("Data de Ingresso", ""))
                     ano, mes, dia = "", "", ""
                     try:
@@ -225,7 +245,7 @@ with aba_salvos:
                     
                     st.markdown(
                         f"""<a href="{url_preenchida}" target="_blank">
-                            <button style="width:100%; border-radius:6px; font-weight:bold; height:3em; background-color:#198754; color:white; border:none; cursor:pointer;">
+                            <button style="width:100%; border-radius:6px; font-weight:bold; height:3em; background-color:#0d6efd; color:white; border:none; cursor:pointer;">
                                 📝 Abrir Google Forms Preenchido
                             </button>
                         </a>""",
