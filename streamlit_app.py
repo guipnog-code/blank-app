@@ -59,7 +59,6 @@ st.markdown(f"""
     </div>
 
     <script>
-    // Monitora o botão de expandir/recolher do menu lateral (>> ou <<)
     const doc = window.parent.document;
     
     function monitorarCliqueMenu() {
@@ -70,7 +69,6 @@ st.markdown(f"""
                 const aviso = doc.getElementById('aviso-clique-aqui');
                 if (aviso) aviso.style.display = 'none';
                 
-                // Força o Streamlit a recarregar a página instantaneamente via trigger invisível
                 const btnHeader = doc.querySelector('button[kind="header"]');
                 if (btnHeader) {
                     btnHeader.click();
@@ -85,9 +83,7 @@ st.markdown(f"""
     </script>
 """, unsafe_allow_html=True)
 
-# Assim que houver a interação que aciona o script, altera o estado no Python de forma definitiva até o F5
 try:
-    parent_doc_check = st.query_params
     if "sidebar_aberto" in st.query_params:
         st.session_state.fechou_sidebar = True
 except Exception:
