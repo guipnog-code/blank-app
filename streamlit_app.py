@@ -128,10 +128,6 @@ if "pdf_proc" not in st.session_state:
 if "pdf_termo" not in st.session_state:
     st.session_state.pdf_termo = None
 
-# Inicializa o controle de aba no session state
-if "aba_selecionada" not in st.session_state:
-    st.session_state.aba_selecionada = "➕ Novo Cadastro"
-
 # Cabeçalho Principal com Métricas Rápidas
 col_cab1, col_cab2 = st.columns([3, 1])
 with col_cab1:
@@ -161,20 +157,10 @@ with st.sidebar:
         elif chave_input:
             st.error("❌ Incorreta.")
 
-# Menu de abas idêntico ao visual original com suporte a redirecionamento por estado
-abas_disponiveis = ["➕ Novo Cadastro", "📂 Servidores Já Cadastrados", "📖 Tutorial"]
+# Criação das abas nativas originais do Streamlit
+aba_novo, aba_salvos, aba_tutorial = st.tabs(["➕ Novo Cadastro", "📂 Servidores Já Cadastrados", "📖 Tutorial"])
 
-st.session_state.aba_selecionada = st.radio(
-    "Navegação:",
-    abas_disponiveis,
-    index=abas_disponiveis.index(st.session_state.aba_selecionada) if st.session_state.aba_selecionada in abas_disponiveis else 0,
-    horizontal=True,
-    label_visibility="collapsed"
-)
-
-st.markdown("---")
-
-if st.session_state.aba_selecionada == "📂 Servidores Já Cadastrados":
+with aba_salvos:
     st.subheader("🔍 Pesquisar e Selecionar Servidor da Planilha")
     
     if usuario_autorizado:
@@ -269,14 +255,20 @@ if st.session_state.aba_selecionada == "📂 Servidores Já Cadastrados":
     else:
         st.warning("🔒 **Conteúdo Restrito.** Abra a **Área do Administrador** na barra lateral e insira a chave de acesso correta.")
 
-elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
+with aba_novo:
     col_sub_1, col_sub_2 = st.columns([3, 1])
     with col_sub_1:
         st.subheader("📝 Preenchimento de Dados Cadastrais (Livre para Uso)")
     with col_sub_2:
-        if st.button("💡 Ver Tutorial de Ajuda", key="btn_ir_tutorial"):
-            st.session_state.aba_selecionada = "📖 Tutorial"
-            st.rerun()
+        # Script JS integrado que simula o clique na aba de tutorial nativa do Streamlit
+        st.markdown("""
+            <button onclick="
+                const tabs = window.parent.document.querySelectorAll('button[data-baseweb=\\'tab\\']');
+                if (tabs.length >= 3) { tabs[2].click(); }
+            " style="width:100%; border-radius:6px; font-weight:bold; height:3em; background-color:#0d6efd; color:white; border:none; cursor:pointer;">
+                💡 Ver Tutorial de Ajuda
+            </button>
+        """, unsafe_allow_html=True)
 
     with st.container(border=True):
         col_p1, col_p2 = st.columns(2)
@@ -390,7 +382,7 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
                 else:
                     st.warning("⚠️ Nenhum arquivo anexado.")
 
-elif st.session_state.aba_selecionada == "📖 Tutorial":
+with aba_tutorial:
     st.subheader("📖 Tutorial de Utilização do Sistema")
     st.info("Selecione abaixo o dispositivo que você está utilizando para visualizar o tutorial correspondente:")
 
