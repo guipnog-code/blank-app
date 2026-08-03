@@ -27,70 +27,23 @@ st.markdown("""
         }
         .stButton>button:hover { background-color: #0b5ed7; color: white; }
         
-        /* Animação e posicionamento exato no topo esquerdo ao lado do ícone >> */
-        @keyframes piscar-seta-topo {
+        /* Animação suave para o aviso dentro da barra lateral */
+        @keyframes piscar-seta-lateral {
             0% { opacity: 0.3; transform: translateX(0px); }
-            50% { opacity: 1; transform: translateX(-5px); }
+            50% { opacity: 1; transform: translateX(-4px); }
             100% { opacity: 0.3; transform: translateX(0px); }
         }
-        .aviso-topo-esquerdo {
-            position: fixed;
-            top: 18px;
-            left: 55px;
-            z-index: 999999;
+        .aviso-menu-sidebar {
             font-weight: bold;
             color: #ffffff;
-            background-color: transparent;
-            animation: piscar-seta-topo 1.2s infinite ease-in-out;
+            animation: piscar-seta-lateral 1.2s infinite ease-in-out;
             font-size: 14px;
+            margin-bottom: 15px;
             display: flex;
             align-items: center;
-            gap: 4px;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
-            pointer-events: none;
+            gap: 6px;
         }
     </style>
-    
-    <!-- Elemento flutuante no topo esquerdo -->
-    <div id="aviso-clique-aqui" class="aviso-topo-esquerdo">
-        <span>⬅️</span> <span>clique aqui</span>
-    </div>
-
-    <script>
-    // Script inteligente para monitorar e ocultar o aviso quando o menu for aberto
-    function atualizarVisibilidadeAviso() {
-        try {
-            const doc = window.parent.document;
-            const aviso = doc.getElementById('aviso-clique-aqui');
-            const sidebar = doc.querySelector('[data-testid="stSidebar"]');
-            
-            if (aviso && sidebar) {
-                // Obtém o atributo aria-expanded ou calcula a largura real da sidebar
-                const expanded = sidebar.getAttribute('aria-expanded');
-                const rect = sidebar.getBoundingClientRect();
-                
-                // Se estiver expandido (aberto) ou com largura maior que 80px, oculta o aviso
-                if (expanded === 'true' || rect.width > 80) {
-                    aviso.style.display = 'none';
-                } else {
-                    aviso.style.display = 'flex';
-                }
-            }
-        } catch (e) {
-            // Ignora erros de cross-origin se houver restrição
-        }
-    }
-
-    // Executa em tempo real a cada clique e mudança de estado na página
-    const observer = new MutationObserver(atualizarVisibilidadeAviso);
-    if (window.parent.document.body) {
-        observer.observe(window.parent.document.body, { attributes: true, subtree: true, childList: true });
-    }
-    window.parent.document.addEventListener('click', () => {
-        setTimeout(atualizarVisibilidadeAviso, 50);
-    });
-    setInterval(atualizarVisibilidadeAviso, 200);
-    </script>
 """, unsafe_allow_html=True)
 
 EXCEL_FILE = "Cadastros_Servidores.xlsx"
@@ -99,6 +52,9 @@ GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz8lQ3xhchTyl2
 CHAVE_ADMIN = "Sindicatojus"
 
 def verificar_admin():
+    # Aviso animado no topo da barra lateral (aparece quando o menu abre e some quando fecha)
+    st.sidebar.markdown('<div class="aviso-menu-sidebar">⬅️ clique aqui</div>', unsafe_allow_html=True)
+    
     st.sidebar.markdown("### 🔐 Acesso Restrito")
     st.sidebar.markdown("*(Exclusivo para preenchimento rápido)*")
     
