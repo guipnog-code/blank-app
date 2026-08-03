@@ -31,17 +31,14 @@ st.markdown("""
 EXCEL_FILE = "Cadastros_Servidores.xlsx"
 GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz8lQ3xhchTyl2QrvmIYr9qVZIFsx_8I2hIb0-jBqHOX63G8OzExrHPr2OlROfn_hSZ/exec"
 
-# ==========================================
-# CHAVE DE ACESSO DEFINIDA PELO ADMINISTRADOR
-# ==========================================
+# Chave de acesso do administrador
 CHAVE_ADMIN = "Sindicatojus"
 
 def verificar_admin():
-    """Valida se a chave de acesso digitada na barra lateral está correta"""
     st.sidebar.markdown("### 🔐 Acesso Restrito")
     st.sidebar.markdown("*(Exclusivo para preenchimento rápido)*")
     
-    chave_input = st.sidebar.text_input("Digite a chave de acesso:", type="password")
+    chave_input = st.sidebar.text_input("Digite a chave de acesso:", type="password", key="input_chave_admin")
     
     if not chave_input:
         st.sidebar.info("💡 Insira a chave para desbloquear a aba de Servidores Cadastrados.")
@@ -125,11 +122,18 @@ def preencher_documentos_oficiais(dados):
 
     return pdf_procuracao_bytes, pdf_termo_bytes
 
+# Inicializa variáveis de estado para persistir ao atualizar a página
+if "nome_servidor" not in st.session_state:
+    st.session_state.nome_servidor = None
+if "pdf_proc" not in st.session_state:
+    st.session_state.pdf_proc = None
+if "pdf_termo" not in st.session_state:
+    st.session_state.pdf_termo = None
+
 st.title("⚖️ Sistema de Cadastro e Gestão de Documentos")
 st.markdown("##### **Ação de Correção Monetária de Exercícios Anteriores**")
 st.markdown("---")
 
-# Barra lateral com opção de esconder e chave de acesso restrito
 with st.sidebar:
     st.header("💡 Ajuda e Navegação")
     st.info(
@@ -138,7 +142,6 @@ with st.sidebar:
     st.markdown("---")
     usuario_autorizado = verificar_admin()
 
-# ABAS DO SITE
 aba_novo, aba_salvos = st.tabs(["➕ Novo Cadastro", "📂 Servidores Já Cadastrados (Preenchimento Rápido)"])
 
 with aba_salvos:
@@ -161,14 +164,13 @@ with aba_salvos:
                 col_b1, col_b2 = st.columns(2)
                 
                 with col_b1:
-                    if st.button("📄 Gerar Documentos para este Servidor"):
+                    if st.button("📄 Gerar Documentos para este Servidor", key="btn_gerar_salvo"):
                         st.session_state.dados_usuario = dados_linha
                         st.session_state.nome_servidor = str(dados_linha.get("Nome", "")).strip()
                         st.session_state.pdf_proc, st.session_state.pdf_termo = preencher_documentos_oficiais(dados_linha)
                         st.success(f"Documentos gerados com sucesso para {st.session_state.nome_servidor}!")
 
                 with col_b2:
-                    # Link pré-preenchido do Google Forms
                     base_form_url = "https://docs.google.com/forms/d/e/1FAIpQLScFHB1lA_2cTeg-ANSa0TK3I4LwwMTa6T9cMnxQiWmbBD6XOw/viewform"
                     
                     params = {
@@ -229,7 +231,7 @@ with aba_novo:
     st.markdown("")
     col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
     with col_btn2:
-        btn_salvar = st.button("💾 Salvar na Planilha e Gerar Documentos")
+        btn_salvar = st.button("💾 Salvar na Planilha e Gerar Documentos", key="btn_salvar_novo")
 
     if btn_salvar:
         if not nome.strip():
@@ -247,17 +249,17 @@ with aba_novo:
             st.session_state.pdf_proc, st.session_state.pdf_termo = preencher_documentos_oficiais(dados_usuario)
             st.success(f"✨ Dados salvos na planilha e documentos gerados para **{st.session_state.nome_servidor}**!")
 
-    if "nome_servidor" in st.session_state or "pdf_proc" in st.session_state:
+    if st.session_state.get("nome_servidor") or st.session_state.get("pdf_proc"):
         st.markdown("---")
         st.subheader(f"⚙️ Gestão de Arquivos para: {st.session_state.get('nome_servidor', '')}")
         
         col_dl1, col_dl2 = st.columns(2)
         if st.session_state.get("pdf_proc"):
             with col_dl1:
-                st.download_button(label="📄 Baixar Procuração Preenchida", data=st.session_state.pdf_proc, file_name="Procuracao_Preenchida.pdf", mime="application/pdf")
+                st.download_button(label="📄 Baixar Procuração Preenchida", data=st.session_state.pdf_proc, file_name="Procuracao_Preenchida.pdf", mime="application/pdf", key="dl_proc")
         if st.session_state.get("pdf_termo"):
             with col_dl2:
-                st.download_button(label="📄 Baixar Termo Preenchido", data=st.session_state.pdf_termo, file_name="Termo_Preenchido.pdf", mime="application/pdf")
+                st.download_button(label="📄 Baixar Termo Preenchido", data=st.session_state.pdf_termo, file_name="Termo_Preenchido.pdf", mime="application/pdf", key="dl_termo")
 
         st.markdown("---")
         st.subheader("📤 Envio de Documentos para o Google Drive")
@@ -273,7 +275,7 @@ with aba_novo:
         st.markdown("")
         col_env1, col_env2, col_env3 = st.columns([1, 2, 1])
         with col_env2:
-            btn_enviar_drive = st.button("🚀 Enviar Arquivos para o Google Drive")
+            btn_enviar_drive = st.button("🚀 Enviar Arquivos para o Google Drive", key="btn_enviar_drive")
 
         if btn_enviar_drive:
             nome_pasta = st.session_state.get("nome_servidor", "Servidor")
@@ -310,7 +312,6 @@ with aba_novo:
             else:
                 st.warning("⚠️ Nenhum arquivo anexado.")
 
-    # --- SEÇÃO DE TUTORIAL DENTRO DA ABA NOVO CADASTRO ---
     st.markdown("---")
     st.subheader("📖 Tutorial para Envio dos Documentos")
     st.info(
