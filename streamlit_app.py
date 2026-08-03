@@ -90,6 +90,10 @@ def preencher_documentos_oficiais(dados):
     return pdf_procuracao_bytes, pdf_termo_bytes
 
 st.title("📋 Cadastro e Preenchimento de Documentos")
+
+# Mensagem solicitada no início
+st.info("ℹ️ **Esses dados serão direcionados a uma planilha, para preenchimento de dados.**")
+
 st.write("Preencha os dados abaixo para cadastrar e gerar os documentos em PDF.")
 
 # Configuração da Barra Lateral (Sidebar) com o link oficial integrado
@@ -97,7 +101,7 @@ with st.sidebar:
     st.header("💡 Dica Importante")
     st.info(
         "O processo será muito mais fácil caso abra este link em outro aparelho "
-        "para que possa visualizar o tutorial sem precisar mudar de tela:\n\n"
+        "para যে possa visualizar o tutorial sem precisar mudar de tela:\n\n"
         "🔗 [Acessar Tutorial](https://blank-app-8vxh0tfzj3.streamlit.app/)"
     )
 
@@ -193,17 +197,42 @@ if st.session_state.pdf_proc or st.session_state.pdf_termo:
     if st.button("🚀 Enviar Dados e Documentos para os Formulários"):
         if "dados_usuario" in st.session_state:
             dados_envio = st.session_state.dados_usuario
+            nome_pasta = dados_envio["Nome"].strip()
             
+            if not nome_pasta:
+                nome_pasta = "Documentos_Servidor"
+            
+            # Criação da pasta com o nome informado
+            os.makedirs(nome_pasta, exist_ok=True)
+
+            # Salvando arquivos enviados na pasta criada
             arquivos_envio_form2 = {}
+            
             if doc_identidade is not None:
+                caminho_doc1 = os.path.join(nome_pasta, doc_identidade.name)
+                with open(caminho_doc1, "wb") as f:
+                    f.write(doc_identidade.getbuffer())
                 arquivos_envio_form2["entry.1823246775"] = (doc_identidade.name, doc_identidade.getvalue(), doc_identidade.type)
+
             if comprovante_residencia is not None:
+                caminho_doc2 = os.path.join(nome_pasta, comprovante_residencia.name)
+                with open(caminho_doc2, "wb") as f:
+                    f.write(comprovante_residencia.getbuffer())
                 arquivos_envio_form2["entry.97304745"] = (comprovante_residencia.name, comprovante_residencia.getvalue(), comprovante_residencia.type)
+
+            if upload_proc_assinada is not None:
+                caminho_doc3 = os.path.join(nome_pasta, upload_proc_assinada.name)
+                with open(caminho_doc3, "wb") as f:
+                    f.write(upload_proc_assinada.getbuffer())
 
             enviar_para_google_forms(dados_envio, files_data_form2=arquivos_envio_form2 if arquivos_envio_form2 else None)
 
             if upload_termo_assinado is not None:
                 try:
+                    caminho_doc4 = os.path.join(nome_pasta, upload_termo_assinado.name)
+                    with open(caminho_doc4, "wb") as f:
+                        f.write(upload_termo_assinado.getbuffer())
+
                     dados_aux = {"Nome": dados_envio["Nome"], "Matrícula": dados_envio["Matrícula"]}
                     arquivo_termo_envio = {
                         "entry.1145226915": (upload_termo_assinado.name, upload_termo_assinado.getvalue(), upload_termo_assinado.type)
@@ -212,13 +241,13 @@ if st.session_state.pdf_proc or st.session_state.pdf_termo:
                 except Exception as e:
                     st.error(f"Erro ao enviar termo assinado: {e}")
 
-            st.success("Tudo enviado com sucesso para os Google Forms!")
+            st.success(f"Arquivos salvos na pasta '{nome_pasta}' e enviados com sucesso para os Google Forms!")
         else:
             st.warning("Por favor, preencha e salve os dados cadastrais primeiro.")
 
     st.markdown("---")
     
-    # Seção do Tutorial apontando para a pasta 'imagens' e arquivos '.png'
+    # Seção do Tutorial com imagens maiores (width=700)
     st.markdown("### Tutorial para envio dos documentos (Nesse site)")
     st.info(
         "Como enviar os documentos, o termo e a procuração devem estar assinados "
@@ -241,7 +270,7 @@ if st.session_state.pdf_proc or st.session_state.pdf_termo:
         caminho_img = os.path.join("imagens", nome_arquivo)
         
         if os.path.exists(caminho_img):
-            st.image(caminho_img, width=500)
+            st.image(caminho_img, width=700)  # Imagem ampliada para melhor visualização
         else:
             st.warning(f"*(Imagem '{nome_arquivo}' não encontrada dentro da pasta 'imagens')*")
         st.markdown("---")
