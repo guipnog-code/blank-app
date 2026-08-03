@@ -181,7 +181,6 @@ with aba_salvos:
                 with col_b2:
                     base_form_url = "https://docs.google.com/forms/d/e/1FAIpQLScFHB1lA_2cTeg-ANSa0TK3I4LwwMTa6T9cMnxQiWmbBD6XOw/viewform"
                     
-                    # Parâmetros mapeados com os IDs reais extraídos do formulário
                     params = {
                         "entry.336229460": dados_linha.get("Nome", ""),
                         "entry.1167987372": dados_linha.get("Matrícula", ""),
@@ -223,7 +222,7 @@ with aba_novo:
         st.markdown("**Dados Pessoais**")
         nome = st.text_input("Nome Completo", key="input_nome")
         cpf = st.text_input("CPF", key="input_cpf")
-        rg = st.text_input("RG", key="input_rg")
+        rg = st.text_input("RG - Órgão de Expedição", key="input_rg")
         email = st.text_input("E-mail", key="input_email")
 
     col_p3, col_p4, col_p5 = st.columns(3)
