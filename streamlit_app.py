@@ -130,7 +130,7 @@ st.title("⚖️ Sistema de Cadastro e Gestão de Documentos")
 st.markdown("##### **Ação de Correção Monetária de Exercícios Anteriores**")
 st.markdown("---")
 
-# Barra lateral com opção de esconder e campo de login restrito
+# Barra lateral com opção de esconder e campo de login restrito para o preenchimento rápido
 with st.sidebar:
     st.header("💡 Ajuda e Navegação")
     st.info(
@@ -139,13 +139,12 @@ with st.sidebar:
     st.markdown("---")
     usuario_autorizado = verificar_admin()
 
-# AS ABAS DO SITE FICA LIVRE PARA TODOS
+# ABAS DO SITE
 aba_novo, aba_salvos = st.tabs(["➕ Novo Cadastro", "📂 Servidores Já Cadastrados (Preenchimento Rápido)"])
 
 with aba_salvos:
     st.subheader("🔍 Selecionar Servidor da Planilha")
     
-    # Restringe apenas esta função ao e-mail autorizado na barra lateral
     if usuario_autorizado:
         df_servidores = carregar_servidores_cadastrados()
         
@@ -166,7 +165,7 @@ with aba_salvos:
                     st.session_state.pdf_proc, st.session_state.pdf_termo = preencher_documentos_oficiais(dados_linha)
                     st.success(f"Documentos gerados com sucesso para {st.session_state.nome_servidor}!")
     else:
-        st.warning("🔒 **Conteúdo Bloqueado.** Insira um e-mail de administrador válido na barra lateral (ícone de seta no canto superior esquerdo) para visualizar o menu de preenchimento rápido.")
+        st.warning("🔒 **Conteúdo Restrito.** Insira um e-mail de administrador válido na barra lateral para visualizar o menu de preenchimento rápido.")
 
 with aba_novo:
     st.subheader("📝 Preenchimento de Dados Cadastrais (Livre para Uso)")
@@ -280,3 +279,20 @@ if "nome_servidor" in st.session_state or "pdf_proc" in st.session_state:
                     st.error("❌ Erro ao enviar para o Google Drive.")
         else:
             st.warning("⚠️ Nenhum arquivo anexado.")
+
+# --- SEÇÃO DE TUTORIAL REINTRODUZIDA ---
+st.markdown("---")
+st.subheader("📖 Tutorial para Envio dos Documentos")
+st.info(
+    "Consulte abaixo o passo a passo ilustrado para realizar o preenchimento, "
+    "as devidas assinaturas e o envio correto dos documentos."
+)
+
+for i in range(1, 7):
+    with st.expander(f"Passo {i} — Clique para visualizar a orientação"):
+        caminho_img = os.path.join("imagens", f"{i}.png")
+        if os.path.exists(caminho_img):
+            st.image(caminho_img, width=700)
+        else:
+            st.warning(f"*(A imagem explicativa '{i}.png' não foi encontrada dentro da pasta 'imagens')*")
+        st.markdown("---")
