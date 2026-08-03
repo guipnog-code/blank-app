@@ -39,10 +39,9 @@ def salvar_no_excel(dados):
         df_final = df_novo
     df_final.to_excel(EXCEL_FILE, index=False)
 
-def enviar_para_google_drive_e_forms(nome_servidor, dados_usuario, lista_arquivos):
+def enviar_para_google_drive(nome_servidor, lista_arquivos):
     payload = {
         "nomeServidor": nome_servidor,
-        "formulario": dados_usuario,
         "arquivos": lista_arquivos
     }
     try:
@@ -174,7 +173,7 @@ if "nome_servidor" in st.session_state or st.session_state.pdf_proc or st.sessio
             st.download_button(label="📄 Baixar Termo Preenchido", data=st.session_state.pdf_termo, file_name="Termo_Preenchido.pdf", mime="application/pdf")
 
     st.markdown("---")
-    st.subheader("📤 3. Anexo de Documentos e Envio Automatizado")
+    st.subheader("📤 3. Anexo de Documentos e Envio para o Google Drive")
     
     col_up1, col_up2 = st.columns(2)
     with col_up1:
@@ -187,11 +186,10 @@ if "nome_servidor" in st.session_state or st.session_state.pdf_proc or st.sessio
     st.markdown("")
     col_env1, col_env2, col_env3 = st.columns([1, 2, 1])
     with col_env2:
-        btn_enviar_drive = st.button("🚀 Enviar para o Google Drive e Preencher Forms")
+        btn_enviar_drive = st.button("🚀 Enviar Documentos para o Google Drive")
 
     if btn_enviar_drive:
         nome_pasta = st.session_state.nome_servidor
-        dados_form = st.session_state.get("dados_usuario", {})
         lista_arquivos_payload = []
 
         if st.session_state.pdf_proc:
@@ -216,12 +214,12 @@ if "nome_servidor" in st.session_state or st.session_state.pdf_proc or st.sessio
                 })
 
         if lista_arquivos_payload:
-            with st.spinner("Enviando arquivos para o Google Drive e disparando os dados para os formulários..."):
-                sucesso = enviar_para_google_drive_e_forms(nome_pasta, dados_form, lista_arquivos_payload)
+            with st.spinner("Enviando arquivos com segurança para o Google Drive..."):
+                sucesso = enviar_para_google_drive(nome_pasta, lista_arquivos_payload)
                 if sucesso:
-                    st.success(f"🎉 Sucesso! A pasta de **{nome_pasta}** foi organizada no Drive e os dados foram integrados aos formulários.")
+                    st.success(f"🎉 Sucesso! A pasta de **{nome_pasta}** e todos os arquivos foram salvos perfeitamente dentro de 'Ação Correção Monetária de Exercícios Anteriores' no Google Drive!")
                 else:
-                    st.error("❌ Ocorreu um erro na integração. Verifique a implantação do Apps Script.")
+                    st.error("❌ Ocorreu um erro ao conectar com o Google Drive.")
         else:
             st.warning("⚠️ Nenhum arquivo foi anexado.")
 
