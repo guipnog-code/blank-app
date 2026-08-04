@@ -128,6 +128,10 @@ if "pdf_proc" not in st.session_state:
 if "pdf_termo" not in st.session_state:
     st.session_state.pdf_termo = None
 
+# Gerenciamento de estado para a aba ativa
+if "aba_selecionada" not in st.session_state:
+    st.session_state.aba_selecionada = "➕ Novo Cadastro"
+
 # Cabeçalho Principal com Métricas Rápidas
 col_cab1, col_cab2 = st.columns([3, 1])
 with col_cab1:
@@ -157,10 +161,20 @@ with st.sidebar:
         elif chave_input:
             st.error("❌ Incorreta.")
 
-# Criação das abas nativas originais do Streamlit
-aba_novo, aba_salvos, aba_tutorial = st.tabs(["➕ Novo Cadastro", "📂 Servidores Já Cadastrados", "📖 Tutorial"])
+# Menu de abas idêntico ao visual original com suporte total a redirecionamento interno
+abas_disponiveis = ["➕ Novo Cadastro", "📂 Servidores Já Cadastrados", "📖 Tutorial"]
 
-with aba_salvos:
+st.session_state.aba_selecionada = st.radio(
+    "Navegação:",
+    abas_disponiveis,
+    index=abas_disponiveis.index(st.session_state.aba_selecionada) if st.session_state.aba_selecionada in abas_disponiveis else 0,
+    horizontal=True,
+    label_visibility="collapsed"
+)
+
+st.markdown("---")
+
+if st.session_state.aba_selecionada == "📂 Servidores Já Cadastrados":
     st.subheader("🔍 Pesquisar e Selecionar Servidor da Planilha")
     
     if usuario_autorizado:
@@ -255,20 +269,14 @@ with aba_salvos:
     else:
         st.warning("🔒 **Conteúdo Restrito.** Abra a **Área do Administrador** na barra lateral e insira a chave de acesso correta.")
 
-with aba_novo:
+elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
     col_sub_1, col_sub_2 = st.columns([3, 1])
     with col_sub_1:
         st.subheader("📝 Preenchimento de Dados Cadastrais (Livre para Uso)")
     with col_sub_2:
-        # Script JS integrado que simula o clique na aba de tutorial nativa do Streamlit
-        st.markdown("""
-            <button onclick="
-                const tabs = window.parent.document.querySelectorAll('button[data-baseweb=\\'tab\\']');
-                if (tabs.length >= 3) { tabs[2].click(); }
-            " style="width:100%; border-radius:6px; font-weight:bold; height:3em; background-color:#0d6efd; color:white; border:none; cursor:pointer;">
-                💡 Ver Tutorial de Ajuda
-            </button>
-        """, unsafe_allow_html=True)
+        if st.button("💡 Ver Tutorial de Ajuda", key="btn_ir_tutorial"):
+            st.session_state.aba_selecionada = "📖 Tutorial"
+            st.rerun()
 
     with st.container(border=True):
         col_p1, col_p2 = st.columns(2)
@@ -382,7 +390,7 @@ with aba_novo:
                 else:
                     st.warning("⚠️ Nenhum arquivo anexado.")
 
-with aba_tutorial:
+elif st.session_state.aba_selecionada == "📖 Tutorial":
     st.subheader("📖 Tutorial de Utilização do Sistema")
     st.info("Selecione abaixo o dispositivo que você está utilizando para visualizar o tutorial correspondente:")
 
@@ -399,12 +407,10 @@ with aba_tutorial:
         st.markdown("### 🖥️ Passo a Passo para Computador")
         st.write("Assista ao vídeo explicativo ou siga o guia detalhado para realizar o processo pelo computador:")
         
-        # Carrega o vídeo da pasta especificada se ele existir
-        caminho_video_pc = os.path.join("imagens", "Tutorial Computador", "video.mp4") # Altere o nome do arquivo caso seja diferente de video.mp4
+        caminho_video_pc = os.path.join("imagens", "Tutorial Computador", "video.mp4")
         if os.path.exists(caminho_video_pc):
             st.video(caminho_video_pc)
         else:
-            # Procura por qualquer arquivo .mp4 na pasta caso o nome exato varie
             pasta_pc = os.path.join("imagens", "Tutorial Computador")
             if os.path.exists(pasta_pc):
                 videos_encontrados = [f for f in os.listdir(pasta_pc) if f.endswith(('.mp4', '.mov', '.avi'))]
@@ -427,7 +433,6 @@ with aba_tutorial:
         st.markdown("### 📱 Passo a Passo para Celular")
         st.write("Assista ao vídeo explicativo ou siga o guia detalhado para realizar o processo pelo celular:")
         
-        # Carrega o vídeo da pasta de celular se existir
         caminho_video_cel = os.path.join("imagens", "Tutorial Celular", "video.mp4")
         if os.path.exists(caminho_video_cel):
             st.video(caminho_video_cel)
