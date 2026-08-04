@@ -161,7 +161,7 @@ with st.sidebar:
         elif chave_input:
             st.error("❌ Incorreta.")
 
-# Menu de abas idêntico ao visual original com suporte total a redirecionamento interno
+# Menu de abas
 abas_disponiveis = ["➕ Novo Cadastro", "📂 Servidores Já Cadastrados", "📖 Tutorial"]
 
 st.session_state.aba_selecionada = st.radio(
@@ -391,7 +391,15 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
                     st.warning("⚠️ Nenhum arquivo anexado.")
 
 elif st.session_state.aba_selecionada == "📖 Tutorial":
-    st.subheader("📖 Tutorial de Utilização do Sistema")
+    # Cabeçalho da aba de Tutorial com o botão de retorno ao cadastro alinhado à direita
+    col_tut_1, col_tut_2 = st.columns([3, 1])
+    with col_tut_1:
+        st.subheader("📖 Tutorial de Utilização do Sistema")
+    with col_tut_2:
+        if st.button("⬅️ Voltar ao Cadastro", key="btn_voltar_cadastro"):
+            st.session_state.aba_selecionada = "➕ Novo Cadastro"
+            st.rerun()
+
     st.info("Selecione abaixo o dispositivo que você está utilizando para visualizar o tutorial correspondente:")
 
     tipo_tutorial = st.radio(
