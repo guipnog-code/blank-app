@@ -33,6 +33,43 @@ EXCEL_FILE = "Cadastros_Servidores.xlsx"
 GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz8lQ3xhchTyl2QrvmIYr9qVZIFsx_8I2hIb0-jBqHOX63G8OzExrHPr2OlROfn_hSZ/exec"
 CHAVE_ADMIN = "Sindicatojus"
 
+# Controle de aceite via session_state
+if "termo_aceito" not in st.session_state:
+    st.session_state.termo_aceito = None
+
+# --- QUADRO DE CONSENTIMENTO INICIAL ---
+if st.session_state.termo_aceito is None:
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    col_centro_1, col_centro_2, col_centro_3 = st.columns([1, 2, 1])
+    
+    with col_centro_2:
+        with st.container(border=True):
+            st.markdown("### 📋 Termo de Consentimento e Privacidade")
+            st.markdown("Esse site tem o objetivo de coletar informações para o ajuizamento da ação de correção monetária de exercícios anteriores.")
+            st.markdown("---")
+            st.markdown("🔒 **Compartilhamento de dados com o Sinprfpi.**")
+            st.markdown("")
+            
+            col_b1, col_b2 = st.columns(2)
+            with col_b1:
+                if st.button("Aceito", key="btn_aceito"):
+                    st.session_state.termo_aceito = True
+                    st.rerun()
+            with col_b2:
+                if st.button("Não aceito", key="btn_nao_aceito"):
+                    st.session_state.termo_aceito = False
+                    st.rerun()
+    st.stop()
+
+# --- BLOQUEIO CASO NÃO ACEITE ---
+elif st.session_state.termo_aceito is False:
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    col_b_1, col_b_2, col_b_3 = st.columns([1, 2, 1])
+    with col_b_2:
+        st.error("🚫 **Acesso Bloqueado.** \n\nVocê recusou os termos de compartilhamento de dados. Para utilizar o sistema, é necessário aceitar os termos. Atualize a página caso deseje aceitar.")
+    st.stop()
+
+# --- CÓDIGO NORMAL DO SITE (Caso aceito) ---
 def carregar_servidores_cadastrados():
     if os.path.exists(EXCEL_FILE):
         try:
@@ -128,7 +165,6 @@ if "pdf_proc" not in st.session_state:
 if "pdf_termo" not in st.session_state:
     st.session_state.pdf_termo = None
 
-# Gerenciamento de estado para a aba ativa
 if "aba_selecionada" not in st.session_state:
     st.session_state.aba_selecionada = "➕ Novo Cadastro"
 
@@ -161,7 +197,6 @@ with st.sidebar:
         elif chave_input:
             st.error("❌ Incorreta.")
 
-# Menu de abas
 abas_disponiveis = ["➕ Novo Cadastro", "📂 Servidores Já Cadastrados", "📖 Tutorial"]
 
 st.session_state.aba_selecionada = st.radio(
@@ -391,7 +426,6 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
                     st.warning("⚠️ Nenhum arquivo anexado.")
 
 elif st.session_state.aba_selecionada == "📖 Tutorial":
-    # Cabeçalho da aba de Tutorial com o botão de retorno ao cadastro alinhado à direita
     col_tut_1, col_tut_2 = st.columns([3, 1])
     with col_tut_1:
         st.subheader("📖 Tutorial de Utilização do Sistema")
