@@ -398,7 +398,22 @@ with aba_tutorial:
     if tipo_tutorial == "💻 Tutorial Computador":
         st.markdown("### 🖥️ Passo a Passo para Computador")
         st.write("Assista ao vídeo explicativo ou siga o guia detalhado para realizar o processo pelo computador:")
-        st.info("💡 *(Espaço reservado para o Vídeo do Tutorial no Computador)*")
+        
+        # Carrega o vídeo da pasta especificada se ele existir
+        caminho_video_pc = os.path.join("imagens", "Tutorial Computador", "video.mp4") # Altere o nome do arquivo caso seja diferente de video.mp4
+        if os.path.exists(caminho_video_pc):
+            st.video(caminho_video_pc)
+        else:
+            # Procura por qualquer arquivo .mp4 na pasta caso o nome exato varie
+            pasta_pc = os.path.join("imagens", "Tutorial Computador")
+            if os.path.exists(pasta_pc):
+                videos_encontrados = [f for f in os.listdir(pasta_pc) if f.endswith(('.mp4', '.mov', '.avi'))]
+                if videos_encontrados:
+                    st.video(os.path.join(pasta_pc, videos_encontrados[0]))
+                else:
+                    st.warning("⚠️ Nenhum arquivo de vídeo encontrado na pasta 'imagens/Tutorial Computador'.")
+            else:
+                st.warning("⚠️ A pasta 'imagens/Tutorial Computador' não foi encontrada.")
 
         for i in range(1, 4):
             with st.expander(f"Passo {i} (Computador) — Clique para visualizar a orientação"):
@@ -411,7 +426,21 @@ with aba_tutorial:
     else:
         st.markdown("### 📱 Passo a Passo para Celular")
         st.write("Assista ao vídeo explicativo ou siga o guia detalhado para realizar o processo pelo celular:")
-        st.info("💡 *(Espaço reservado para o Vídeo do Tutorial no Celular)*")
+        
+        # Carrega o vídeo da pasta de celular se existir
+        caminho_video_cel = os.path.join("imagens", "Tutorial Celular", "video.mp4")
+        if os.path.exists(caminho_video_cel):
+            st.video(caminho_video_cel)
+        else:
+            pasta_cel = os.path.join("imagens", "Tutorial Celular")
+            if os.path.exists(pasta_cel):
+                videos_encontrados = [f for f in os.listdir(pasta_cel) if f.endswith(('.mp4', '.mov', '.avi'))]
+                if videos_encontrados:
+                    st.video(os.path.join(pasta_cel, videos_encontrados[0]))
+                else:
+                    st.warning("⚠️ Nenhum arquivo de vídeo encontrado na pasta 'imagens/Tutorial Celular'.")
+            else:
+                st.warning("⚠️ A pasta 'imagens/Tutorial Celular' não foi encontrada.")
 
         for i in range(1, 4):
             with st.expander(f"Passo {i} (Celular) — Clique para visualizar a orientação"):
