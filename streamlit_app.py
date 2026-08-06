@@ -314,6 +314,14 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
             st.rerun()
 
     with st.container(border=True):
+        st.markdown("**📍 Local de Preenchimento do Documento**")
+        col_loc1, col_loc2 = st.columns(2)
+        with col_loc1:
+            local_municipio = st.text_input("Município de Preenchimento", key="input_local_mun")
+        with col_loc2:
+            local_estado = st.text_input("Estado (UF) de Preenchimento", key="input_local_uf")
+
+        st.markdown("---")
         col_p1, col_p2 = st.columns(2)
         with col_p1:
             st.markdown("**Dados Profissionais**")
@@ -350,6 +358,8 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
             st.error("⚠️ Por favor, preencha o campo 'Nome Completo'.")
         else:
             dados_usuario = {
+                "Local Preenchimiento Município": local_municipio,
+                "Local Preenchimento Estado": local_estado,
                 "Matrícula": matricula, "Cargo": cargo, "Órgão": orgao, "Data de Ingresso": ingresso,
                 "Nome": nome, "CPF": cpf, "E-mail": email, "RG": rg, "Telefone": telefone,
                 "Estado Civil": estado_civil, "CEP": cep, "Endereço": endereco, "Município": municipio, "Estado": estado
