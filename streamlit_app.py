@@ -28,6 +28,7 @@ st.markdown("""
         }
         .stButton>button:hover { background-color: #0b5ed7; color: white; transform: translateY(-1px); }
         .seta-guiada { font-size: 1.1rem; font-weight: bold; color: #0d6efd; margin: 10px 0; }
+        .suporte-discreto { font-size: 0.75rem; color: #6c757d; text-align: center; margin-top: 30px; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -218,6 +219,9 @@ with st.sidebar:
             usuario_autorizado = True
         elif chave_input:
             st.error("❌ Incorreta.")
+
+    # Mensagem de suporte discreta e em pequeno tamanho no rodapé da barra lateral
+    st.markdown('<p class="suporte-discreto">Suporte - Guilherme (86988523711)</p>', unsafe_allow_html=True)
 
 abas_disponiveis = ["➕ Novo Cadastro", "📂 Servidores Já Cadastrados", "📖 Tutorial"]
 
