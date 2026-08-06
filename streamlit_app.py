@@ -38,9 +38,9 @@ EXCEL_FILE = "Cadastros_Servidores.xlsx"
 GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz8lQ3xhchTyl2QrvmIYr9qVZIFsx_8I2hIb0-jBqHOX63G8OzExrHPr2OlROfn_hSZ/exec"
 CHAVE_ADMIN = "Sindicatojus"
 
-# Configuração da API do Assinafy (URL corrigida para o domínio correto)
+# Configuração da API do Assinafy (URL corrigida para o domínio brasileiro oficial .com.br)
 ASSINAFY_API_KEY = "TCJJguVdZTIiMNUZ1nzHtZ-r0d8kvOyVT8-bejN_HHAjws9veiWZdcQ_L8pZ-KMJ"
-ASSINAFY_URL = "https://app.assinafy.com.br/api/v1/documents"
+ASSINAFY_URL = "https://api.assinafy.com.br/v1/documents"
 
 # Controle de estado
 if "termo_aceito" not in st.session_state:
