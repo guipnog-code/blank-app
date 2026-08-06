@@ -36,6 +36,10 @@ EXCEL_FILE = "Cadastros_Servidores.xlsx"
 GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz8lQ3xhchTyl2QrvmIYr9qVZIFsx_8I2hIb0-jBqHOX63G8OzExrHPr2OlROfn_hSZ/exec"
 CHAVE_ADMIN = "Sindicatojus"
 
+# Configurações da API do Assinafy (Substitua pela sua chave de API real obtida no painel do Assinafy)
+ASSINAFY_API_KEY = "SUA_API_KEY_DO_ASSINAFY_AQUI"
+ASSINAFY_URL = "https://api.assinafy.com/v1/documents" # Endpoint padrão de exemplo da API
+
 # Controle de aceite via session_state
 if "termo_aceito" not in st.session_state:
     st.session_state.termo_aceito = None
@@ -50,7 +54,7 @@ if st.session_state.termo_aceito is None:
             st.markdown("### 📋 Termo de Consentimento e Privacidade")
             st.markdown("Esse site tem o objetivo de coletar informações para o ajuizamento da ação de correção monetária de exercícios anteriores.")
             st.markdown("---")
-            st.markdown("🔒 **Compartilhamento de dados com o Sinprfpi.**[cite: 2]")
+            st.markdown("🔒 **Compartilhamento de dados com o Sinprfpi.**")
             st.markdown("")
             
             col_b1, col_b2 = st.columns(2)
@@ -69,7 +73,7 @@ elif st.session_state.termo_aceito is False:
     st.markdown("<br><br>", unsafe_allow_html=True)
     col_b_1, col_b_2, col_b_3 = st.columns([1, 2, 1])
     with col_b_2:
-        st.error("🚫 **Acesso Bloqueado.** \n\nVocê recusou os termos de compartilhamento de dados[cite: 2]. Para utilizar o sistema, é necessário aceitar os termos. Atualize a página caso deseje aceitar.")
+        st.error("🚫 **Acesso Bloqueado.** \n\nVocê recusou os termos de compartilhamento de dados. Para utilizar o sistema, é necessário aceitar os termos. Atualize a página caso deseje aceitar.")
     st.stop()
 
 # --- CÓDIGO NORMAL DO SITE (Caso aceito) ---
@@ -105,6 +109,37 @@ def enviar_para_google_drive(nome_servidor, lista_arquivos):
     except Exception as e:
         print(f"Erro ao conectar: {e}")
         return False
+
+def enviar_para_assinafy(nome_cliente, email_cliente, pdf_bytes, nome_arquivo):
+    """Função modelo para integrar o envio do PDF gerado diretamente para a API do Assinafy"""
+    headers = {
+        "Authorization": f"Bearer {ASSINAFY_API_KEY}",
+        "Content-Type": "application/json"
+    }
+    
+    # Codificando o PDF em base64 para envio via JSON (ou multipart/form-data conforme a documentação oficial da API)
+    pdf_base64 = base64.b64encode(pdf_bytes).decode('utf-8')
+    
+    payload = {
+        "name": nome_arquivo,
+        "file": pdf_base64,
+        "signers": [
+            {
+                "name": nome_cliente,
+                "email": email_cliente,
+                "action": "SIGN"
+            }
+        ]
+    }
+    
+    try:
+        response = requests.post(ASSINAFY_URL, json=payload, headers=headers)
+        if response.status_code in [200, 201]:
+            return True, response.json()
+        else:
+            return False, response.text
+    except Exception as e:
+        return False, str(e)
 
 def formatar_data_callback():
     val = st.session_state.get("input_ing_raw", "")
@@ -220,7 +255,6 @@ with st.sidebar:
         elif chave_input:
             st.error("❌ Incorreta.")
 
-    # Mensagem de suporte discreta e em pequeno tamanho no rodapé da barra lateral
     st.markdown('<p class="suporte-discreto">Suporte - Guilherme (86988523711)</p>', unsafe_allow_html=True)
 
 abas_disponiveis = ["➕ Novo Cadastro", "📂 Servidores Já Cadastrados", "📖 Tutorial"]
@@ -429,6 +463,14 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
             st.session_state.nome_servidor = nome.strip()
             
             st.session_state.pdf_proc, st.session_state.pdf_termo = preencher_documentos_oficiais(dados_usuario)
+            
+            # EXEMPLO DE INTEGRAÇÃO AUTOMÁTICA COM O ASSINAFY
+            # st.info("Enviando documentos para assinatura digital no Assinafy...")
+            # sucesso_proc, res_proc = enviar_para_assinafy(nome, email, st.session_state.pdf_proc, "Procuracao.pdf")
+            # sucesso_termo, res_termo = enviar_para_assinafy(nome, email, st.session_state.pdf_termo, "Termo.pdf")
+            # if sucesso_proc and sucesso_termo:
+            #     st.success("✨ Documentos gerados e enviados para assinatura digital via Assinafy com sucesso!")
+            
             st.success(f"✨ Dados salvos na planilha e documentos gerados para **{st.session_state.nome_servidor}**!")
             st.rerun()
 
@@ -498,7 +540,6 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
                         sucesso = enviar_para_google_drive(nome_pasta, lista_arquivos_payload)
                         if sucesso:
                             st.success(f"🎉 Sucesso! A pasta de **{nome_pasta}** foi atualizada no Google Drive.")
-                            # Limpeza segura do cache local de arquivos após o envio bem-sucedido
                             st.session_state.pdf_proc = None
                             st.session_state.pdf_termo = None
                             st.session_state.nome_servidor = None
