@@ -36,9 +36,9 @@ EXCEL_FILE = "Cadastros_Servidores.xlsx"
 GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz8lQ3xhchTyl2QrvmIYr9qVZIFsx_8I2hIb0-jBqHOX63G8OzExrHPr2OlROfn_hSZ/exec"
 CHAVE_ADMIN = "Sindicatojus"
 
-# Configurações da API do Assinafy (Substitua pela sua chave de API real obtida no painel do Assinafy)
-ASSINAFY_API_KEY = "SUA_API_KEY_DO_ASSINAFY_AQUI"
-ASSINAFY_URL = "https://api.assinafy.com/v1/documents" # Endpoint padrão de exemplo da API
+# Configuração da API do Assinafy com a sua chave fornecida
+ASSINAFY_API_KEY = "TCJJguVdZTIiMNUZ1nzHtZ-r0d8kvOyVT8-bejN_HHAjws9veiWZdcQ_L8pZ-KMJ"
+ASSINAFY_URL = "https://api.assinafy.com/v1/documents"
 
 # Controle de aceite via session_state
 if "termo_aceito" not in st.session_state:
@@ -111,13 +111,12 @@ def enviar_para_google_drive(nome_servidor, lista_arquivos):
         return False
 
 def enviar_para_assinafy(nome_cliente, email_cliente, pdf_bytes, nome_arquivo):
-    """Função modelo para integrar o envio do PDF gerado diretamente para a API do Assinafy"""
+    """Função para integrar o envio do PDF gerado diretamente para a API do Assinafy"""
     headers = {
         "Authorization": f"Bearer {ASSINAFY_API_KEY}",
         "Content-Type": "application/json"
     }
     
-    # Codificando o PDF em base64 para envio via JSON (ou multipart/form-data conforme a documentação oficial da API)
     pdf_base64 = base64.b64encode(pdf_bytes).decode('utf-8')
     
     payload = {
@@ -464,12 +463,9 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
             
             st.session_state.pdf_proc, st.session_state.pdf_termo = preencher_documentos_oficiais(dados_usuario)
             
-            # EXEMPLO DE INTEGRAÇÃO AUTOMÁTICA COM O ASSINAFY
-            # st.info("Enviando documentos para assinatura digital no Assinafy...")
-            # sucesso_proc, res_proc = enviar_para_assinafy(nome, email, st.session_state.pdf_proc, "Procuracao.pdf")
-            # sucesso_termo, res_termo = enviar_para_assinafy(nome, email, st.session_state.pdf_termo, "Termo.pdf")
-            # if sucesso_proc and sucesso_termo:
-            #     st.success("✨ Documentos gerados e enviados para assinatura digital via Assinafy com sucesso!")
+            # Envio opcional automático para o Assinafy
+            # enviar_para_assinafy(nome, email, st.session_state.pdf_proc, "Procuracao.pdf")
+            # enviar_para_assinafy(nome, email, st.session_state.pdf_termo, "Termo.pdf")
             
             st.success(f"✨ Dados salvos na planilha e documentos gerados para **{st.session_state.nome_servidor}**!")
             st.rerun()
