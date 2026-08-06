@@ -111,32 +111,6 @@ def enviar_para_google_drive(nome_servidor, lista_arquivos):
         print(f"Erro ao conectar: {e}")
         return False
 
-def enviar_para_assinafy(nome_cliente, email_cliente, pdf_bytes, nome_arquivo):
-    headers = {
-        "Authorization": f"Bearer {ASSINAFY_API_KEY}",
-        "Content-Type": "application/json"
-    }
-    pdf_base64 = base64.b64encode(pdf_bytes).decode('utf-8')
-    payload = {
-        "name": nome_arquivo,
-        "file": pdf_base64,
-        "signers": [
-            {
-                "name": nome_cliente,
-                "email": email_cliente,
-                "action": "SIGN"
-            }
-        ]
-    }
-    try:
-        response = requests.post(ASSINAFY_URL, json=payload, headers=headers)
-        if response.status_code in [200, 201]:
-            return True, response.json()
-        else:
-            return False, response.text
-    except Exception as e:
-        return False, str(e)
-
 def formatar_data_callback():
     val = st.session_state.get("input_ing_raw", "")
     digitos = "".join(filter(str.isdigit, str(val)))[:8]
@@ -369,12 +343,12 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
             st.session_state.aba_selecionada = "📖 Tutorial"
             st.rerun()
 
-    # Bloco explicativo visível na tela sobre para onde vão os dados e como assinar
+    # Bloco explicativo visível na tela
     st.markdown("""
         <div class="box-instrucoes">
             <b>📌 Informações Importantes:</b><br>
-            • <b>Onde vai:</b> Seus dados são salvos com segurança e enviados para a pasta oficial do sistema no Google Drive.<br>
-            • <b>Como assinar:</b> Após gerar os documentos, você poderá baixá-los e eles serão enviados automaticamente para assinatura digital via Assinafy para o seu e-mail.
+            • <b>Onde vão os dados:</b> Seus dados são salvos com segurança na planilha e enviados para a pasta oficial do sistema no Google Drive.<br>
+            • <b>Como assinar:</b> Após gerar os documentos, baixe os arquivos para conferência e faça o upload das vias assinadas logo abaixo.
         </div>
     """, unsafe_allow_html=True)
 
@@ -454,8 +428,6 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
     if btn_salvar:
         if not nome.strip():
             st.error("⚠️ Por favor, preencha o campo 'Nome completo'.")
-        elif not email.strip():
-            st.error("⚠️ Por favor, preencha o campo 'E-mail' para receber a assinatura digital.")
         else:
             dados_usuario = {
                 "Local Preenchimento Município": local_municipio,
@@ -468,18 +440,12 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
             st.session_state.dados_usuario = dados_usuario
             st.session_state.nome_servidor = nome.strip()
             
-            # Gera os PDFs oficiais
+            # Gera os PDFs oficiais preenchidos localmente com sucesso
             st.session_state.pdf_proc, st.session_state.pdf_termo = preencher_documentos_oficiais(dados_usuario)
             
-            # Disparo real ativo para o Assinafy enviar a assinatura digital por e-mail
-            with st.spinner("Enviando documentos para assinatura digital via Assinafy..."):
-                sucesso_proc, res_proc = enviar_para_assinafy(nome, email, st.session_state.pdf_proc, "Procuracao_Preenchida.pdf")
-                sucesso_termo, res_termo = enviar_para_assinafy(nome, email, st.session_state.pdf_termo, "Termo_Preenchido.pdf")
-                
-                if sucesso_proc or sucesso_termo:
-                    st.success(f"✨ Dados salvos e documentos enviados para a assinatura digital de **{nome}** no e-mail: **{email}**!")
-                else:
-                    st.warning("⚠️ Dados salvos e PDFs gerados, mas verifique o painel do Assinafy se houve falha na chave de API.")
+            # Mensagem visível clara de sucesso
+            st.success(f"✨ Dados salvos na planilha e documentos gerados com sucesso para **{st.session_state.nome_servidor}**!")
+            st.rerun()
 
     # 2. Se os documentos já foram gerados, aparece o bloco de Gestão de Arquivos com a seta azul apontando
     if tem_documentos:
