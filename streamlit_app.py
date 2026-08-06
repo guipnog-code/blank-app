@@ -19,17 +19,20 @@ st.set_page_config(
 st.markdown("""
     <style>
         .main { background-color: #f4f6f9; }
+        /* Botões azuis com tom mais suave e agradável */
         .stButton>button {
             width: 100%;
             border-radius: 10px;
             font-weight: bold;
             height: 3.5em;
             font-size: 16px;
-            background-color: #0d6efd;
+            background-color: #3b82f6;
             color: white;
             transition: 0.3s;
+            border: none;
         }
-        .stButton>button:hover { background-color: #0b5ed7; color: white; transform: translateY(-1px); }
+        .stButton>button:hover { background-color: #2563eb; color: white; transform: translateY(-1px); }
+        
         /* Botão de assinar ajustado: menor, mais discreto e elegante */
         .btn-assinar { 
             width: 100%; 
@@ -49,10 +52,10 @@ st.markdown("""
         }
         .btn-assinar:hover { background-color: #343a40; color: white; }
         .btn-whatsapp { width: 100%; background-color: #25d366; color: white; border: none; padding: 12px; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; text-align: center; text-decoration: none; display: block; margin-bottom: 20px; }
-        .seta-guiada { font-size: 1.1rem; font-weight: bold; color: #0d6efd; margin: 10px 0; }
+        .seta-guiada { font-size: 1.1rem; font-weight: bold; color: #3b82f6; margin: 10px 0; }
         .suporte-discreto { font-size: 0.75rem; color: #6c757d; text-align: center; margin-top: 30px; }
-        .box-instrucoes { background-color: #ffffff; padding: 15px; border-radius: 8px; border-left: 4px solid #0d6efd; margin-bottom: 20px; font-size: 0.9rem; }
-        .box-passo { background-color: #ffffff; padding: 20px; border-radius: 12px; margin-bottom: 20px; border-left: 6px solid #0d6efd; box-shadow: 2px 2px 8px rgba(0,0,0,0.05); }
+        .box-instrucoes { background-color: #ffffff; padding: 15px; border-radius: 8px; border-left: 4px solid #3b82f6; margin-bottom: 20px; font-size: 0.9rem; }
+        .box-passo { background-color: #ffffff; padding: 20px; border-radius: 12px; margin-bottom: 20px; border-left: 6px solid #3b82f6; box-shadow: 2px 2px 8px rgba(0,0,0,0.05); }
     </style>
 """, unsafe_allow_html=True)
 
@@ -372,7 +375,7 @@ if st.session_state.aba_selecionada == "📂 Servidores Já Cadastrados":
                         url_preenchida = f"{base_form_url}?usp=pp_url&{urllib.parse.urlencode(params)}"
                         st.markdown(
                             f"""<a href="{url_preenchida}" target="_blank">
-                                <button style="width:100%; border-radius:6px; font-weight:bold; height:2.5em; background-color:#0d6efd; color:white; border:none; cursor:pointer;">
+                                <button style="width:100%; border-radius:6px; font-weight:bold; height:2.5em; background-color:#3b82f6; color:white; border:none; cursor:pointer;">
                                     📝 Forms Correção Monetária
                                 </button>
                             </a>""",
