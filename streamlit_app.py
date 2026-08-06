@@ -6,6 +6,8 @@ import requests
 import base64
 import json
 import urllib.parse
+import zipfile
+import io
 from datetime import datetime
 
 st.set_page_config(
@@ -28,7 +30,24 @@ st.markdown("""
             transition: 0.3s;
         }
         .stButton>button:hover { background-color: #0b5ed7; color: white; transform: translateY(-1px); }
-        .btn-assinar { width: 100%; background-color: #ff4b4b; color: white; border: none; padding: 15px; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer; text-align: center; text-decoration: none; display: block; margin-top: 10px; }
+        /* Botão de assinar ajustado: menor, mais discreto e elegante */
+        .btn-assinar { 
+            width: 100%; 
+            background-color: #495057; 
+            color: white; 
+            border: none; 
+            padding: 10px 15px; 
+            border-radius: 8px; 
+            font-size: 15px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            text-align: center; 
+            text-decoration: none; 
+            display: block; 
+            margin-top: 10px; 
+            transition: 0.3s;
+        }
+        .btn-assinar:hover { background-color: #343a40; color: white; }
         .btn-whatsapp { width: 100%; background-color: #25d366; color: white; border: none; padding: 12px; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; text-align: center; text-decoration: none; display: block; margin-bottom: 20px; }
         .seta-guiada { font-size: 1.1rem; font-weight: bold; color: #0d6efd; margin: 10px 0; }
         .suporte-discreto { font-size: 0.75rem; color: #6c757d; text-align: center; margin-top: 30px; }
@@ -248,7 +267,7 @@ st.session_state.aba_selecionada = st.radio(
 
 st.markdown("---")
 
-# --- ABA: SERVIDORES JÁ CADASTRADOS ---
+# --- ABA: SERVIDORES JÁ CADASTRADOS (ÁREA DO ADMINISTRADOR) ---
 if st.session_state.aba_selecionada == "📂 Servidores Já Cadastrados":
     st.subheader("🔍 Pesquisar e Selecionar Servidor da Planilha")
     
@@ -287,6 +306,24 @@ if st.session_state.aba_selecionada == "📂 Servidores Já Cadastrados":
                             st.session_state.nome_servidor = str(dados_linha.get("Nome", "")).strip()
                             st.session_state.pdf_proc, st.session_state.pdf_termo = preencher_documentos_oficiais(dados_linha)
                             st.success(f"Documentos gerados com sucesso para {st.session_state.nome_servidor}!")
+
+                        if st.session_state.get("pdf_proc") and st.session_state.get("pdf_termo"):
+                            nome_serv_limpo = str(dados_linha.get("Nome", "Servidor")).replace(" ", "_")
+                            
+                            zip_buffer = io.BytesIO()
+                            with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+                                zip_file.writestr(f"Procuracao_{nome_serv_limpo}.pdf", st.session_state.pdf_proc)
+                                zip_file.writestr(f"Termo_{nome_serv_limpo}.pdf", st.session_state.pdf_termo)
+                            zip_buffer.seek(0)
+                            
+                            st.markdown("<br>", unsafe_allow_html=True)
+                            st.download_button(
+                                label="📥 Baixar Procuração e Termo Juntos (ZIP)",
+                                data=zip_buffer,
+                                file_name=f"Documentos_{nome_serv_limpo}.zip",
+                                mime="application/zip",
+                                key=f"btn_zip_{nome_serv_limpo}"
+                            )
 
                 with col_b2:
                     with st.container(border=True):
@@ -344,7 +381,7 @@ if st.session_state.aba_selecionada == "📂 Servidores Já Cadastrados":
     else:
         st.warning("🔒 **Conteúdo Restrito.** Abra a **Área do Administrador** na barra lateral e insira a chave de acesso correta.")
 
-# --- ABA: NOVO CADASTRO (Otimizada e Limpa) ---
+# --- ABA: NOVO CADASTRO ---
 elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
     col_sub_1, col_sub_2 = st.columns([3, 1])
     with col_sub_1:
@@ -354,7 +391,6 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
             st.session_state.aba_selecionada = "📖 Tutorial"
             st.rerun()
 
-    # Botão de Suporte WhatsApp em destaque para idosos
     st.markdown(f'''
         <a href="https://wa.me/5586988523711" target="_blank">
             <button class="btn-whatsapp">📱 PRECISA DE AJUDA? Fale conosco no WhatsApp</button>
@@ -369,7 +405,6 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
         </div>
     """, unsafe_allow_html=True)
 
-    # Condição visual: se os PDFs já foram gerados, ocultamos o formulário gigante e mostramos apenas os passos seguintes
     if st.session_state.get("pdf_proc") is None:
         with st.container(border=True):
             st.markdown('<div class="box-passo"><b>📍 Passo 1: Preencha os campos abaixo corretamente:</b></div>', unsafe_allow_html=True)
@@ -464,7 +499,6 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
                 st.success(f"✨ Dados salvos com sucesso para **{st.session_state.nome_servidor}**!")
                 st.rerun()
 
-    # --- SE OS DOCUMENTOS JÁ FORAM GERADOS (Passos 2, 3 e 4 limpos e destacados) ---
     if st.session_state.get("pdf_proc") is not None:
         st.markdown("---")
         with st.container(border=True):
@@ -531,7 +565,6 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
                 else:
                     st.warning("⚠️ Nenhum arquivo anexado.")
 
-        # Botão para reiniciar o fluxo com facilidade
         st.markdown("<br>", unsafe_allow_html=True)
         if st.button("🔄 Fazer Novo Cadastro / Limpar Tela"):
             st.session_state.pdf_proc = None
