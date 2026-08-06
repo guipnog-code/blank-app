@@ -29,6 +29,7 @@ st.markdown("""
         .stButton>button:hover { background-color: #0b5ed7; color: white; transform: translateY(-1px); }
         .seta-guiada { font-size: 1.1rem; font-weight: bold; color: #0d6efd; margin: 10px 0; }
         .suporte-discreto { font-size: 0.75rem; color: #6c757d; text-align: center; margin-top: 30px; }
+        .box-instrucoes { background-color: #ffffff; padding: 15px; border-radius: 8px; border-left: 4px solid #0d6efd; margin-bottom: 20px; font-size: 0.9rem; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -36,7 +37,7 @@ EXCEL_FILE = "Cadastros_Servidores.xlsx"
 GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz8lQ3xhchTyl2QrvmIYr9qVZIFsx_8I2hIb0-jBqHOX63G8OzExrHPr2OlROfn_hSZ/exec"
 CHAVE_ADMIN = "Sindicatojus"
 
-# Configuração da API do Assinafy com a sua chave fornecida
+# Configuração da API do Assinafy
 ASSINAFY_API_KEY = "TCJJguVdZTIiMNUZ1nzHtZ-r0d8kvOyVT8-bejN_HHAjws9veiWZdcQ_L8pZ-KMJ"
 ASSINAFY_URL = "https://api.assinafy.com/v1/documents"
 
@@ -111,14 +112,11 @@ def enviar_para_google_drive(nome_servidor, lista_arquivos):
         return False
 
 def enviar_para_assinafy(nome_cliente, email_cliente, pdf_bytes, nome_arquivo):
-    """Função para integrar o envio do PDF gerado diretamente para a API do Assinafy"""
     headers = {
         "Authorization": f"Bearer {ASSINAFY_API_KEY}",
         "Content-Type": "application/json"
     }
-    
     pdf_base64 = base64.b64encode(pdf_bytes).decode('utf-8')
-    
     payload = {
         "name": nome_arquivo,
         "file": pdf_base64,
@@ -130,7 +128,6 @@ def enviar_para_assinafy(nome_cliente, email_cliente, pdf_bytes, nome_arquivo):
             }
         ]
     }
-    
     try:
         response = requests.post(ASSINAFY_URL, json=payload, headers=headers)
         if response.status_code in [200, 201]:
@@ -306,7 +303,6 @@ if st.session_state.aba_selecionada == "📂 Servidores Já Cadastrados":
                             st.session_state.nome_servidor = str(dados_linha.get("Nome", "")).strip()
                             st.session_state.pdf_proc, st.session_state.pdf_termo = preencher_documentos_oficiais(dados_linha)
                             st.success(f"Documentos gerados com sucesso para {st.session_state.nome_servidor}!")
-                            st.rerun()
 
                 with col_b2:
                     with st.container(border=True):
@@ -372,6 +368,15 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
         if st.button("💡 Ver Tutorial de Ajuda", key="btn_ir_tutorial"):
             st.session_state.aba_selecionada = "📖 Tutorial"
             st.rerun()
+
+    # Bloco explicativo visível na tela sobre para onde vão os dados e como assinar
+    st.markdown("""
+        <div class="box-instrucoes">
+            <b>📌 Informações Importantes:</b><br>
+            • <b>Onde vai:</b> Seus dados são salvos com segurança e enviados para a pasta oficial do sistema no Google Drive.<br>
+            • <b>Como assinar:</b> Após gerar os documentos, você poderá baixá-los e eles serão enviados automaticamente para assinatura digital via Assinafy para o seu e-mail.
+        </div>
+    """, unsafe_allow_html=True)
 
     with st.container(border=True):
         st.info("🧭 Siga a indicação da seta (➡️) passo a passo para preencher os seus dados corretamente:")
@@ -449,6 +454,8 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
     if btn_salvar:
         if not nome.strip():
             st.error("⚠️ Por favor, preencha o campo 'Nome completo'.")
+        elif not email.strip():
+            st.error("⚠️ Por favor, preencha o campo 'E-mail' para receber a assinatura digital.")
         else:
             dados_usuario = {
                 "Local Preenchimento Município": local_municipio,
@@ -461,14 +468,18 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
             st.session_state.dados_usuario = dados_usuario
             st.session_state.nome_servidor = nome.strip()
             
+            # Gera os PDFs oficiais
             st.session_state.pdf_proc, st.session_state.pdf_termo = preencher_documentos_oficiais(dados_usuario)
             
-            # Envio opcional automático para o Assinafy
-            # enviar_para_assinafy(nome, email, st.session_state.pdf_proc, "Procuracao.pdf")
-            # enviar_para_assinafy(nome, email, st.session_state.pdf_termo, "Termo.pdf")
-            
-            st.success(f"✨ Dados salvos na planilha e documentos gerados para **{st.session_state.nome_servidor}**!")
-            st.rerun()
+            # Disparo real ativo para o Assinafy enviar a assinatura digital por e-mail
+            with st.spinner("Enviando documentos para assinatura digital via Assinafy..."):
+                sucesso_proc, res_proc = enviar_para_assinafy(nome, email, st.session_state.pdf_proc, "Procuracao_Preenchida.pdf")
+                sucesso_termo, res_termo = enviar_para_assinafy(nome, email, st.session_state.pdf_termo, "Termo_Preenchido.pdf")
+                
+                if sucesso_proc or sucesso_termo:
+                    st.success(f"✨ Dados salvos e documentos enviados para a assinatura digital de **{nome}** no e-mail: **{email}**!")
+                else:
+                    st.warning("⚠️ Dados salvos e PDFs gerados, mas verifique o painel do Assinafy se houve falha na chave de API.")
 
     # 2. Se os documentos já foram gerados, aparece o bloco de Gestão de Arquivos com a seta azul apontando
     if tem_documentos:
