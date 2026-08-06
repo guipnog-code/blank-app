@@ -19,26 +19,27 @@ st.markdown("""
         .main { background-color: #f4f6f9; }
         .stButton>button {
             width: 100%;
-            border-radius: 8px;
+            border-radius: 10px;
             font-weight: bold;
-            height: 3.2em;
+            height: 3.5em;
+            font-size: 16px;
             background-color: #0d6efd;
             color: white;
             transition: 0.3s;
         }
         .stButton>button:hover { background-color: #0b5ed7; color: white; transform: translateY(-1px); }
-        .btn-assinar { width: 100%; background-color: #ff4b4b; color: white; border: none; padding: 15px; border-radius: 8px; font-weight: bold; cursor: pointer; text-align: center; text-decoration: none; display: block; margin-top: 10px; }
+        .btn-assinar { width: 100%; background-color: #ff4b4b; color: white; border: none; padding: 15px; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer; text-align: center; text-decoration: none; display: block; margin-top: 10px; }
+        .btn-whatsapp { width: 100%; background-color: #25d366; color: white; border: none; padding: 12px; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; text-align: center; text-decoration: none; display: block; margin-bottom: 20px; }
         .seta-guiada { font-size: 1.1rem; font-weight: bold; color: #0d6efd; margin: 10px 0; }
         .suporte-discreto { font-size: 0.75rem; color: #6c757d; text-align: center; margin-top: 30px; }
         .box-instrucoes { background-color: #ffffff; padding: 15px; border-radius: 8px; border-left: 4px solid #0d6efd; margin-bottom: 20px; font-size: 0.9rem; }
+        .box-passo { background-color: #ffffff; padding: 20px; border-radius: 12px; margin-bottom: 20px; border-left: 6px solid #0d6efd; box-shadow: 2px 2px 8px rgba(0,0,0,0.05); }
     </style>
 """, unsafe_allow_html=True)
 
 EXCEL_FILE = "Cadastros_Servidores.xlsx"
 GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz8lQ3xhchTyl2QrvmIYr9qVZIFsx_8I2hIb0-jBqHOX63G8OzExrHPr2OlROfn_hSZ/exec"
 CHAVE_ADMIN = "Sindicatojus"
-
-# Configuração da API do Assinafy
 ASSINAFY_API_KEY = "TCJJguVdZTIiMNUZ1nzHtZ-r0d8kvOyVT8-bejN_HHAjws9veiWZdcQ_L8pZ-KMJ"
 
 # Controle de estado
@@ -87,7 +88,7 @@ elif st.session_state.termo_aceito is False:
         st.error("🚫 **Acesso Bloqueado.** \n\nVocê recusou os termos de compartilhamento de dados. Para utilizar o sistema, é necessário aceitar os termos. Atualize a página caso deseje aceitar.")
     st.stop()
 
-# --- CÓDIGO NORMAL DO SITE ---
+# --- FUNÇÕES DO SISTEMA ---
 def carregar_servidores_cadastrados():
     if os.path.exists(EXCEL_FILE):
         try:
@@ -121,7 +122,6 @@ def enviar_para_google_drive(nome_servidor, lista_arquivos):
         print(f"Erro ao conectar: {e}")
         return False
 
-# Função adaptada para redirecionamento manual seguro após restrição de rota da API
 def enviar_para_assinafy(nome, email, pdf_bytes, nome_arquivo):
     if not pdf_bytes:
         return False, "PDF não foi gerado."
@@ -248,6 +248,7 @@ st.session_state.aba_selecionada = st.radio(
 
 st.markdown("---")
 
+# --- ABA: SERVIDORES JÁ CADASTRADOS ---
 if st.session_state.aba_selecionada == "📂 Servidores Já Cadastrados":
     st.subheader("🔍 Pesquisar e Selecionar Servidor da Planilha")
     
@@ -343,6 +344,7 @@ if st.session_state.aba_selecionada == "📂 Servidores Já Cadastrados":
     else:
         st.warning("🔒 **Conteúdo Restrito.** Abra a **Área do Administrador** na barra lateral e insira a chave de acesso correta.")
 
+# --- ABA: NOVO CADASTRO (Otimizada e Limpa) ---
 elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
     col_sub_1, col_sub_2 = st.columns([3, 1])
     with col_sub_1:
@@ -352,6 +354,13 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
             st.session_state.aba_selecionada = "📖 Tutorial"
             st.rerun()
 
+    # Botão de Suporte WhatsApp em destaque para idosos
+    st.markdown(f'''
+        <a href="https://wa.me/5586988523711" target="_blank">
+            <button class="btn-whatsapp">📱 PRECISA DE AJUDA? Fale conosco no WhatsApp</button>
+        </a>
+    ''', unsafe_allow_html=True)
+
     st.markdown("""
         <div class="box-instrucoes">
             <b>📌 Informações Importantes:</b><br>
@@ -360,107 +369,107 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
         </div>
     """, unsafe_allow_html=True)
 
-    with st.container(border=True):
-        st.info("🧭 Siga a indicação da seta (➡️) passo a passo para preencher os seus dados corretamente:")
+    # Condição visual: se os PDFs já foram gerados, ocultamos o formulário gigante e mostramos apenas os passos seguintes
+    if st.session_state.get("pdf_proc") is None:
+        with st.container(border=True):
+            st.markdown('<div class="box-passo"><b>📍 Passo 1: Preencha os campos abaixo corretamente:</b></div>', unsafe_allow_html=True)
 
-        val_1 = st.session_state.get("input_local_mun", "")
-        val_2 = st.session_state.get("input_local_uf", "")
-        val_3 = st.session_state.get("input_mat", "")
-        val_4 = st.session_state.get("input_nome", "")
-        val_5 = st.session_state.get("input_cargo", "")
-        val_6 = st.session_state.get("input_cpf", "")
-        val_7 = st.session_state.get("input_orgao", "")
-        val_8 = st.session_state.get("input_rg", "")
-        val_9 = st.session_state.get("input_ing_raw", "")
-        val_10 = st.session_state.get("input_email", "")
-        val_11 = st.session_state.get("input_tel", "")
-        val_12 = st.session_state.get("input_cep", "")
-        val_13 = st.session_state.get("input_mun", "")
-        val_14 = st.session_state.get("input_ec", "")
-        val_15 = st.session_state.get("input_end", "")
-        val_16 = st.session_state.get("input_uf", "")
+            val_1 = st.session_state.get("input_local_mun", "")
+            val_2 = st.session_state.get("input_local_uf", "")
+            val_3 = st.session_state.get("input_mat", "")
+            val_4 = st.session_state.get("input_nome", "")
+            val_5 = st.session_state.get("input_cargo", "")
+            val_6 = st.session_state.get("input_cpf", "")
+            val_7 = st.session_state.get("input_orgao", "")
+            val_8 = st.session_state.get("input_rg", "")
+            val_9 = st.session_state.get("input_ing_raw", "")
+            val_10 = st.session_state.get("input_email", "")
+            val_11 = st.session_state.get("input_tel", "")
+            val_12 = st.session_state.get("input_cep", "")
+            val_13 = st.session_state.get("input_mun", "")
+            val_14 = st.session_state.get("input_ec", "")
+            val_15 = st.session_state.get("input_end", "")
+            val_16 = st.session_state.get("input_uf", "")
 
-        def s(n):
-            p = 1
-            for x in [val_1, val_2, val_3, val_4, val_5, val_6, val_7, val_8, val_9, val_10, val_11, val_12, val_13, val_14, val_15, val_16]:
-                if not str(x).strip():
-                    break
-                p += 1
-            return "➡️ " if n == p else ""
+            def s(n):
+                p = 1
+                for x in [val_1, val_2, val_3, val_4, val_5, val_6, val_7, val_8, val_9, val_10, val_11, val_12, val_13, val_14, val_15, val_16]:
+                    if not str(x).strip():
+                        break
+                    p += 1
+                return "➡️ " if n == p else ""
 
-        st.markdown(f"**📍 Local de Preenchimento**")
-        col_loc1, col_loc2 = st.columns(2)
-        with col_loc1:
-            local_municipio = st.text_input(f"{s(1)}1. Município que está", key="input_local_mun")
-        with col_loc2:
-            local_estado = st.text_input(f"{s(2)}2. Estado", key="input_local_uf")
+            st.markdown(f"**📍 Local de Preenchimento**")
+            col_loc1, col_loc2 = st.columns(2)
+            with col_loc1:
+                local_municipio = st.text_input(f"{s(1)}1. Município que está", key="input_local_mun")
+            with col_loc2:
+                local_estado = st.text_input(f"{s(2)}2. Estado", key="input_local_uf")
 
-        st.markdown("---")
-        col_p1, col_p2 = st.columns(2)
-        with col_p1:
-            st.markdown("**💼 Dados Profissionais**")
-            matricula = st.text_input(f"{s(3)}3. Matrícula (SIAPE)", key="input_mat")
-            cargo = st.text_input(f"{s(5)}5. Cargo", key="input_cargo")
-            orgao = st.text_input(f"{s(7)}7. Órgão", key="input_orgao")
-            ingresso = st.text_input(f"{s(9)}9. Data de Ingresso", placeholder="DD/MM/AAAA", key="input_ing_raw", max_chars=10, on_change=formatar_data_callback)
+            st.markdown("---")
+            col_p1, col_p2 = st.columns(2)
+            with col_p1:
+                st.markdown("**💼 Dados Profissionais**")
+                matricula = st.text_input(f"{s(3)}3. Matrícula (SIAPE)", key="input_mat")
+                cargo = st.text_input(f"{s(5)}5. Cargo", key="input_cargo")
+                orgao = st.text_input(f"{s(7)}7. Órgão", key="input_orgao")
+                ingresso = st.text_input(f"{s(9)}9. Data de Ingresso", placeholder="DD/MM/AAAA", key="input_ing_raw", max_chars=10, on_change=formatar_data_callback)
 
-        with col_p2:
-            st.markdown("**👤 Dados Pessoais**")
-            nome = st.text_input(f"{s(4)}4. Nome completo", key="input_nome")
-            cpf = st.text_input(f"{s(6)}6. CPF", key="input_cpf")
-            rg = st.text_input(f"{s(8)}8. RG - Órgão de Expedição", key="input_rg")
-            email = st.text_input(f"{s(10)}10. E-mail", key="input_email")
+            with col_p2:
+                st.markdown("**👤 Dados Pessoais**")
+                nome = st.text_input(f"{s(4)}4. Nome completo", key="input_nome")
+                cpf = st.text_input(f"{s(6)}6. CPF", key="input_cpf")
+                rg = st.text_input(f"{s(8)}8. RG - Órgão de Expedição", key="input_rg")
+                email = st.text_input(f"{s(10)}10. E-mail", key="input_email")
 
-        col_p3, col_p4, col_p5 = st.columns(3)
-        with col_p3:
-            telefone = st.text_input(f"{s(11)}11. Telefone", key="input_tel")
-            estado_civil = st.text_input(f"{s(14)}14. Estado Civil", key="input_ec")
-        with col_p4:
-            cep = st.text_input(f"{s(12)}12. CEP", key="input_cep")
-            endereco = st.text_input(f"{s(15)}15. Endereço", key="input_end")
-        with col_p5:
-            municipio = st.text_input(f"{s(13)}13. Município", key="input_mun")
-            estado = st.text_input(f"{s(16)}16. Estado (UF)", key="input_uf")
+            col_p3, col_p4, col_p5 = st.columns(3)
+            with col_p3:
+                telefone = st.text_input(f"{s(11)}11. Telefone", key="input_tel")
+                estado_civil = st.text_input(f"{s(14)}14. Estado Civil", key="input_ec")
+            with col_p4:
+                cep = st.text_input(f"{s(12)}12. CEP", key="input_cep")
+                endereco = st.text_input(f"{s(15)}15. Endereço", key="input_end")
+            with col_p5:
+                municipio = st.text_input(f"{s(13)}13. Município", key="input_mun")
+                estado = st.text_input(f"{s(16)}16. Estado (UF)", key="input_uf")
 
-    todos_preenchidos = all(str(x).strip() for x in [val_1, val_2, val_3, val_4, val_5, val_6, val_7, val_8, val_9, val_10, val_11, val_12, val_13, val_14, val_15, val_16])
+        todos_preenchidos = all(str(x).strip() for x in [val_1, val_2, val_3, val_4, val_5, val_6, val_7, val_8, val_9, val_10, val_11, val_12, val_13, val_14, val_15, val_16])
 
-    if todos_preenchidos and st.session_state.get("pdf_proc") is None:
-        st.markdown('<p class="seta-guiada">➡️ 1. Clique no botão abaixo para salvar e gerar os documentos:</p>', unsafe_allow_html=True)
+        if todos_preenchidos:
+            st.markdown('<p class="seta-guiada">➡️ Tudo preenchido! Clique no botão abaixo para salvar:</p>', unsafe_allow_html=True)
 
-    col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
-    with col_btn2:
-        btn_salvar = st.button("💾 Salvar na Planilha e Gerar Documentos", key="btn_salvar_novo")
+        col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
+        with col_btn2:
+            btn_salvar = st.button("💾 Salvar na Planilha e Gerar Documentos", key="btn_salvar_novo")
 
-    if btn_salvar:
-        if not nome.strip():
-            st.error("⚠️ Por favor, preencha o campo 'Nome completo'.")
-        elif not email.strip():
-            st.error("⚠️ Por favor, preencha o campo 'E-mail'.")
-        else:
-            dados_usuario = {
-                "Local Preenchimento Município": local_municipio,
-                "Local Preenchimento Estado": local_estado,
-                "Matrícula": matricula, "Cargo": cargo, "Órgão": orgao, "Data de Ingresso": ingresso,
-                "Nome": nome, "CPF": cpf, "E-mail": email, "RG": rg, "Telefone": telefone,
-                "Estado Civil": estado_civil, "CEP": cep, "Endereço": endereco, "Município": municipio, "Estado": estado
-            }
-            salvar_no_excel(dados_usuario)
-            st.session_state.dados_usuario = dados_usuario
-            st.session_state.nome_servidor = nome.strip()
-            
-            # Gerar PDFs oficiais
-            st.session_state.pdf_proc, st.session_state.pdf_termo = preencher_documentos_oficiais(dados_usuario)
-            st.session_state.link_assinatura = "https://app.assinafy.com.br/dashboard"
-            st.session_state.status_assinafy = "manual"
+        if btn_salvar:
+            if not nome.strip():
+                st.error("⚠️ Por favor, preencha o campo 'Nome completo'.")
+            elif not email.strip():
+                st.error("⚠️ Por favor, preencha o campo 'E-mail'.")
+            else:
+                dados_usuario = {
+                    "Local Preenchimento Município": local_municipio,
+                    "Local Preenchimento Estado": local_estado,
+                    "Matrícula": matricula, "Cargo": cargo, "Órgão": orgao, "Data de Ingresso": ingresso,
+                    "Nome": nome, "CPF": cpf, "E-mail": email, "RG": rg, "Telefone": telefone,
+                    "Estado Civil": estado_civil, "CEP": cep, "Endereço": endereco, "Município": municipio, "Estado": estado
+                }
+                salvar_no_excel(dados_usuario)
+                st.session_state.dados_usuario = dados_usuario
+                st.session_state.nome_servidor = nome.strip()
+                
+                # Gerar PDFs oficiais
+                st.session_state.pdf_proc, st.session_state.pdf_termo = preencher_documentos_oficiais(dados_usuario)
+                st.success(f"✨ Dados salvos com sucesso para **{st.session_state.nome_servidor}**!")
+                st.rerun()
 
-            st.success(f"✨ Dados salvos e documentos gerados com sucesso para **{st.session_state.nome_servidor}**!")
-            st.rerun()
-
+    # --- SE OS DOCUMENTOS JÁ FORAM GERADOS (Passos 2, 3 e 4 limpos e destacados) ---
     if st.session_state.get("pdf_proc") is not None:
         st.markdown("---")
         with st.container(border=True):
-            st.markdown('<p class="seta-guiada">➡️ 2. Baixe os documentos gerados abaixo:</p>', unsafe_allow_html=True)
-            st.subheader(f"⚙️ Gestão de Arquivos para: {st.session_state.get('nome_servidor', '')}")
+            st.markdown('<div class="box-passo" style="border-left-color: #198754;"><b>✅ Passo 2: Baixe os documentos gerados</b></div>', unsafe_allow_html=True)
+            st.subheader(f"⚙️ Arquivos prontos para: {st.session_state.get('nome_servidor', '')}")
             
             sufixo_chave = str(st.session_state.get('nome_servidor', 'usuario')).replace(" ", "_")
             
@@ -473,14 +482,13 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
                     st.download_button(label="📄 Baixar Termo", data=st.session_state.pdf_termo, file_name="Termo_Preenchido.pdf", mime="application/pdf", key=f"dl_termo_{sufixo_chave}")
 
             st.markdown("---")
-            st.markdown('<p class="seta-guiada">➡️ Assine o documento digitalmente:</p>', unsafe_allow_html=True)
-            st.markdown('''<a href="https://app.assinafy.com.br/dashboard" target="_blank" class="btn-assinar">✍️ ABRIR PAINEL DO ASSINAFY PARA ASSINAR</a>''', unsafe_allow_html=True)
-            st.info("ℹ️ **Nota:** O documento foi gerado e salvo com sucesso. Utilize o botão acima para acessar o painel do Assinafy e realizar a assinatura.")
+            st.markdown('<div class="box-passo"><b>✍️ Passo 3: Assinatura Digital</b></div>', unsafe_allow_html=True)
+            st.markdown('<a href="https://app.assinafy.com.br/dashboard" target="_blank" class="btn-assinar">✍️ ABRIR PAINEL DO ASSINAFY PARA ASSINAR</a>', unsafe_allow_html=True)
+            st.info("ℹ️ **Nota:** Clique acima para abrir o painel do Assinafy, faça o upload dos arquivos baixados e realize a assinatura.")
 
         st.markdown("---")
         with st.container(border=True):
-            st.markdown('<p class="seta-guiada">➡️ 3. Faça o upload dos documentos solicitados abaixo:</p>', unsafe_allow_html=True)
-            st.subheader("📤 Envio de Documentos para o Google Drive")
+            st.markdown('<div class="box-passo"><b>📤 Passo 4: Envio de Documentos para o Google Drive</b></div>', unsafe_allow_html=True)
             
             col_up1, col_up2 = st.columns(2)
             with col_up1:
@@ -490,8 +498,7 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
                 comprovante_residencia = st.file_uploader("🏠 2. Comprovante de residência atualizado", type=["pdf", "jpg", "jpeg", "png"], key="up_residencia")
                 upload_termo_assinado = st.file_uploader("✍️ 4. Termo assinado", type=["pdf"], key="upload_termo")
 
-            st.markdown('<p class="seta-guiada">➡️ 4. Clique no botão abaixo para enviar os arquivos:</p>', unsafe_allow_html=True)
-            
+            st.markdown("<br>", unsafe_allow_html=True)
             col_env1, col_env2, col_env3 = st.columns([1, 2, 1])
             with col_env2:
                 btn_enviar_drive = st.button("🚀 Enviar arquivos para o Google Drive", key="btn_enviar_drive")
@@ -524,6 +531,14 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
                 else:
                     st.warning("⚠️ Nenhum arquivo anexado.")
 
+        # Botão para reiniciar o fluxo com facilidade
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("🔄 Fazer Novo Cadastro / Limpar Tela"):
+            st.session_state.pdf_proc = None
+            st.session_state.pdf_termo = None
+            st.rerun()
+
+# --- ABA: TUTORIAL ---
 elif st.session_state.aba_selecionada == "📖 Tutorial":
     col_tut_1, col_tut_2 = st.columns([3, 1])
     with col_tut_1:
