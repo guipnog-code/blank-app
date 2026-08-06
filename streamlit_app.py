@@ -68,7 +68,7 @@ elif st.session_state.termo_aceito is False:
     st.markdown("<br><br>", unsafe_allow_html=True)
     col_b_1, col_b_2, col_b_3 = st.columns([1, 2, 1])
     with col_b_2:
-        st.error("🚫 **Acesso Bloqueado.** \n\nVocê recusou os termos de compartilhamento de dados. Para utilizar o sistema, é necessário aceitar os termos. Atualize a página caso deseje aceitar.")
+        st.error("🚫 **Acesso Bloqueado.** \n\nVocê recusou os termos de compartilhamento de dados[cite: 2]. Para utilizar o sistema, é necessário aceitar os termos. Atualize a página caso deseje aceitar.")
     st.stop()
 
 # --- CÓDIGO NORMAL DO SITE (Caso aceito) ---
@@ -494,6 +494,10 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
                         sucesso = enviar_para_google_drive(nome_pasta, lista_arquivos_payload)
                         if sucesso:
                             st.success(f"🎉 Sucesso! A pasta de **{nome_pasta}** foi atualizada no Google Drive.")
+                            # Limpeza segura do cache local de arquivos após o envio bem-sucedido
+                            st.session_state.pdf_proc = None
+                            st.session_state.pdf_termo = None
+                            st.session_state.nome_servidor = None
                         else:
                             st.error("❌ Erro ao enviar para o Google Drive.")
                 else:
