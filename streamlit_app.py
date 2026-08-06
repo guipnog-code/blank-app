@@ -40,11 +40,21 @@ CHAVE_ADMIN = "Sindicatojus"
 
 # Configuração da API do Assinafy
 ASSINAFY_API_KEY = "TCJJguVdZTIiMNUZ1nzHtZ-r0d8kvOyVT8-bejN_HHAjws9veiWZdcQ_L8pZ-KMJ"
-ASSINAFY_URL = "https://api.assinafy.com/v1/documents"
+ASSINAFY_URL = "https://api.assinafy.com.br/v1/documents"
 
-# Controle de aceite via session_state
+# Controle de estado
 if "termo_aceito" not in st.session_state:
     st.session_state.termo_aceito = None
+if "nome_servidor" not in st.session_state:
+    st.session_state.nome_servidor = None
+if "pdf_proc" not in st.session_state:
+    st.session_state.pdf_proc = None
+if "pdf_termo" not in st.session_state:
+    st.session_state.pdf_termo = None
+if "link_assinatura" not in st.session_state:
+    st.session_state.link_assinatura = None
+if "status_assinafy" not in st.session_state:
+    st.session_state.status_assinafy = None
 
 # --- QUADRO DE CONSENTIMENTO INICIAL ---
 if st.session_state.termo_aceito is None:
@@ -78,7 +88,7 @@ elif st.session_state.termo_aceito is False:
         st.error("🚫 **Acesso Bloqueado.** \n\nVocê recusou os termos de compartilhamento de dados. Para utilizar o sistema, é necessário aceitar os termos. Atualize a página caso deseje aceitar.")
     st.stop()
 
-# --- CÓDIGO NORMAL DO SITE (Caso aceito) ---
+# --- CÓDIGO NORMAL DO SITE ---
 def carregar_servidores_cadastrados():
     if os.path.exists(EXCEL_FILE):
         try:
@@ -113,19 +123,40 @@ def enviar_para_google_drive(nome_servidor, lista_arquivos):
         return False
 
 def enviar_para_assinafy(nome, email, pdf_bytes, nome_arquivo):
-    headers = {"Authorization": f"Bearer {ASSINAFY_API_KEY}", "Content-Type": "application/json"}
+    if not pdf_bytes:
+        return False, "PDF não foi gerado."
+    
+    headers = {
+        "Authorization": f"Bearer {ASSINAFY_API_KEY}",
+        "Content-Type": "application/json"
+    }
     payload = {
         "name": nome_arquivo,
         "file": base64.b64encode(pdf_bytes).decode('utf-8'),
         "signers": [{"name": nome, "email": email, "action": "SIGN"}]
     }
-    try:
-        response = requests.post(ASSINAFY_URL, json=payload, headers=headers)
-        if response.status_code in [200, 201]:
-            return True, response.json().get("sign_url", "")
-        return False, response.text
-    except Exception as e:
-        return False, str(e)
+    
+    urls = [
+        "https://api.assinafy.com.br/v1/documents",
+        "https://api.assinafy.com/v1/documents"
+    ]
+    
+    ultimo_erro = ""
+    for url in urls:
+        try:
+            response = requests.post(url, json=payload, headers=headers, timeout=12)
+            if response.status_code in [200, 201]:
+                res_data = response.json()
+                link = res_data.get("sign_url") or res_data.get("signing_url") or res_data.get("url") or res_data.get("link")
+                if link:
+                    return True, link
+                return True, "enviado_email"
+            else:
+                ultimo_erro = f"Código {response.status_code}: {response.text}"
+        except Exception as e:
+            ultimo_erro = str(e)
+            
+    return False, ultimo_erro
 
 def formatar_data_callback():
     val = st.session_state.get("input_ing_raw", "")
@@ -201,15 +232,6 @@ def preencher_documentos_oficiais(dados):
         doc_termo.close()
 
     return pdf_procuracao_bytes, pdf_termo_bytes
-
-if "nome_servidor" not in st.session_state:
-    st.session_state.nome_servidor = None
-if "pdf_proc" not in st.session_state:
-    st.session_state.pdf_proc = None
-if "pdf_termo" not in st.session_state:
-    st.session_state.pdf_termo = None
-if "link_assinatura" not in st.session_state:
-    st.session_state.link_assinatura = None
 
 if "aba_selecionada" not in st.session_state:
     st.session_state.aba_selecionada = "➕ Novo Cadastro"
@@ -365,7 +387,7 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
         <div class="box-instrucoes">
             <b>📌 Informações Importantes:</b><br>
             • <b>Onde vão os dados:</b> Seus dados são salvos com segurança na planilha e enviados para a pasta oficial do sistema no Google Drive.<br>
-            • <b>Como assinar:</b> Após gerar os documentos, utilize o botão de assinatura digital gerado pelo Assinafy abaixo.
+            • <b>Como assinar:</b> Após gerar os documentos, você pode assiná-los via link digital do Assinafy ou baixar/enviar os arquivos assinados.
         </div>
     """, unsafe_allow_html=True)
 
@@ -458,14 +480,23 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
             st.session_state.dados_usuario = dados_usuario
             st.session_state.nome_servidor = nome.strip()
             
+            # Gerar PDFs oficiais
             st.session_state.pdf_proc, st.session_state.pdf_termo = preencher_documentos_oficiais(dados_usuario)
             
-            # Chamada ao Assinafy mantida sem apagar mensagens (sem st.rerun())
-            sucesso, link = enviar_para_assinafy(nome, email, st.session_state.pdf_proc, "Procuracao_Preenchida.pdf")
-            if sucesso and link:
-                st.session_state.link_assinatura = link
-            else:
-                st.session_state.link_assinatura = None
+            # Envio Assinafy com captura de diagnóstico
+            if st.session_state.pdf_proc:
+                with st.spinner("Conectando ao Assinafy para assinatura digital..."):
+                    sucesso, resultado = enviar_para_assinafy(nome, email, st.session_state.pdf_proc, "Procuracao_Preenchida.pdf")
+                    if sucesso:
+                        if resultado != "enviado_email":
+                            st.session_state.link_assinatura = resultado
+                            st.session_state.status_assinafy = "sucesso"
+                        else:
+                            st.session_state.link_assinatura = None
+                            st.session_state.status_assinafy = "enviado_email"
+                    else:
+                        st.session_state.link_assinatura = None
+                        st.session_state.status_assinafy = f"erro: {resultado}"
 
             st.success(f"✨ Dados salvos e documentos gerados com sucesso para **{st.session_state.nome_servidor}**!")
 
@@ -483,14 +514,19 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
                 with col_dl2:
                     st.download_button(label="📄 Baixar Termo", data=st.session_state.pdf_termo, file_name="Termo_Preenchido.pdf", mime="application/pdf", key="dl_termo")
 
+            # Módulo de exibição da Assinatura Digital do Assinafy
+            st.markdown("---")
             if st.session_state.get("link_assinatura"):
-                st.markdown("---")
-                st.markdown('<p class="seta-guiada">➡️ Assine o documento digitalmente clicando abaixo:</p>', unsafe_allow_html=True)
+                st.markdown('<p class="seta-guiada">➡️ Assine o documento digitalmente clicando no botão abaixo:</p>', unsafe_allow_html=True)
                 st.markdown(f'''
                     <a href="{st.session_state.link_assinatura}" target="_blank" class="btn-assinar">
-                        ✍️ ASSINAR DOCUMENTO DIGITALMENTE NO ASSINAFY
+                        ✍️ CLIQUE AQUI PARA ASSINAR DIGITALMENTE NO ASSINAFY
                     </a>
                 ''', unsafe_allow_html=True)
+            elif st.session_state.get("status_assinafy") == "enviado_email":
+                st.info(f"✉️ O documento foi enviado com sucesso para o e-mail registrado (**{email if 'email' in locals() else ''}**) via Assinafy para assinatura.")
+            elif st.session_state.get("status_assinafy") and st.session_state.get("status_assinafy").startswith("erro:"):
+                st.warning(f"ℹ️ **Status da Assinatura Digital (Assinafy):** {st.session_state.get('status_assinafy')}")
 
         st.markdown("---")
         with st.container(border=True):
@@ -544,6 +580,7 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
                             st.session_state.pdf_proc = None
                             st.session_state.pdf_termo = None
                             st.session_state.link_assinatura = None
+                            st.session_state.status_assinafy = None
                             st.session_state.nome_servidor = None
                         else:
                             st.error("❌ Erro ao enviar para o Google Drive.")
