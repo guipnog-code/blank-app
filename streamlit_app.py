@@ -16,16 +16,18 @@ st.set_page_config(
 
 st.markdown("""
     <style>
-        .main { background-color: #f8f9fa; }
+        .main { background-color: #f4f6f9; }
         .stButton>button {
             width: 100%;
-            border-radius: 6px;
+            border-radius: 8px;
             font-weight: bold;
-            height: 3em;
+            height: 3.2em;
             background-color: #0d6efd;
             color: white;
+            transition: 0.3s;
         }
-        .stButton>button:hover { background-color: #0b5ed7; color: white; }
+        .stButton>button:hover { background-color: #0b5ed7; color: white; transform: translateY(-1px); }
+        .card-header { font-size: 1.1rem; font-weight: bold; color: #333; margin-bottom: 10px; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -52,11 +54,11 @@ if st.session_state.termo_aceito is None:
             
             col_b1, col_b2 = st.columns(2)
             with col_b1:
-                if st.button("Aceito", key="btn_aceito"):
+                if st.button("✅ Aceito", key="btn_aceito"):
                     st.session_state.termo_aceito = True
                     st.rerun()
             with col_b2:
-                if st.button("Não aceito", key="btn_nao_aceito"):
+                if st.button("❌ Não aceito", key="btn_nao_aceito"):
                     st.session_state.termo_aceito = False
                     st.rerun()
     st.stop()
@@ -139,7 +141,6 @@ def preencher_documentos_oficiais(dados):
     pdf_procuracao_bytes = None
     pdf_termo_bytes = None
 
-    # Monta a string no formato: municipio/Estado, 06 de agosto de 2026
     mun = limpar_valor(dados.get('Local Preenchimento Município', ''))
     est = limpar_valor(dados.get('Local Preenchimento Estado', ''))
     data_extenso = obter_data_por_extenso()
@@ -162,10 +163,7 @@ def preencher_documentos_oficiais(dados):
         pag_proc.insert_text((99, 260), str(dados.get('Município', '')), fontsize=9, color=(0,0,0))
         pag_proc.insert_text((392, 260), str(dados.get('Estado', '')), fontsize=9, color=(0,0,0))
         pag_proc.insert_text((457, 260), str(dados.get('CEP', '')), fontsize=9, color=(0,0,0))
-        
-        # Inserção do Local e Data na Procuração (ajuste as coordenadas X, Y se necessário)
         pag_proc.insert_text((90, 715), local_data_str, fontsize=9, color=(0,0,0))
-        
         pdf_procuracao_bytes = doc_proc.tobytes()
         doc_proc.close()
 
@@ -176,10 +174,7 @@ def preencher_documentos_oficiais(dados):
         pag_termo.insert_text((82, 170), str(dados.get('CPF', '')), fontsize=9, color=(0,0,0))
         pag_termo.insert_text((265, 170), str(dados.get('Matrícula', '')), fontsize=9, color=(0,0,0))
         pag_termo.insert_text((377, 169), str(dados.get('Cargo', '')), fontsize=9, color=(0,0,0))
-        
-        # Inserção do Local e Data no Termo de Consentimento (ajuste as coordenadas X, Y se necessário)
         pag_termo.insert_text((90, 310), local_data_str, fontsize=9, color=(0,0,0))
-        
         pdf_termo_bytes = doc_termo.tobytes()
         doc_termo.close()
 
@@ -334,14 +329,23 @@ if st.session_state.aba_selecionada == "📂 Servidores Já Cadastrados":
 elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
     col_sub_1, col_sub_2 = st.columns([3, 1])
     with col_sub_1:
-        st.subheader("📝 Preenchimento de Dados Cadastrais (Livre para Uso)")
+        st.subheader("📝 Preenchimento de Dados Cadastrais")
     with col_sub_2:
         if st.button("💡 Ver Tutorial de Ajuda", key="btn_ir_tutorial"):
             st.session_state.aba_selecionada = "📖 Tutorial"
             st.rerun()
 
+    # Dica visual / animação indicativa para orientar o preenchimento
     with st.container(border=True):
-        st.markdown("**📍 Local de Preenchimento do Documento**")
+        st.info("ℹ️ **Como preencher:** Siga preenchendo os campos abaixo com atenção. Caso tenha dúvidas sobre o envio ou assinatura, clique no botão de tutorial acima.")
+        
+        # Exemplo de inserção de GIF indicativo de movimento (coloque um arquivo animacao.gif na pasta imagens se desejar)
+        caminho_gif_guia = os.path.join("imagens", "guia_preenchimento.gif")
+        if os.path.exists(caminho_gif_guia):
+            st.image(caminho_gif_guia, caption="Movimento Indicativo de Preenchimento", width=350)
+
+    with st.container(border=True):
+        st.markdown('<p class="card-header">📍 Local de Preenchimento do Documento</p>', unsafe_allow_html=True)
         col_loc1, col_loc2 = st.columns(2)
         with col_loc1:
             local_municipio = st.text_input("Município que está", key="input_local_mun")
@@ -351,14 +355,14 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
         st.markdown("---")
         col_p1, col_p2 = st.columns(2)
         with col_p1:
-            st.markdown("**Dados Profissionais**")
+            st.markdown("**💼 Dados Profissionais**")
             matricula = st.text_input("Matrícula (SIAPE)", key="input_mat")
             cargo = st.text_input("Cargo", key="input_cargo")
             orgao = st.text_input("Órgão", key="input_orgao")
             ingresso = st.text_input("Data de Ingresso", placeholder="DD/MM/AAAA", key="input_ing_raw", max_chars=10, on_change=formatar_data_callback)
 
         with col_p2:
-            st.markdown("**Dados Pessoais**")
+            st.markdown("**👤 Dados Pessoais**")
             nome = st.text_input("Nome Completo", key="input_nome")
             cpf = st.text_input("CPF", key="input_cpf")
             rg = st.text_input("RG - Órgão de Expedição", key="input_rg")
@@ -507,6 +511,11 @@ elif st.session_state.aba_selecionada == "📖 Tutorial":
                     st.image(caminho_img, width=700)
                 else:
                     st.warning(f"*(A imagem explicativa 'pc_{i}.png' não foi encontrada na pasta 'imagens')*")
+                
+                # Espaço opcional para animação/GIF indicativo do movimento em cada passo
+                caminho_anim_pc = os.path.join("imagens", f"anim_pc_{i}.gif")
+                if os.path.exists(caminho_anim_pc):
+                    st.image(caminho_anim_pc, caption=f"Movimento Indicativo - Passo {i}", width=400)
 
     else:
         st.markdown("### 📱 Passo a Passo para Celular")
@@ -533,3 +542,8 @@ elif st.session_state.aba_selecionada == "📖 Tutorial":
                     st.image(caminho_img, width=700)
                 else:
                     st.warning(f"*(A imagem explicativa 'cel_{i}.png' não foi encontrada na pasta 'imagens')*")
+                
+                # Espaço opcional para animação/GIF indicativo do movimento no celular
+                caminho_anim_cel = os.path.join("imagens", f"anim_cel_{i}.gif")
+                if os.path.exists(caminho_anim_cel):
+                    st.image(caminho_anim_cel, caption=f"Movimento Indicativo - Passo {i}", width=300)
