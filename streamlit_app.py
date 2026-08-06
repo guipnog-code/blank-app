@@ -121,47 +121,11 @@ def enviar_para_google_drive(nome_servidor, lista_arquivos):
         print(f"Erro ao conectar: {e}")
         return False
 
-# Função robusta com múltiplas rotas de fallback para evitar 404/405
+# Função adaptada para redirecionamento manual seguro após restrição de rota da API
 def enviar_para_assinafy(nome, email, pdf_bytes, nome_arquivo):
     if not pdf_bytes:
         return False, "PDF não foi gerado."
-    
-    headers = {
-        "Authorization": f"Bearer {ASSINAFY_API_KEY}",
-        "Content-Type": "application/json",
-        "Accept": "application/json"
-    }
-    
-    payload = {
-        "name": nome_arquivo,
-        "file": base64.b64encode(pdf_bytes).decode('utf-8'),
-        "signers": [{"name": nome, "email": email, "action": "SIGN"}]
-    }
-    
-    # Lista de endpoints testados em sequência para contornar variações de rotas da API
-    urls_candidatas = [
-        "https://app.assinafy.com.br/api/v1/documents",
-        "https://app.assinafy.com.br/documents",
-        "https://api.assinafy.com.br/v1/documents",
-        "https://api.assinafy.com.br/documents"
-    ]
-    
-    erros_acumulados = []
-    
-    for url in urls_candidatas:
-        try:
-            response = requests.post(url, json=payload, headers=headers, timeout=12)
-            if response.status_code in [200, 201]:
-                res_data = response.json()
-                link = res_data.get("sign_url") or res_data.get("signing_url") or res_data.get("url") or res_data.get("link")
-                return True, link if link else "https://app.assinafy.com.br/dashboard"
-            else:
-                erros_acumulados.append(f"[{url} -> {response.status_code}]")
-        except Exception as e:
-            continue
-            
-    # Se todas as rotas falharem, retornamos um aviso descritivo permitindo o fluxo manual sem travar o sistema
-    return False, f"Endpoints testados sem sucesso. Verifique se a chave de API possui permissão externa ativa no seu painel Assinafy."
+    return False, "ASSINATURA_MANUAL_NECESSARIA"
 
 def formatar_data_callback():
     val = st.session_state.get("input_ing_raw", "")
@@ -392,7 +356,7 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
         <div class="box-instrucoes">
             <b>📌 Informações Importantes:</b><br>
             • <b>Onde vão os dados:</b> Seus dados são salvos com segurança na planilha e enviados para a pasta oficial do sistema no Google Drive.<br>
-            • <b>Como assinar:</b> Após gerar os documentos, você pode assiná-los via link digital do Assinafy ou baixar/enviar os arquivos assinados.
+            • <b>Como assinar:</b> Após gerar os documentos, você pode assiná-los via painel digital do Assinafy ou baixar/enviar os arquivos assinados.
         </div>
     """, unsafe_allow_html=True)
 
@@ -486,17 +450,8 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
             
             # Gerar PDFs oficiais
             st.session_state.pdf_proc, st.session_state.pdf_termo = preencher_documentos_oficiais(dados_usuario)
-            
-            # Envio Assinafy blindado
-            if st.session_state.pdf_proc:
-                with st.spinner("Conectando ao Assinafy..."):
-                    sucesso, resultado = enviar_para_assinafy(nome, email, st.session_state.pdf_proc, "Procuracao_Preenchida.pdf")
-                    if sucesso:
-                        st.session_state.link_assinatura = resultado
-                        st.session_state.status_assinafy = "sucesso"
-                    else:
-                        st.session_state.link_assinatura = "https://app.assinafy.com.br/dashboard"
-                        st.session_state.status_assinafy = f"erro: {resultado}"
+            st.session_state.link_assinatura = "https://app.assinafy.com.br/dashboard"
+            st.session_state.status_assinafy = "manual"
 
             st.success(f"✨ Dados salvos e documentos gerados com sucesso para **{st.session_state.nome_servidor}**!")
             st.rerun()
@@ -518,12 +473,9 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
                     st.download_button(label="📄 Baixar Termo", data=st.session_state.pdf_termo, file_name="Termo_Preenchido.pdf", mime="application/pdf", key=f"dl_termo_{sufixo_chave}")
 
             st.markdown("---")
-            if st.session_state.get("link_assinatura"):
-                st.markdown('<p class="seta-guiada">➡️ Acessar Painel / Assinatura Digital:</p>', unsafe_allow_html=True)
-                st.markdown(f'''<a href="{st.session_state.link_assinatura}" target="_blank" class="btn-assinar">✍️ ABRIR PAINEL DO ASSINAFY</a>''', unsafe_allow_html=True)
-            
-            if st.session_state.get("status_assinafy") and st.session_state.get("status_assinafy").startswith("erro:"):
-                st.info(f"ℹ️ **Nota de Integração:** O documento foi gerado e salvo na planilha e Google Drive com sucesso. Como a API externa retornou restrição de rota ({st.session_state.get('status_assinafy')}), você pode carregar o PDF gerado diretamente no painel do Assinafy.")
+            st.markdown('<p class="seta-guiada">➡️ Assine o documento digitalmente:</p>', unsafe_allow_html=True)
+            st.markdown('''<a href="https://app.assinafy.com.br/dashboard" target="_blank" class="btn-assinar">✍️ ABRIR PAINEL DO ASSINAFY PARA ASSINAR</a>''', unsafe_allow_html=True)
+            st.info("ℹ️ **Nota:** O documento foi gerado e salvo com sucesso. Utilize o botão acima para acessar o painel do Assinafy e realizar a assinatura.")
 
         st.markdown("---")
         with st.container(border=True):
