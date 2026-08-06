@@ -38,7 +38,7 @@ EXCEL_FILE = "Cadastros_Servidores.xlsx"
 GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz8lQ3xhchTyl2QrvmIYr9qVZIFsx_8I2hIb0-jBqHOX63G8OzExrHPr2OlROfn_hSZ/exec"
 CHAVE_ADMIN = "Sindicatojus"
 
-# Configuração da API do Assinafy (URL corrigida para o domínio brasileiro oficial .com.br)
+# Configuração da API do Assinafy (Domínio oficial brasileiro)
 ASSINAFY_API_KEY = "TCJJguVdZTIiMNUZ1nzHtZ-r0d8kvOyVT8-bejN_HHAjws9veiWZdcQ_L8pZ-KMJ"
 ASSINAFY_URL = "https://api.assinafy.com.br/v1/documents"
 
@@ -445,16 +445,14 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
             estado = st.text_input(f"{s(16)}16. Estado (UF)", key="input_uf")
 
     todos_preenchidos = all(str(x).strip() for x in [val_1, val_2, val_3, val_4, val_5, val_6, val_7, val_8, val_9, val_10, val_11, val_12, val_13, val_14, val_15, val_16])
-    tem_documentos = st.session_state.get("pdf_proc") is not None
 
-    if todos_preenchidos and not tem_documentos:
+    if todos_preenchidos and st.session_state.get("pdf_proc") is None:
         st.markdown('<p class="seta-guiada">➡️ 1. Clique no botão abaixo para salvar e gerar os documentos:</p>', unsafe_allow_html=True)
 
     col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
     with col_btn2:
         btn_salvar = st.button("💾 Salvar na Planilha e Gerar Documentos", key="btn_salvar_novo")
 
-    # Bloco do Botão Salvar (Substitua por este)
     if btn_salvar:
         if not nome.strip():
             st.error("⚠️ Por favor, preencha o campo 'Nome completo'.")
@@ -469,54 +467,57 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
                 "Estado Civil": estado_civil, "CEP": cep, "Endereço": endereco, "Município": municipio, "Estado": estado
             }
             salvar_no_excel(dados_usuario)
-            
-            # Gera os PDFs e armazena no session_state
-            st.session_state.pdf_proc, st.session_state.pdf_termo = preencher_documentos_oficiais(dados_usuario)
+            st.session_state.dados_usuario = dados_usuario
             st.session_state.nome_servidor = nome.strip()
             
-            # Envio Assinafy
-            sucesso, resultado = enviar_para_assinafy(nome, email, st.session_state.pdf_proc, "Procuracao_Preenchida.pdf")
-            if sucesso:
-                st.session_state.link_assinatura = resultado if resultado != "enviado_email" else None
-                st.session_state.status_assinafy = "enviado_email" if resultado == "enviado_email" else "sucesso"
-            else:
-                st.session_state.status_assinafy = f"erro: {resultado}"
+            # Gerar PDFs oficiais
+            st.session_state.pdf_proc, st.session_state.pdf_termo = preencher_documentos_oficiais(dados_usuario)
             
+            # Envio Assinafy com captura de diagnóstico
+            if st.session_state.pdf_proc:
+                with st.spinner("Conectando ao Assinafy para assinatura digital..."):
+                    sucesso, resultado = enviar_para_assinafy(nome, email, st.session_state.pdf_proc, "Procuracao_Preenchida.pdf")
+                    if sucesso:
+                        if resultado != "enviado_email":
+                            st.session_state.link_assinatura = resultado
+                            st.session_state.status_assinafy = "sucesso"
+                        else:
+                            st.session_state.link_assinatura = None
+                            st.session_state.status_assinafy = "enviado_email"
+                    else:
+                        st.session_state.link_assinatura = None
+                        st.session_state.status_assinafy = f"erro: {resultado}"
+
             st.success(f"✨ Dados salvos e documentos gerados com sucesso para **{st.session_state.nome_servidor}**!")
-            # O st.rerun() aqui é necessário para atualizar a tela e mostrar os botões de download
             st.rerun()
 
-    # Bloco de Gestão de Arquivos (Verifique se está exatamente assim)
-    # A condição deve checar o session_state, não uma variável local
     if st.session_state.get("pdf_proc") is not None:
         st.markdown("---")
         with st.container(border=True):
             st.markdown('<p class="seta-guiada">➡️ 2. Baixe os documentos gerados abaixo:</p>', unsafe_allow_html=True)
             st.subheader(f"⚙️ Gestão de Arquivos para: {st.session_state.get('nome_servidor', '')}")
             
-            col_dl1, col_dl2 = st.columns(2)
-            with col_dl1:
-                st.download_button(label="📄 Baixar Procuração", data=st.session_state.pdf_proc, file_name="Procuracao_Preenchida.pdf", mime="application/pdf", key="dl_proc")
-            with col_dl2:
-                st.download_button(label="📄 Baixar Termo", data=st.session_state.pdf_termo, file_name="Termo_Preenchido.pdf", mime="application/pdf", key="dl_termo")
-
-            # Botão de Assinatura
-            if st.session_state.get("link_assinatura"):
-                st.markdown('<p class="seta-guiada">➡️ Assine o documento digitalmente:</p>', unsafe_allow_html=True)
-                st.markdown(f'''<a href="{st.session_state.link_assinatura}" target="_blank" class="btn-assinar">✍️ CLIQUE AQUI PARA ASSINAR NO ASSINAFY</a>''', unsafe_allow_html=True)
-    if tem_documentos:
-        st.markdown("---")
-        with st.container(border=True):
-            st.markdown('<p class="seta-guiada">➡️ 2. Baixe os documentos gerados abaixo:</p>', unsafe_allow_html=True)
-            st.subheader(f"⚙️ Gestão de Arquivos para: {st.session_state.get('nome_servidor', '')}")
+            sufixo_chave = str(st.session_state.get('nome_servidor', 'usuario')).replace(" ", "_")
             
             col_dl1, col_dl2 = st.columns(2)
             if st.session_state.get("pdf_proc"):
                 with col_dl1:
-                    st.download_button(label="📄 Baixar Procuração", data=st.session_state.pdf_proc, file_name="Procuracao_Preenchida.pdf", mime="application/pdf", key="dl_proc")
+                    st.download_button(
+                        label="📄 Baixar Procuração", 
+                        data=st.session_state.pdf_proc, 
+                        file_name="Procuracao_Preenchida.pdf", 
+                        mime="application/pdf", 
+                        key=f"dl_proc_{sufixo_chave}"
+                    )
             if st.session_state.get("pdf_termo"):
                 with col_dl2:
-                    st.download_button(label="📄 Baixar Termo", data=st.session_state.pdf_termo, file_name="Termo_Preenchido.pdf", mime="application/pdf", key="dl_termo")
+                    st.download_button(
+                        label="📄 Baixar Termo", 
+                        data=st.session_state.pdf_termo, 
+                        file_name="Termo_Preenchido.pdf", 
+                        mime="application/pdf", 
+                        key=f"dl_termo_{sufixo_chave}"
+                    )
 
             # Módulo de exibição da Assinatura Digital do Assinafy
             st.markdown("---")
@@ -528,7 +529,7 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
                     </a>
                 ''', unsafe_allow_html=True)
             elif st.session_state.get("status_assinafy") == "enviado_email":
-                st.info(f"✉️ O documento foi enviado com sucesso para o e-mail registrado (**{email if 'email' in locals() else ''}**) via Assinafy para assinatura.")
+                st.info(f"✉️ O documento foi enviado com sucesso para o e-mail registrado via Assinafy para assinatura.")
             elif st.session_state.get("status_assinafy") and st.session_state.get("status_assinafy").startswith("erro:"):
                 st.warning(f"ℹ️ **Status da Assinatura Digital (Assinafy):** {st.session_state.get('status_assinafy')}")
 
@@ -586,6 +587,7 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
                             st.session_state.link_assinatura = None
                             st.session_state.status_assinafy = None
                             st.session_state.nome_servidor = None
+                            st.rerun()
                         else:
                             st.error("❌ Erro ao enviar para o Google Drive.")
                 else:
