@@ -120,12 +120,31 @@ def limpar_valor(val):
         return ""
     return str(val).strip()
 
+def obter_data_por_extenso():
+    meses = {
+        1: "janeiro", 2: "fevereiro", 3: "março", 4: "abril",
+        5: "maio", 6: "junho", 7: "julho", 8: "agosto",
+        9: "setembro", 10: "outubro", 11: "novembro", 12: "dezembro"
+    }
+    agora = datetime.now()
+    dia = agora.strftime("%d")
+    mes = meses[agora.month]
+    ano = agora.strftime("%Y")
+    return f"{dia} de {mes} de {ano}"
+
 def preencher_documentos_oficiais(dados):
     caminho_procuracao = "template_procuracao.pdf"
     caminho_termo = "template_termo.pdf"
     
     pdf_procuracao_bytes = None
     pdf_termo_bytes = None
+
+    # Monta a string no formato: municipio/Estado, 06 de agosto de 2026
+    mun = limpar_valor(dados.get('Local Preenchimento Município', ''))
+    est = limpar_valor(dados.get('Local Preenchimento Estado', ''))
+    data_extenso = obter_data_por_extenso()
+    
+    local_data_str = f"{mun}/{est}, {data_extenso}" if mun and est else f", {data_extenso}"
 
     if os.path.exists(caminho_procuracao):
         doc_proc = fitz.open(caminho_procuracao)
@@ -143,6 +162,10 @@ def preencher_documentos_oficiais(dados):
         pag_proc.insert_text((99, 260), str(dados.get('Município', '')), fontsize=9, color=(0,0,0))
         pag_proc.insert_text((392, 260), str(dados.get('Estado', '')), fontsize=9, color=(0,0,0))
         pag_proc.insert_text((457, 260), str(dados.get('CEP', '')), fontsize=9, color=(0,0,0))
+        
+        # Inserção do Local e Data na Procuração (ajuste as coordenadas X, Y se necessário)
+        pag_proc.insert_text((90, 715), local_data_str, fontsize=9, color=(0,0,0))
+        
         pdf_procuracao_bytes = doc_proc.tobytes()
         doc_proc.close()
 
@@ -153,6 +176,10 @@ def preencher_documentos_oficiais(dados):
         pag_termo.insert_text((82, 170), str(dados.get('CPF', '')), fontsize=9, color=(0,0,0))
         pag_termo.insert_text((265, 170), str(dados.get('Matrícula', '')), fontsize=9, color=(0,0,0))
         pag_termo.insert_text((377, 169), str(dados.get('Cargo', '')), fontsize=9, color=(0,0,0))
+        
+        # Inserção do Local e Data no Termo de Consentimento (ajuste as coordenadas X, Y se necessário)
+        pag_termo.insert_text((90, 310), local_data_str, fontsize=9, color=(0,0,0))
+        
         pdf_termo_bytes = doc_termo.tobytes()
         doc_termo.close()
 
