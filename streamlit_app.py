@@ -190,6 +190,12 @@ if "pdf_termo" not in st.session_state:
 if "aba_selecionada" not in st.session_state:
     st.session_state.aba_selecionada = "➕ Novo Cadastro"
 
+# Controladores de etapas concluídas
+if "baixou_proc" not in st.session_state:
+    st.session_state.baixou_proc = False
+if "baixou_termo" not in st.session_state:
+    st.session_state.baixou_termo = False
+
 # Cabeçalho Principal com Métricas Rápidas
 col_cab1, col_cab2 = st.columns([3, 1])
 with col_cab1:
@@ -338,7 +344,6 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
     with st.container(border=True):
         st.info("🧭 Siga a indicação da seta (➡️) passo a passo para preencher os seus dados corretamente:")
 
-        # Variáveis temporárias para checar preenchimento e mover a seta em tempo real
         val_1 = st.session_state.get("input_local_mun", "")
         val_2 = st.session_state.get("input_local_uf", "")
         val_3 = st.session_state.get("input_mat", "")
@@ -357,7 +362,6 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
         val_16 = st.session_state.get("input_uf", "")
 
         def s(n):
-            # Retorna a seta se for a vez deste campo, senão vazio
             p = 1
             for x in [val_1, val_2, val_3, val_4, val_5, val_6, val_7, val_8, val_9, val_10, val_11, val_12, val_13, val_14, val_15, val_16]:
                 if not str(x).strip():
@@ -399,10 +403,11 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
             municipio = st.text_input(f"{s(13)}13. Município", key="input_mun")
             estado = st.text_input(f"{s(16)}16. Estado (UF)", key="input_uf")
 
-    # Verifica se todos os 17 passos (16 campos + botão de salvar) foram alcançados
     todos_preenchidos = all(str(x).strip() for x in [val_1, val_2, val_3, val_4, val_5, val_6, val_7, val_8, val_9, val_10, val_11, val_12, val_13, val_14, val_15, val_16])
+    tem_documentos = st.session_state.get("pdf_proc") is not None
 
-    if todos_preenchidos:
+    # Seta aparece apenas no botão de salvar se todos os campos foram preenchidos e ainda não gerou
+    if todos_preenchidos and not tem_documentos:
         st.markdown('<p class="seta-ativa">➡️ Clique no botão abaixo para salvar e gerar os documentos:</p>', unsafe_allow_html=True)
     
     col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
@@ -426,73 +431,99 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
             
             st.session_state.pdf_proc, st.session_state.pdf_termo = preencher_documentos_oficiais(dados_usuario)
             st.success(f"✨ Dados salvos na planilha e documentos gerados para **{st.session_state.nome_servidor}**!")
+            st.rerun()
 
-    if st.session_state.get("nome_servidor") or st.session_state.get("pdf_proc"):
+    if tem_documentos:
         st.markdown("---")
         with st.container(border=True):
             st.subheader(f"⚙️ Gestão de Arquivos para: {st.session_state.get('nome_servidor', '')}")
             
-            st.markdown('<p class="seta-ativa">➡️ Baixe os documentos gerados abaixo:</p>', unsafe_allow_html=True)
-            col_dl1, col_dl2 = st.columns(2)
-            if st.session_state.get("pdf_proc"):
-                with col_dl1:
-                    st.download_button(label="📄 Baixar Procuração", data=st.session_state.pdf_proc, file_name="Procuracao_Preenchida.pdf", mime="application/pdf", key="dl_proc")
-            if st.session_state.get("pdf_termo"):
-                with col_dl2:
-                    st.download_button(label="📄 Baixar Termo", data=st.session_state.pdf_termo, file_name="Termo_Preenchido.pdf", mime="application/pdf", key="dl_termo")
-
-        st.markdown("---")
-        with st.container(border=True):
-            st.subheader("📤 Envio de Documentos para o Google Drive")
+            # 1º Passo: Seta aponta para Baixar Procuração (se ainda não baixou)
+            if not st.session_state.baixou_proc:
+                st.markdown('<p class="seta-ativa">➡️ Passo 1: Clique em "Baixar Procuração":</p>', unsafe_allow_html=True)
             
-            st.markdown('<p class="seta-ativa">➡️ Anexe os documentos solicitados abaixo:</p>', unsafe_allow_html=True)
-            col_up1, col_up2 = st.columns(2)
-            with col_up1:
-                doc_identidade = st.file_uploader("🪪 Documento de Identidade com foto", type=["pdf", "jpg", "jpeg", "png"], key="up_identidade")
-                upload_proc_assinada = st.file_uploader("✍️ Procuração assinada", type=["pdf"], key="upload_proc")
-            with col_up2:
-                comprovante_residencia = st.file_uploader("🏠 Comprovante de residência atualizado", type=["pdf", "jpg", "jpeg", "png"], key="up_residencia")
-                upload_termo_assinado = st.file_uploader("✍️ Termo assinado", type=["pdf"], key="upload_termo")
+            col_dl1, col_dl2 = st.columns(2)
+            with col_dl1:
+                if st.download_button(label="📄 Baixar Procuração", data=st.session_state.pdf_proc, file_name="Procuracao_Preenchida.pdf", mime="application/pdf", key="dl_proc"):
+                    st.session_state.baixou_proc = True
+                    st.rerun()
 
-            st.markdown('<p class="seta-ativa">➡️ Por fim, clique no botão abaixo para enviar os arquivos:</p>', unsafe_allow_html=True)
-            col_env1, col_env2, col_env3 = st.columns([1, 2, 1])
-            with col_env2:
-                btn_enviar_drive = st.button("🚀 Enviar arquivos para o Google Drive", key="btn_enviar_drive")
+            # 2º Passo: Seta aponta para Baixar Termo (se já baixou a procuração mas ainda não baixou o termo)
+            if st.session_state.baixou_proc and not st.session_state.baixou_termo:
+                st.markdown('<p class="seta-ativa">➡️ Passo 2: Agora clique em "Baixar Termo":</p>', unsafe_allow_html=True)
 
-            if btn_enviar_drive:
-                nome_pasta = st.session_state.get("nome_servidor", "Servidor")
-                lista_arquivos_payload = []
+            with col_dl2:
+                if st.download_button(label="📄 Baixar Termo", data=st.session_state.pdf_termo, file_name="Termo_Preenchido.pdf", mime="application/pdf", key="dl_termo"):
+                    st.session_state.baixou_termo = True
+                    st.rerun()
 
-                if st.session_state.get("pdf_proc"):
-                    lista_arquivos_payload.append({
-                        "nome": "Procuracao_Preenchida.pdf",
-                        "conteudo": base64.b64encode(st.session_state.pdf_proc).decode('utf-8'),
-                        "mimeType": "application/pdf"
-                    })
-                if st.session_state.get("pdf_termo"):
-                    lista_arquivos_payload.append({
-                        "nome": "Termo_Preenchido.pdf",
-                        "conteudo": base64.b64encode(st.session_state.pdf_termo).decode('utf-8'),
-                        "mimeType": "application/pdf"
-                    })
+        # 3º Passo: Se já baixou ambos, mostra a seção de upload passo a passo
+        if st.session_state.baixou_proc and st.session_state.baixou_termo:
+            st.markdown("---")
+            with st.container(border=True):
+                st.subheader("📤 Envio de Documentos para o Google Drive")
+                
+                doc_identidade = st.file_uploader("🪪 1. Documento de Identidade com foto", type=["pdf", "jpg", "jpeg", "png"], key="up_identidade")
+                
+                if doc_identidade is not None:
+                    comprovante_residencia = st.file_uploader("🏠 2. Comprovante de residência atualizado", type=["pdf", "jpg", "jpeg", "png"], key="up_residencia")
+                else:
+                    comprovante_residencia = None
 
-                for arquivo_up in [doc_identidade, comprovante_residencia, upload_proc_assinada, upload_termo_assinado]:
-                    if arquivo_up is not None:
+                if comprovante_residencia is not None:
+                    upload_proc_assinada = st.file_uploader("✍️ 3. Procuração assinada", type=["pdf"], key="upload_proc")
+                else:
+                    upload_proc_assinada = None
+
+                if upload_proc_assinada is not None:
+                    upload_termo_assinado = st.file_uploader("✍️ 4. Termo assinado", type=["pdf"], key="upload_termo")
+                else:
+                    upload_termo_assinado = None
+
+                # 4º Passo: O botão de envio só exibe a seta final quando todos os 4 arquivos estiverem anexados
+                todos_arquivos_prontos = all([doc_identidade, comprovante_residencia, upload_proc_assinada, upload_termo_assinado])
+
+                if todos_arquivos_prontos:
+                    st.markdown('<p class="seta-ativa">➡️ Todos os arquivos anexados! Clique abaixo para enviar para o Google Drive:</p>', unsafe_allow_html=True)
+                
+                col_env1, col_env2, col_env3 = st.columns([1, 2, 1])
+                with col_env2:
+                    btn_enviar_drive = st.button("🚀 Enviar arquivos para o Google Drive", key="btn_enviar_drive")
+
+                if btn_enviar_drive:
+                    nome_pasta = st.session_state.get("nome_servidor", "Servidor")
+                    lista_arquivos_payload = []
+
+                    if st.session_state.get("pdf_proc"):
                         lista_arquivos_payload.append({
-                            "nome": arquivo_up.name,
-                            "conteudo": base64.b64encode(arquivo_up.getbuffer()).decode('utf-8'),
-                            "mimeType": arquivo_up.type
+                            "nome": "Procuracao_Preenchida.pdf",
+                            "conteudo": base64.b64encode(st.session_state.pdf_proc).decode('utf-8'),
+                            "mimeType": "application/pdf"
+                        })
+                    if st.session_state.get("pdf_termo"):
+                        lista_arquivos_payload.append({
+                            "nome": "Termo_Preenchido.pdf",
+                            "conteudo": base64.b64encode(st.session_state.pdf_termo).decode('utf-8'),
+                            "mimeType": "application/pdf"
                         })
 
-                if lista_arquivos_payload:
-                    with st.spinner("Enviando arquivos para o Google Drive..."):
-                        sucesso = enviar_para_google_drive(nome_pasta, lista_arquivos_payload)
-                        if sucesso:
-                            st.success(f"🎉 Sucesso! A pasta de **{nome_pasta}** foi atualizada no Google Drive.")
-                        else:
-                            st.error("❌ Erro ao enviar para o Google Drive.")
-                else:
-                    st.warning("⚠️ Nenhum arquivo anexado.")
+                    for arquivo_up in [doc_identidade, comprovante_residencia, upload_proc_assinada, upload_termo_assinado]:
+                        if arquivo_up is not None:
+                            lista_arquivos_payload.append({
+                                "nome": arquivo_up.name,
+                                "conteudo": base64.b64encode(arquivo_up.getbuffer()).decode('utf-8'),
+                                "mimeType": arquivo_up.type
+                            })
+
+                    if lista_arquivos_payload:
+                        with st.spinner("Enviando arquivos para o Google Drive..."):
+                            sucesso = enviar_para_google_drive(nome_pasta, lista_arquivos_payload)
+                            if sucesso:
+                                st.success(f"🎉 Sucesso! A pasta de **{nome_pasta}** foi atualizada no Google Drive.")
+                            else:
+                                st.error("❌ Erro ao enviar para o Google Drive.")
+                    else:
+                        st.warning("⚠️ Nenhum arquivo anexado.")
 
 elif st.session_state.aba_selecionada == "📖 Tutorial":
     col_tut_1, col_tut_2 = st.columns([3, 1])
