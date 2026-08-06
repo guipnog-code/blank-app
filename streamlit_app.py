@@ -27,7 +27,7 @@ st.markdown("""
             transition: 0.3s;
         }
         .stButton>button:hover { background-color: #0b5ed7; color: white; transform: translateY(-1px); }
-        .seta-ativa { font-size: 1.1rem; font-weight: bold; color: #ff4b4b; margin-bottom: 2px; }
+        .seta-guiada { font-size: 1.1rem; font-weight: bold; color: #ff4b4b; margin: 10px 0; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -398,6 +398,13 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
             municipio = st.text_input(f"{s(13)}13. Município", key="input_mun")
             estado = st.text_input(f"{s(16)}16. Estado (UF)", key="input_uf")
 
+    # 1. Seta aponta para o botão de salvar apenas quando os 16 campos forem preenchidos e os documentos ainda não gerados
+    todos_preenchidos = all(str(x).strip() for x in [val_1, val_2, val_3, val_4, val_5, val_6, val_7, val_8, val_9, val_10, val_11, val_12, val_13, val_14, val_15, val_16])
+    tem_documentos = st.session_state.get("pdf_proc") is not None
+
+    if todos_preenchidos and not tem_documentos:
+        st.markdown('<p class="seta-guiada">➡️ 1. Clique no botão abaixo para salvar e gerar os documentos:</p>', unsafe_allow_html=True)
+
     col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
     with col_btn2:
         btn_salvar = st.button("💾 Salvar na Planilha e Gerar Documentos", key="btn_salvar_novo")
@@ -421,10 +428,11 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
             st.success(f"✨ Dados salvos na planilha e documentos gerados para **{st.session_state.nome_servidor}**!")
             st.rerun()
 
-    # Exibe a seção de gestão de arquivos e envios se o nome do servidor ou o PDF estiverem definidos no session_state
-    if st.session_state.get("nome_servidor") or st.session_state.get("pdf_proc"):
+    if tem_documentos:
         st.markdown("---")
         with st.container(border=True):
+            # 2. Seta aponta para baixar termo e procuração
+            st.markdown('<p class="seta-guiada">➡️ 2. Baixe os documentos gerados abaixo:</p>', unsafe_allow_html=True)
             st.subheader(f"⚙️ Gestão de Arquivos para: {st.session_state.get('nome_servidor', '')}")
             
             col_dl1, col_dl2 = st.columns(2)
@@ -437,6 +445,8 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
 
         st.markdown("---")
         with st.container(border=True):
+            # 3. Seta aponta para os botões de upload de documentos
+            st.markdown('<p class="seta-guiada">➡️ 3. Faça o upload dos documentos solicitados abaixo:</p>', unsafe_allow_html=True)
             st.subheader("📤 Envio de Documentos para o Google Drive")
             
             col_up1, col_up2 = st.columns(2)
@@ -447,6 +457,9 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
                 comprovante_residencia = st.file_uploader("🏠 2. Comprovante de residência atualizado", type=["pdf", "jpg", "jpeg", "png"], key="up_residencia")
                 upload_termo_assinado = st.file_uploader("✍️ 4. Termo assinado", type=["pdf"], key="upload_termo")
 
+            # 4. Seta aponta para o botão final de enviar arquivos para o Google Drive
+            st.markdown('<p class="seta-guiada">➡️ 4. Clique no botão abaixo para enviar os arquivos:</p>', unsafe_allow_html=True)
+            
             col_env1, col_env2, col_env3 = st.columns([1, 2, 1])
             with col_env2:
                 btn_enviar_drive = st.button("🚀 Enviar arquivos para o Google Drive", key="btn_enviar_drive")
