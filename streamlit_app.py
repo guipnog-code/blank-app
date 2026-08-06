@@ -269,6 +269,7 @@ if st.session_state.aba_selecionada == "📂 Servidores Já Cadastrados":
                             st.session_state.nome_servidor = str(dados_linha.get("Nome", "")).strip()
                             st.session_state.pdf_proc, st.session_state.pdf_termo = preencher_documentos_oficiais(dados_linha)
                             st.success(f"Documentos gerados com sucesso para {st.session_state.nome_servidor}!")
+                            st.rerun()
 
                 with col_b2:
                     with st.container(border=True):
@@ -418,7 +419,9 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
             
             st.session_state.pdf_proc, st.session_state.pdf_termo = preencher_documentos_oficiais(dados_usuario)
             st.success(f"✨ Dados salvos na planilha e documentos gerados para **{st.session_state.nome_servidor}**!")
+            st.rerun()
 
+    # Exibe a seção de gestão de arquivos e envios sempre que os documentos estiverem gerados ou o servidor estiver ativo
     if st.session_state.get("nome_servidor") or st.session_state.get("pdf_proc"):
         st.markdown("---")
         with st.container(border=True):
