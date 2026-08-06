@@ -38,7 +38,7 @@ EXCEL_FILE = "Cadastros_Servidores.xlsx"
 GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz8lQ3xhchTyl2QrvmIYr9qVZIFsx_8I2hIb0-jBqHOX63G8OzExrHPr2OlROfn_hSZ/exec"
 CHAVE_ADMIN = "Sindicatojus"
 
-# Configuração da API do Assinafy (Domínio oficial brasileiro)
+# Configuração da API do Assinafy
 ASSINAFY_API_KEY = "TCJJguVdZTIiMNUZ1nzHtZ-r0d8kvOyVT8-bejN_HHAjws9veiWZdcQ_L8pZ-KMJ"
 ASSINAFY_URL = "https://api.assinafy.com.br/v1/documents"
 
