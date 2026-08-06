@@ -27,8 +27,7 @@ st.markdown("""
             transition: 0.3s;
         }
         .stButton>button:hover { background-color: #0b5ed7; color: white; transform: translateY(-1px); }
-        .card-header { font-size: 1.1rem; font-weight: bold; color: #333; margin-bottom: 10px; }
-        .guia-seta { font-size: 1.3rem; font-weight: bold; color: #0d6efd; text-align: center; margin: 10px 0; }
+        .seta-ativa { font-size: 1.1rem; font-weight: bold; color: #ff4b4b; margin-bottom: 2px; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -337,43 +336,74 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
             st.rerun()
 
     with st.container(border=True):
-        st.info("🧭 **Siga a ordem numérica (1 a 16)** abaixo para preencher os seus dados corretamente:")
-        
-        st.markdown("**📍 Local de Preenchimento**")
+        st.info("🧭 Siga a indicação da seta (➡️) passo a passo para preencher os seus dados corretamente:")
+
+        # Variáveis temporárias para checar preenchimento e mover a seta em tempo real
+        val_1 = st.session_state.get("input_local_mun", "")
+        val_2 = st.session_state.get("input_local_uf", "")
+        val_3 = st.session_state.get("input_mat", "")
+        val_4 = st.session_state.get("input_nome", "")
+        val_5 = st.session_state.get("input_cargo", "")
+        val_6 = st.session_state.get("input_cpf", "")
+        val_7 = st.session_state.get("input_orgao", "")
+        val_8 = st.session_state.get("input_rg", "")
+        val_9 = st.session_state.get("input_ing_raw", "")
+        val_10 = st.session_state.get("input_email", "")
+        val_11 = st.session_state.get("input_tel", "")
+        val_12 = st.session_state.get("input_cep", "")
+        val_13 = st.session_state.get("input_mun", "")
+        val_14 = st.session_state.get("input_ec", "")
+        val_15 = st.session_state.get("input_end", "")
+        val_16 = st.session_state.get("input_uf", "")
+
+        def s(n):
+            # Retorna a seta se for a vez deste campo, senão vazio
+            p = 1
+            for x in [val_1, val_2, val_3, val_4, val_5, val_6, val_7, val_8, val_9, val_10, val_11, val_12, val_13, val_14, val_15, val_16]:
+                if not str(x).strip():
+                    break
+                p += 1
+            return "➡️ " if n == p else ""
+
+        st.markdown(f"**📍 Local de Preenchimento**")
         col_loc1, col_loc2 = st.columns(2)
         with col_loc1:
-            local_municipio = st.text_input("1. Município que está", key="input_local_mun")
+            local_municipio = st.text_input(f"{s(1)}1. Município que está", key="input_local_mun")
         with col_loc2:
-            local_estado = st.text_input("2. Estado", key="input_local_uf")
+            local_estado = st.text_input(f"{s(2)}2. Estado", key="input_local_uf")
 
         st.markdown("---")
         col_p1, col_p2 = st.columns(2)
         with col_p1:
             st.markdown("**💼 Dados Profissionais**")
-            matricula = st.text_input("3. Matrícula (SIAPE)", key="input_mat")
-            cargo = st.text_input("5. Cargo", key="input_cargo")
-            orgao = st.text_input("7. Órgão", key="input_orgao")
-            ingresso = st.text_input("9. Data de Ingresso", placeholder="DD/MM/AAAA", key="input_ing_raw", max_chars=10, on_change=formatar_data_callback)
+            matricula = st.text_input(f"{s(3)}3. Matrícula (SIAPE)", key="input_mat")
+            cargo = st.text_input(f"{s(5)}5. Cargo", key="input_cargo")
+            orgao = st.text_input(f"{s(7)}7. Órgão", key="input_orgao")
+            ingresso = st.text_input(f"{s(9)}9. Data de Ingresso", placeholder="DD/MM/AAAA", key="input_ing_raw", max_chars=10, on_change=formatar_data_callback)
 
         with col_p2:
             st.markdown("**👤 Dados Pessoais**")
-            nome = st.text_input("4. Nome completo", key="input_nome")
-            cpf = st.text_input("6. CPF", key="input_cpf")
-            rg = st.text_input("8. RG - Órgão de Expedição", key="input_rg")
-            email = st.text_input("10. E-mail", key="input_email")
+            nome = st.text_input(f"{s(4)}4. Nome completo", key="input_nome")
+            cpf = st.text_input(f"{s(6)}6. CPF", key="input_cpf")
+            rg = st.text_input(f"{s(8)}8. RG - Órgão de Expedição", key="input_rg")
+            email = st.text_input(f"{s(10)}10. E-mail", key="input_email")
 
         col_p3, col_p4, col_p5 = st.columns(3)
         with col_p3:
-            telefone = st.text_input("11. Telefone", key="input_tel")
-            estado_civil = st.text_input("14. Estado Civil", key="input_ec")
+            telefone = st.text_input(f"{s(11)}11. Telefone", key="input_tel")
+            estado_civil = st.text_input(f"{s(14)}14. Estado Civil", key="input_ec")
         with col_p4:
-            cep = st.text_input("12. CEP", key="input_cep")
-            endereco = st.text_input("15. Endereço", key="input_end")
+            cep = st.text_input(f"{s(12)}12. CEP", key="input_cep")
+            endereco = st.text_input(f"{s(15)}15. Endereço", key="input_end")
         with col_p5:
-            municipio = st.text_input("13. Município", key="input_mun")
-            estado = st.text_input("16. Estado (UF)", key="input_uf")
+            municipio = st.text_input(f"{s(13)}13. Município", key="input_mun")
+            estado = st.text_input(f"{s(16)}16. Estado (UF)", key="input_uf")
 
-    st.markdown('<p class="guia-seta">⬇️ Aponta para o botão abaixo ⬇️</p>', unsafe_allow_html=True)
+    # Verifica se todos os 17 passos (16 campos + botão de salvar) foram alcançados
+    todos_preenchidos = all(str(x).strip() for x in [val_1, val_2, val_3, val_4, val_5, val_6, val_7, val_8, val_9, val_10, val_11, val_12, val_13, val_14, val_15, val_16])
+
+    if todos_preenchidos:
+        st.markdown('<p class="seta-ativa">➡️ Clique no botão abaixo para salvar e gerar os documentos:</p>', unsafe_allow_html=True)
     
     col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
     with col_btn2:
@@ -398,11 +428,11 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
             st.success(f"✨ Dados salvos na planilha e documentos gerados para **{st.session_state.nome_servidor}**!")
 
     if st.session_state.get("nome_servidor") or st.session_state.get("pdf_proc"):
-        st.markdown('<p class="guia-seta">⬇️ Aponta para os botões de download abaixo ⬇️</p>', unsafe_allow_html=True)
         st.markdown("---")
         with st.container(border=True):
             st.subheader(f"⚙️ Gestão de Arquivos para: {st.session_state.get('nome_servidor', '')}")
             
+            st.markdown('<p class="seta-ativa">➡️ Baixe os documentos gerados abaixo:</p>', unsafe_allow_html=True)
             col_dl1, col_dl2 = st.columns(2)
             if st.session_state.get("pdf_proc"):
                 with col_dl1:
@@ -411,11 +441,11 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
                 with col_dl2:
                     st.download_button(label="📄 Baixar Termo", data=st.session_state.pdf_termo, file_name="Termo_Preenchido.pdf", mime="application/pdf", key="dl_termo")
 
-        st.markdown('<p class="guia-seta">⬇️ Aponta para as caixas de envio abaixo ⬇️</p>', unsafe_allow_html=True)
         st.markdown("---")
         with st.container(border=True):
             st.subheader("📤 Envio de Documentos para o Google Drive")
             
+            st.markdown('<p class="seta-ativa">➡️ Anexe os documentos solicitados abaixo:</p>', unsafe_allow_html=True)
             col_up1, col_up2 = st.columns(2)
             with col_up1:
                 doc_identidade = st.file_uploader("🪪 Documento de Identidade com foto", type=["pdf", "jpg", "jpeg", "png"], key="up_identidade")
@@ -424,7 +454,7 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
                 comprovante_residencia = st.file_uploader("🏠 Comprovante de residência atualizado", type=["pdf", "jpg", "jpeg", "png"], key="up_residencia")
                 upload_termo_assinado = st.file_uploader("✍️ Termo assinado", type=["pdf"], key="upload_termo")
 
-            st.markdown('<p class="guia-seta">⬇️ Aponta para o botão de envio final abaixo ⬇️</p>', unsafe_allow_html=True)
+            st.markdown('<p class="seta-ativa">➡️ Por fim, clique no botão abaixo para enviar os arquivos:</p>', unsafe_allow_html=True)
             col_env1, col_env2, col_env3 = st.columns([1, 2, 1])
             with col_env2:
                 btn_enviar_drive = st.button("🚀 Enviar arquivos para o Google Drive", key="btn_enviar_drive")
