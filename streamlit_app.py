@@ -421,7 +421,7 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
             st.success(f"✨ Dados salvos na planilha e documentos gerados para **{st.session_state.nome_servidor}**!")
             st.rerun()
 
-    # Exibe a seção de gestão de arquivos e envios sempre que os documentos estiverem gerados ou o servidor estiver ativo
+    # Exibe a seção de gestão de arquivos e envios se o nome do servidor ou o PDF estiverem definidos no session_state
     if st.session_state.get("nome_servidor") or st.session_state.get("pdf_proc"):
         st.markdown("---")
         with st.container(border=True):
