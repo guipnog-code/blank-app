@@ -121,15 +121,17 @@ def enviar_para_google_drive(nome_servidor, lista_arquivos):
         print(f"Erro ao conectar: {e}")
         return False
 
-# Função corrigida com a URL correta baseada no seu dashboard
+# Função substituída com a rota e o método ajustados para o padrão correto do Assinafy
 def enviar_para_assinafy(nome, email, pdf_bytes, nome_arquivo):
     if not pdf_bytes:
         return False, "PDF não foi gerado."
     
     headers = {
         "Authorization": f"Bearer {ASSINAFY_API_KEY}",
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "Accept": "application/json"
     }
+    
     payload = {
         "name": nome_arquivo,
         "file": base64.b64encode(pdf_bytes).decode('utf-8'),
@@ -141,7 +143,13 @@ def enviar_para_assinafy(nome, email, pdf_bytes, nome_arquivo):
     try:
         response = requests.post(url, json=payload, headers=headers, timeout=15)
         
-        if response.status_code != 200 and response.status_code != 201:
+        if response.status_code == 405:
+            # Caso o endpoint raiz seja o aceito para POST sem a estrutura /api/v1
+            url_alt = "https://app.assinafy.com.br/documents"
+            response = requests.post(url_alt, json=payload, headers=headers, timeout=15)
+            url = url_alt
+            
+        if response.status_code not in [200, 201]:
             return False, f"URL: {url} | Código: {response.status_code} | Resposta: {response.text}"
             
         res_data = response.json()
@@ -560,6 +568,81 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
                     st.warning("⚠️ Nenhum arquivo anexado.")
 
 elif st.session_state.aba_selecionada == "📖 Tutorial":
-    # (Mantido o código do seu tutorial)
-    st.subheader("📖 Tutorial de Utilização do Sistema")
-    if st.button("⬅️ Voltar ao Cadastro"): st.session_state.aba_selecionada = "➕ Novo Cadastro"; st.rerun()
+    col_tut_1, col_tut_2 = st.columns([3, 1])
+    with col_tut_1:
+        st.subheader("📖 Tutorial de Utilização do Sistema")
+    with col_tut_2:
+        if st.button("⬅️ Voltar ao Cadastro", key="btn_voltar_cadastro"):
+            st.session_state.aba_selecionada = "➕ Novo Cadastro"
+            st.rerun()
+
+    st.info("Selecione abaixo o dispositivo que você está utilizando para visualizar o tutorial correspondente:")
+
+    tipo_tutorial = st.radio(
+        "Escolha a plataforma:",
+        ["💻 Tutorial Computador", "📱 Tutorial Celular"],
+        horizontal=True,
+        label_visibility="collapsed"
+    )
+
+    st.markdown("---")
+
+    if tipo_tutorial == "💻 Tutorial Computador":
+        st.markdown("### 🖥️ Passo a Passo para Computador")
+        st.write("Assista ao vídeo explicativo ou siga o guia detalhado para realizar o processo pelo computador:")
+        
+        caminho_video_pc = os.path.join("imagens", "Tutorial Computador", "video.mp4")
+        if os.path.exists(caminho_video_pc):
+            st.video(caminho_video_pc)
+        else:
+            pasta_pc = os.path.join("imagens", "Tutorial Computador")
+            if os.path.exists(pasta_pc):
+                videos_encontrados = [f for f in os.listdir(pasta_pc) if f.endswith(('.mp4', '.mov', '.avi'))]
+                if videos_encontrados:
+                    st.video(os.path.join(pasta_pc, videos_encontrados[0]))
+                else:
+                    st.warning("⚠️ Nenhum arquivo de vídeo encontrado na pasta 'imagens/Tutorial Computador'.")
+            else:
+                st.warning("⚠️ A pasta 'imagens/Tutorial Computador' não foi encontrada.")
+
+        for i in range(1, 4):
+            with st.expander(f"Passo {i} (Computador) — Clique para visualizar a orientação"):
+                caminho_img = os.path.join("imagens", f"pc_{i}.png")
+                if os.path.exists(caminho_img):
+                    st.image(caminho_img, width=700)
+                else:
+                    st.warning(f"*(A imagem explicativa 'pc_{i}.png' não foi encontrada na pasta 'imagens')*")
+                
+                caminho_anim_pc = os.path.join("imagens", f"anim_pc_{i}.gif")
+                if os.path.exists(caminho_anim_pc):
+                    st.image(caminho_anim_pc, caption=f"Movimento Indicativo - Passo {i}", width=400)
+
+    else:
+        st.markdown("### 📱 Passo a Passo para Celular")
+        st.write("Assista ao vídeo explicativo ou siga o guia detalhado para realizar o processo pelo celular:")
+        
+        caminho_video_cel = os.path.join("imagens", "Tutorial Celular", "video.mp4")
+        if os.path.exists(caminho_video_cel):
+            st.video(caminho_video_cel)
+        else:
+            pasta_cel = os.path.join("imagens", "Tutorial Celular")
+            if os.path.exists(pasta_cel):
+                videos_encontrados = [f for f in os.listdir(pasta_cel) if f.endswith(('.mp4', '.mov', '.avi'))]
+                if videos_encontrados:
+                    st.video(os.path.join(pasta_cel, videos_encontrados[0]))
+                else:
+                    st.warning("⚠️ Nenhum arquivo de vídeo encontrado na pasta 'imagens/Tutorial Celular'.")
+            else:
+                st.warning("⚠️ A pasta 'imagens/Tutorial Celular' não foi encontrada.")
+
+        for i in range(1, 4):
+            with st.expander(f"Passo {i} (Celular) — Clique para visualizar a orientação"):
+                caminho_img = os.path.join("imagens", f"cel_{i}.png")
+                if os.path.exists(caminho_img):
+                    st.image(caminho_img, width=700)
+                else:
+                    st.warning(f"*(A imagem explicativa 'cel_{i}.png' não foi encontrada na pasta 'imagens')*")
+                
+                caminho_anim_cel = os.path.join("imagens", f"anim_cel_{i}.gif")
+                if os.path.exists(caminho_anim_cel):
+                    st.image(caminho_anim_cel, caption=f"Movimento Indicativo - Passo {i}", width=300)
