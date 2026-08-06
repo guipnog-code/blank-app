@@ -47,7 +47,7 @@ if st.session_state.termo_aceito is None:
     with col_centro_2:
         with st.container(border=True):
             st.markdown("### 📋 Termo de Consentimento e Privacidade")
-            st.markdown("Esse site tem o objetivo de coletar informações para o ajuizamento da ação de correção monetária de exercícios anteriores.")
+            st.markdown("Esse site tiene o objetivo de coletar informações para o ajuizamento da ação de correção monetária de exercícios anteriores.")
             st.markdown("---")
             st.markdown("🔒 **Compartilhamento de dados com o Sinprfpi.**[cite: 2]")
             st.markdown("")
@@ -398,7 +398,7 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
             municipio = st.text_input(f"{s(13)}13. Município", key="input_mun")
             estado = st.text_input(f"{s(16)}16. Estado (UF)", key="input_uf")
 
-    # 1. Seta aponta para o botão de salvar apenas quando os 16 campos forem preenchidos e os documentos ainda não gerados
+    # 1. Seta aponta para o botão de salvar APENAS se os 16 campos estiverem preenchidos e os documentos ainda não gerados
     todos_preenchidos = all(str(x).strip() for x in [val_1, val_2, val_3, val_4, val_5, val_6, val_7, val_8, val_9, val_10, val_11, val_12, val_13, val_14, val_15, val_16])
     tem_documentos = st.session_state.get("pdf_proc") is not None
 
@@ -428,10 +428,10 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
             st.success(f"✨ Dados salvos na planilha e documentos gerados para **{st.session_state.nome_servidor}**!")
             st.rerun()
 
+    # 2. Se os documentos já foram gerados, aparece o bloco de Gestão de Arquivos com a seta apontando para baixo
     if tem_documentos:
         st.markdown("---")
         with st.container(border=True):
-            # 2. Seta aponta para baixar termo e procuração
             st.markdown('<p class="seta-guiada">➡️ 2. Baixe os documentos gerados abaixo:</p>', unsafe_allow_html=True)
             st.subheader(f"⚙️ Gestão de Arquivos para: {st.session_state.get('nome_servidor', '')}")
             
@@ -443,9 +443,9 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
                 with col_dl2:
                     st.download_button(label="📄 Baixar Termo", data=st.session_state.pdf_termo, file_name="Termo_Preenchido.pdf", mime="application/pdf", key="dl_termo")
 
+        # 3. Bloco de Envio com a seta apontando para os uploads
         st.markdown("---")
         with st.container(border=True):
-            # 3. Seta aponta para os botões de upload de documentos
             st.markdown('<p class="seta-guiada">➡️ 3. Faça o upload dos documentos solicitados abaixo:</p>', unsafe_allow_html=True)
             st.subheader("📤 Envio de Documentos para o Google Drive")
             
@@ -457,7 +457,7 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
                 comprovante_residencia = st.file_uploader("🏠 2. Comprovante de residência atualizado", type=["pdf", "jpg", "jpeg", "png"], key="up_residencia")
                 upload_termo_assinado = st.file_uploader("✍️ 4. Termo assinado", type=["pdf"], key="upload_termo")
 
-            # 4. Seta aponta para o botão final de enviar arquivos para o Google Drive
+            # 4. Seta final apontando para o botão de enviar ao Google Drive
             st.markdown('<p class="seta-guiada">➡️ 4. Clique no botão abaixo para enviar os arquivos:</p>', unsafe_allow_html=True)
             
             col_env1, col_env2, col_env3 = st.columns([1, 2, 1])
