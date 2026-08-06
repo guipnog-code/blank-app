@@ -122,7 +122,7 @@ def enviar_para_google_drive(nome_servidor, lista_arquivos):
         print(f"Erro ao conectar: {e}")
         return False
 
-def enviar_para_assinafy(nome, email, pdf_bytes, nome_arquivo):
+enviar_para_assinafy
     if not pdf_bytes:
         return False, "PDF não foi gerado."
     
