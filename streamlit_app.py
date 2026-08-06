@@ -121,7 +121,6 @@ def enviar_para_google_drive(nome_servidor, lista_arquivos):
         print(f"Erro ao conectar: {e}")
         return False
 
-# Função corrigida com def e fallback para evitar 404
 def enviar_para_assinafy(nome, email, pdf_bytes, nome_arquivo):
     if not pdf_bytes:
         return False, "PDF não foi gerado."
@@ -136,26 +135,20 @@ def enviar_para_assinafy(nome, email, pdf_bytes, nome_arquivo):
         "signers": [{"name": nome, "email": email, "action": "SIGN"}]
     }
     
-    urls_possiveis = [
-        "https://api.assinafy.com.br/v1/documents",
-        "https://api.assinafy.com.br/api/v1/documents"
-    ]
+    url = "https://api.assinafy.com.br/v1/documents"
     
-    for url in urls_possiveis:
-        try:
-            response = requests.post(url, json=payload, headers=headers, timeout=15)
-            if response.status_code in [200, 201]:
-                res_data = response.json()
-                link = res_data.get("sign_url") or res_data.get("signing_url") or res_data.get("url") or res_data.get("link")
-                if link:
-                    return True, link
-                return True, "enviado_email"
-            elif response.status_code != 404:
-                return False, f"Código {response.status_code}: {response.text}"
-        except Exception as e:
-            continue
+    try:
+        response = requests.post(url, json=payload, headers=headers, timeout=15)
+        
+        if response.status_code != 200 and response.status_code != 201:
+            return False, f"URL: {url} | Código: {response.status_code} | Resposta: {response.text}"
             
-    return False, "Erro 404: Rota da API não encontrada nas tentativas."
+        res_data = response.json()
+        link = res_data.get("sign_url") or res_data.get("signing_url") or res_data.get("url") or res_data.get("link")
+        return True, link if link else "enviado_email"
+        
+    except Exception as e:
+        return False, f"Erro de conexão: {str(e)}"
 
 def formatar_data_callback():
     val = st.session_state.get("input_ing_raw", "")
@@ -481,7 +474,7 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
             # Gerar PDFs oficiais
             st.session_state.pdf_proc, st.session_state.pdf_termo = preencher_documentos_oficiais(dados_usuario)
             
-            # Envio Assinafy com captura de diagnóstico
+            # Envio Assinafy com captura de diagnóstico detalhado
             if st.session_state.pdf_proc:
                 with st.spinner("Conectando ao Assinafy para assinatura digital..."):
                     sucesso, resultado = enviar_para_assinafy(nome, email, st.session_state.pdf_proc, "Procuracao_Preenchida.pdf")
