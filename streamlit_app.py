@@ -38,9 +38,8 @@ EXCEL_FILE = "Cadastros_Servidores.xlsx"
 GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz8lQ3xhchTyl2QrvmIYr9qVZIFsx_8I2hIb0-jBqHOX63G8OzExrHPr2OlROfn_hSZ/exec"
 CHAVE_ADMIN = "Sindicatojus"
 
-# Configuração da API do Assinafy (URL corrigida com o prefixo /api/)
+# Configuração da API do Assinafy
 ASSINAFY_API_KEY = "TCJJguVdZTIiMNUZ1nzHtZ-r0d8kvOyVT8-bejN_HHAjws9veiWZdcQ_L8pZ-KMJ"
-ASSINAFY_URL = "https://api.assinafy.com.br/api/v1/documents"
 
 # Controle de estado
 if "termo_aceito" not in st.session_state:
@@ -122,7 +121,8 @@ def enviar_para_google_drive(nome_servidor, lista_arquivos):
         print(f"Erro ao conectar: {e}")
         return False
 
-enviar_para_assinafy
+# Função corrigida com def e fallback para evitar 404
+def enviar_para_assinafy(nome, email, pdf_bytes, nome_arquivo):
     if not pdf_bytes:
         return False, "PDF não foi gerado."
     
@@ -136,18 +136,26 @@ enviar_para_assinafy
         "signers": [{"name": nome, "email": email, "action": "SIGN"}]
     }
     
-    try:
-        response = requests.post(ASSINAFY_URL, json=payload, headers=headers, timeout=15)
-        if response.status_code in [200, 201]:
-            res_data = response.json()
-            link = res_data.get("sign_url") or res_data.get("signing_url") or res_data.get("url") or res_data.get("link")
-            if link:
-                return True, link
-            return True, "enviado_email"
-        else:
-            return False, f"Código {response.status_code}: {response.text}"
-    except Exception as e:
-        return False, str(e)
+    urls_possiveis = [
+        "https://api.assinafy.com.br/v1/documents",
+        "https://api.assinafy.com.br/api/v1/documents"
+    ]
+    
+    for url in urls_possiveis:
+        try:
+            response = requests.post(url, json=payload, headers=headers, timeout=15)
+            if response.status_code in [200, 201]:
+                res_data = response.json()
+                link = res_data.get("sign_url") or res_data.get("signing_url") or res_data.get("url") or res_data.get("link")
+                if link:
+                    return True, link
+                return True, "enviado_email"
+            elif response.status_code != 404:
+                return False, f"Código {response.status_code}: {response.text}"
+        except Exception as e:
+            continue
+            
+    return False, "Erro 404: Rota da API não encontrada nas tentativas."
 
 def formatar_data_callback():
     val = st.session_state.get("input_ing_raw", "")
