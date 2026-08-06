@@ -408,7 +408,7 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
             dados_usuario = {
                 "Local Preenchimento Município": local_municipio,
                 "Local Preenchimento Estado": local_estado,
-                "Matrícula": matricula, "Cargo": cargo, "Órgão": orgao, "Data de Ingresso": ingreso,
+                "Matrícula": matricula, "Cargo": cargo, "Órgão": orgao, "Data de Ingresso": ingresso,
                 "Nome": nome, "CPF": cpf, "E-mail": email, "RG": rg, "Telefone": telefone,
                 "Estado Civil": estado_civil, "CEP": cep, "Endereço": endereco, "Município": municipio, "Estado": estado
             }
