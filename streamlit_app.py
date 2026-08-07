@@ -111,11 +111,7 @@ elif st.session_state.termo_aceito is False:
         st.error("🚫 **Acesso Bloqueado.** \n\nVocê recusou os termos de compartilhamento de dados. Para utilizar o sistema, é necessário aceitar os termos. Atualize a página caso deseje aceitar.")
     st.stop()
 
-<<<<<<< HEAD
-# --- FUNÇÕES DO SISTEMA ---
-=======
 # --- FUNÇÕES DO SISTEMA (INTEGRADO AO GOOGLE SHEETS VIA SECRETS) ---
->>>>>>> 8631154 (Atualizacao do codigo e integracao com sheets)
 def carregar_servidores_cadastrados():
     try:
         escopo = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
@@ -137,7 +133,6 @@ def carregar_servidores_cadastrados():
     return pd.DataFrame()
 
 def salvar_no_excel(dados):
-    # Mantido para compatibilidade caso utilize gravação auxiliar, ou pode ser integrado diretamente via append_row se desejar salvar direto no Sheets.
     pass
 
 def enviar_para_google_drive(nome_servidor, lista_arquivos):
