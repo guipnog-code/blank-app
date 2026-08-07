@@ -9,6 +9,7 @@ import urllib.parse
 import zipfile
 import io
 from datetime import datetime
+import time
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
@@ -131,6 +132,39 @@ def carregar_servidores_cadastrados():
     except Exception as e:
         print(f"Erro ao conectar com o Google Planilhas: {e}")
     return pd.DataFrame()
+
+def consultar_status_matricula_api(matricula_buscada):
+    try:
+        escopo = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+        credenciais_dict = dict(st.secrets["google_sheets"])
+        credenciais = ServiceAccountCredentials.from_json_keyfile_dict(credenciais_dict, escopo)
+        cliente = gspread.authorize(credenciais)
+        
+        id_planilha = "1OPl-0WAFUTQt6Nd1VZBTDgXr5SzjvLHNirpwgjf9kXc"
+        planilha = cliente.open_by_key(id_planilha)
+        
+        # Acessa a aba Ferramenta de Pesquisa
+        aba_pesquisa = planilha.worksheet("Ferramenta de Pesquisa")
+        
+        # Digita a matrícula nas células B2:G3 (limpando e atualizando B2 ou mesclado)
+        aba_pesquisa.update("B2", [[str(matricula_buscada)]])
+        
+        # Aguarda 1 segundo para processamento de fórmulas/scripts da planilha
+        time.sleep(1)
+        
+        # Lê o intervalo B6:G6 para checar os resultados
+        valores_b6_g6 = aba_pesquisa.row_values(6)[1:7]  # Colunas B até G correspondem aos índices 1 a 6
+        
+        # Verifica se há dados preenchidos no intervalo
+        tem_resultado = any(str(val).strip() != "" for val in valores_b6_g6)
+        
+        if tem_resultado:
+            return "Enviou", valores_b6_g6
+        else:
+            return "Não enviou", []
+            
+    except Exception as e:
+        return f"Erro: {e}", []
 
 def salvar_no_excel(dados):
     pass
@@ -280,6 +314,25 @@ if st.session_state.aba_selecionada == "📂 Servidores Já Cadastrados":
     st.subheader("🔍 Pesquisar e Selecionar Servidor da Planilha")
     
     if usuario_autorizado:
+        # Nova seção de consulta automatizada via API na Ferramenta de Pesquisa
+        with st.container(border=True):
+            st.markdown("##### **🔍 Verificação Rápida de Envio por Matrícula**")
+            matricula_busca = st.text_input("Digite a matrícula para consultar na aba 'Ferramenta de Pesquisa':", key="input_busca_api")
+            if st.button("Consultar Status de Envio", key="btn_consultar_api"):
+                if matricula_busca.strip():
+                    with st.spinner("Consultando planilha via API..."):
+                        status_envio, dados_encontrados = consultar_status_matricula_api(matricula_busca)
+                        if status_envio == "Enviou":
+                            st.success("✅ **Status: Enviou** (Dados localizados em B6:G6)")
+                            st.write(dados_encontrados)
+                        elif status_envio == "Não enviou":
+                            st.warning("⚠️ **Status: Não enviou** (Nenhum resultado encontrado em B6:G6)")
+                        else:
+                            st.error(status_envio)
+                else:
+                    st.warning("Por favor, digite uma matrícula.")
+
+        st.markdown("---")
         df_servidores = carregar_servidores_cadastrados()
         
         if df_servidores.empty:
