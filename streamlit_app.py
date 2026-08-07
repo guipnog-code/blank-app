@@ -66,53 +66,7 @@ GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz8lQ3xhchTyl2
 CHAVE_ADMIN = "Sindicatojus"
 ASSINAFY_API_KEY = "TCJJguVdZTIiMNUZ1nzHtZ-r0d8kvOyVT8-bejN_HHAjws9veiWZdcQ_L8pZ-KMJ"
 
-# Controle de estado
-if "termo_aceito" not in st.session_state:
-    st.session_state.termo_aceito = None
-if "nome_servidor" not in st.session_state:
-    st.session_state.nome_servidor = None
-if "pdf_proc" not in st.session_state:
-    st.session_state.pdf_proc = None
-if "pdf_termo" not in st.session_state:
-    st.session_state.pdf_termo = None
-if "link_assinatura" not in st.session_state:
-    st.session_state.link_assinatura = None
-if "status_assinafy" not in st.session_state:
-    st.session_state.status_assinafy = None
-
-# --- QUADRO DE CONSENTIMENTO INICIAL ---
-if st.session_state.termo_aceito is None:
-    st.markdown("<br><br>", unsafe_allow_html=True)
-    col_centro_1, col_centro_2, col_centro_3 = st.columns([1, 2, 1])
-    
-    with col_centro_2:
-        with st.container(border=True):
-            st.markdown("### 📋 Termo de Consentimento e Privacidade")
-            st.markdown("Esse site tem o objetivo de coletar informações para o ajuizamento da ação de correção monetária de exercícios anteriores.")
-            st.markdown("---")
-            st.markdown("🔒 **Compartilhamento de dados com o Sinprfpi.**")
-            st.markdown("")
-            
-            col_b1, col_b2 = st.columns(2)
-            with col_b1:
-                if st.button("✅ Aceito", key="btn_aceito"):
-                    st.session_state.termo_aceito = True
-                    st.rerun()
-            with col_b2:
-                if st.button("❌ Não aceito", key="btn_nao_aceito"):
-                    st.session_state.termo_aceito = False
-                    st.rerun()
-    st.stop()
-
-# --- BLOQUEIO CASO NÃO ACEITE ---
-elif st.session_state.termo_aceito is False:
-    st.markdown("<br><br>", unsafe_allow_html=True)
-    col_b_1, col_b_2, col_b_3 = st.columns([1, 2, 1])
-    with col_b_2:
-        st.error("🚫 **Acesso Bloqueado.** \n\nVocê recusou os termos de compartilhamento de dados. Para utilizar o sistema, é necessário aceitar os termos. Atualize a página caso deseje aceitar.")
-    st.stop()
-
-# --- FUNÇÕES DO SISTEMA (INTEGRADO AO GOOGLE SHEETS VIA SECRETS) ---
+# --- FUNÇÕES DE CONEXÃO COM O GOOGLE SHEETS ---
 def carregar_servidores_cadastrados():
     try:
         escopo = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
@@ -146,14 +100,14 @@ def consultar_status_matricula_api(matricula_buscada):
         # Acessa a aba Ferramenta de Pesquisa
         aba_pesquisa = planilha.worksheet("Ferramenta de Pesquisa")
         
-        # Digita a matrícula nas células B2:G3 (limpando e atualizando B2 ou mesclado)
+        # Digita a matrícula na célula B2
         aba_pesquisa.update("B2", [[str(matricula_buscada)]])
         
-        # Aguarda 1 segundo para processamento de fórmulas/scripts da planilha
+        # Aguarda 1 segundo para processamento das fórmulas na planilha
         time.sleep(1)
         
         # Lê o intervalo B6:G6 para checar os resultados
-        valores_b6_g6 = aba_pesquisa.row_values(6)[1:7]  # Colunas B até G correspondem aos índices 1 a 6
+        valores_b6_g6 = aba_pesquisa.row_values(6)[1:7]  # Índices 1 a 6 equivalem às colunas B até G
         
         # Verifica se há dados preenchidos no intervalo
         tem_resultado = any(str(val).strip() != "" for val in valores_b6_g6)
@@ -164,8 +118,90 @@ def consultar_status_matricula_api(matricula_buscada):
             return "Não enviou", []
             
     except Exception as e:
-        return f"Erro: {e}", []
+        return f"Erro na consulta: {e}", []
 
+# Controle de estado
+if "termo_aceito" not in st.session_state:
+    st.session_state.termo_aceito = None
+if "matricula_verificada" not in st.session_state:
+    st.session_state.matricula_verificada = False
+if "nome_servidor" not in st.session_state:
+    st.session_state.nome_servidor = None
+if "pdf_proc" not in st.session_state:
+    st.session_state.pdf_proc = None
+if "pdf_termo" not in st.session_state:
+    st.session_state.pdf_termo = None
+if "link_assinatura" not in st.session_state:
+    st.session_state.link_assinatura = None
+if "status_assinafy" not in st.session_state:
+    st.session_state.status_assinafy = None
+
+# --- PASSO 1: QUADRO DE CONSENTIMENTO INICIAL ---
+if st.session_state.termo_aceito is None:
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    col_centro_1, col_centro_2, col_centro_3 = st.columns([1, 2, 1])
+    
+    with col_centro_2:
+        with st.container(border=True):
+            st.markdown("### 📋 Termo de Consentimento e Privacidade")
+            st.markdown("Esse site tem o objetivo de coletar informações para o ajuizamento da ação de correção monetária de exercícios anteriores.")
+            st.markdown("---")
+            st.markdown("🔒 **Compartilhamento de dados com o Sinprfpi.**")
+            st.markdown("")
+            
+            col_b1, col_b2 = st.columns(2)
+            with col_b1:
+                if st.button("✅ Aceito", key="btn_aceito"):
+                    st.session_state.termo_aceito = True
+                    st.rerun()
+            with col_b2:
+                if st.button("❌ Não aceito", key="btn_nao_aceito"):
+                    st.session_state.termo_aceito = False
+                    st.rerun()
+    st.stop()
+
+# --- BLOQUEIO CASO NÃO ACEITE TERMOS ---
+elif st.session_state.termo_aceito is False:
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    col_b_1, col_b_2, col_b_3 = st.columns([1, 2, 1])
+    with col_b_2:
+        st.error("🚫 **Acesso Bloqueado.** \n\nVocê recusou os termos de compartilhamento de dados. Para utilizar o sistema, é necessário aceitar os termos. Atualize a página caso deseje aceitar.")
+    st.stop()
+
+# --- PASSO 2: VERIFICAÇÃO AUTOMÁTICA DE ENVIO POR MATRÍCULA ---
+if not st.session_state.matricula_verificada:
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    col_v1, col_v2, col_v3 = st.columns([1, 2, 1])
+    
+    with col_v2:
+        with st.container(border=True):
+            st.markdown("### 🔍 Verificação de Cadastro")
+            st.markdown("Informe sua **Matrícula (SIAPE)** para verificar se sua documentação já foi enviada no sistema.")
+            st.markdown("---")
+            
+            mat_check = st.text_input("Digite sua Matrícula:", key="input_mat_verificacao")
+            
+            if st.button("Verificar e Continuar", key="btn_verificar_matricula"):
+                if not mat_check.strip():
+                    st.warning("⚠️ Por favor, informe a matrícula.")
+                else:
+                    with st.spinner("Consultando status no sistema..."):
+                        status_envio, dados_envio = consultar_status_matricula_api(mat_check.strip())
+                        
+                        if status_envio == "Enviou":
+                            st.error("🚫 **Acesso Bloqueado: Documentação Já Enviada!**\n\nIdentificamos que você já enviou os documentos necessários para esta ação. Para evitar duplicidades, seu acesso ao formulário foi bloqueado.")
+                            st.stop()
+                        elif status_envio == "Não enviou":
+                            st.session_state.matricula_verificada = True
+                            st.session_state["input_mat"] = mat_check.strip()  # Já deixa preenchido no formulário!
+                            st.success("✅ Verificação concluída! Liberando formulário...")
+                            time.sleep(1)
+                            st.rerun()
+                        else:
+                            st.error(f"❌ Ocorreu um erro na consulta: {status_envio}")
+    st.stop()
+
+# --- DEMAIS FUNÇÕES DO SISTEMA ---
 def salvar_no_excel(dados):
     pass
 
@@ -314,25 +350,6 @@ if st.session_state.aba_selecionada == "📂 Servidores Já Cadastrados":
     st.subheader("🔍 Pesquisar e Selecionar Servidor da Planilha")
     
     if usuario_autorizado:
-        # Nova seção de consulta automatizada via API na Ferramenta de Pesquisa
-        with st.container(border=True):
-            st.markdown("##### **🔍 Verificação Rápida de Envio por Matrícula**")
-            matricula_busca = st.text_input("Digite a matrícula para consultar na aba 'Ferramenta de Pesquisa':", key="input_busca_api")
-            if st.button("Consultar Status de Envio", key="btn_consultar_api"):
-                if matricula_busca.strip():
-                    with st.spinner("Consultando planilha via API..."):
-                        status_envio, dados_encontrados = consultar_status_matricula_api(matricula_busca)
-                        if status_envio == "Enviou":
-                            st.success("✅ **Status: Enviou** (Dados localizados em B6:G6)")
-                            st.write(dados_encontrados)
-                        elif status_envio == "Não enviou":
-                            st.warning("⚠️ **Status: Não enviou** (Nenhum resultado encontrado em B6:G6)")
-                        else:
-                            st.error(status_envio)
-                else:
-                    st.warning("Por favor, digite uma matrícula.")
-
-        st.markdown("---")
         df_servidores = carregar_servidores_cadastrados()
         
         if df_servidores.empty:
