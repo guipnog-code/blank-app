@@ -9,6 +9,8 @@ import urllib.parse
 import zipfile
 import io
 from datetime import datetime
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
 
 st.set_page_config(
     page_title="Sistema - Ação Correção Monetária",
@@ -59,7 +61,6 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-EXCEL_FILE = "Cadastros_Servidores.xlsx"
 GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz8lQ3xhchTyl2QrvmIYr9qVZIFsx_8I2hIb0-jBqHOX63G8OzExrHPr2OlROfn_hSZ/exec"
 CHAVE_ADMIN = "Sindicatojus"
 ASSINAFY_API_KEY = "TCJJguVdZTIiMNUZ1nzHtZ-r0d8kvOyVT8-bejN_HHAjws9veiWZdcQ_L8pZ-KMJ"
@@ -110,25 +111,34 @@ elif st.session_state.termo_aceito is False:
         st.error("🚫 **Acesso Bloqueado.** \n\nVocê recusou os termos de compartilhamento de dados. Para utilizar o sistema, é necessário aceitar os termos. Atualize a página caso deseje aceitar.")
     st.stop()
 
+<<<<<<< HEAD
 # --- FUNÇÕES DO SISTEMA ---
+=======
+# --- FUNÇÕES DO SISTEMA (INTEGRADO AO GOOGLE SHEETS VIA SECRETS) ---
+>>>>>>> 8631154 (Atualizacao do codigo e integracao com sheets)
 def carregar_servidores_cadastrados():
-    if os.path.exists(EXCEL_FILE):
-        try:
-            df = pd.read_excel(EXCEL_FILE)
-            if not df.empty and "Nome" in df.columns:
-                return df
-        except Exception:
-            pass
+    try:
+        escopo = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+        credenciais_dict = dict(st.secrets["google_sheets"])
+        credenciais = ServiceAccountCredentials.from_json_keyfile_dict(credenciais_dict, escopo)
+        cliente = gspread.authorize(credenciais)
+        
+        id_planilha = "1OPl-0WAFUTQt6Nd1VZBTDgXr5SzjvLHNirpwgjf9kXc"
+        planilha = cliente.open_by_key(id_planilha)
+        
+        aba = planilha.get_worksheet(0)
+        dados = aba.get_all_records()
+        df = pd.DataFrame(dados)
+        
+        if not df.empty and "Nome" in df.columns:
+            return df
+    except Exception as e:
+        print(f"Erro ao conectar com o Google Planilhas: {e}")
     return pd.DataFrame()
 
 def salvar_no_excel(dados):
-    df_novo = pd.DataFrame([dados])
-    if os.path.exists(EXCEL_FILE):
-        df_existente = pd.read_excel(EXCEL_FILE)
-        df_final = pd.concat([df_existente, df_novo], ignore_index=True)
-    else:
-        df_final = df_novo
-    df_final.to_excel(EXCEL_FILE, index=False)
+    # Mantido para compatibilidade caso utilize gravação auxiliar, ou pode ser integrado diretamente via append_row se desejar salvar direto no Sheets.
+    pass
 
 def enviar_para_google_drive(nome_servidor, lista_arquivos):
     payload = {
