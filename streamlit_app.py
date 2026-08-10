@@ -177,7 +177,47 @@ if not st.session_state.matricula_verificada:
 
 # --- DEMAIS FUNÇÕES DO SISTEMA ---
 def salvar_no_excel(dados):
-    pass
+    try:
+        escopo = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+        credenciais_dict = dict(st.secrets["google_sheets"])
+        credenciais = ServiceAccountCredentials.from_json_keyfile_dict(credenciais_dict, escopo)
+        cliente = gspread.authorize(credenciais)
+        
+        # ID da sua planilha oficial
+        id_planilha = "1OPl-0WAFUTQt6Nd1VZBTDgXr5SzjvLHNirpwgjf9kXc"
+        planilha = cliente.open_by_key(id_planilha)
+        
+        # Acessa a primeira aba (onde ficam os cadastros)
+        aba = planilha.get_worksheet(0)
+        
+        # Cria a lista com os valores na mesma ordem das colunas da sua planilha
+        # Certifique-se de que a ordem corresponde exatamente aos cabeçalhos da sua planilha do Google
+        nova_linha = [
+            dados.get('Local Preenchimento Município', ''),
+            dados.get('Local Preenchimento Estado', ''),
+            dados.get('Matrícula', ''),
+            dados.get('Cargo', ''),
+            dados.get('Órgão', ''),
+            dados.get('Data de Nascimento', ''),
+            dados.get('Data de Ingresso', ''),
+            dados.get('Nome', ''),
+            dados.get('CPF', ''),
+            dados.get('E-mail', ''),
+            dados.get('RG', ''),
+            dados.get('Telefone', ''),
+            dados.get('Estado Civil', ''),
+            dados.get('CEP', ''),
+            dados.get('Endereço', ''),
+            dados.get('Município', ''),
+            dados.get('Estado', '')
+        ]
+        
+        # Adiciona a linha permanentemente na planilha do Google
+        aba.append_row(nova_linha)
+        return True
+    except Exception as e:
+        print(f"Erro ao salvar na planilha: {e}")
+        return False
 
 def enviar_para_google_drive(nome_servidor, lista_arquivos):
     payload = {"nomeServidor": nome_servidor, "arquivos": lista_arquivos}
