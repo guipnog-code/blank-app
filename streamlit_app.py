@@ -64,17 +64,17 @@ CHAVE_ADMIN = "Sindicatojus"
 ASSINAFY_API_KEY = "TCJJguVdZTIiMNUZ1nzHtZ-r0d8kvOyVT8-bejN_HHAjws9veiWZdcQ_L8pZ-KMJ"
 
 # --- FUNÇÕES DE CONEXÃO COM O GOOGLE SHEETS ---
-def obter_credenciais():
-    # Carrega os segredos de forma direta
-    cred_dict = dict(st.secrets["google_sheets"])
-    # Garante que a chave privada tenha exatamente o formato que o Google exige
-    cred_dict["private_key"] = cred_dict["private_key"].replace("\\n", "\n")
-    return ServiceAccountCredentials.from_json_keyfile_dict(cred_dict, [
-        "https://spreadsheets.google.com/feeds", 
-        "https://www.googleapis.com/auth/drive"
-    ])
-
 from google.oauth2 import service_account
+
+def obter_credenciais():
+    # Carrega os dados do segredo
+    info = dict(st.secrets["google_sheets"])
+    
+    # GARANTIA: Removemos qualquer caractere de controle estranho
+    # O JSON do Google usa \n literal, o TOML pode interpretar mal
+    info["private_key"] = info["private_key"].replace("\\n", "\n")
+    
+    return service_account.Credentials.from_service_account_info(info)
 
 def obter_credenciais():
     # Cria o dicionário exatamente como o Google espera
@@ -107,7 +107,7 @@ def consultar_status_matricula_api(matricula_buscada):
         res = aba_pesquisa.row_values(6)[1:7]
         return ("Enviou", res) if any(str(v).strip() != "" for v in res) else ("Não enviou", [])
     except Exception as e: return (f"Erro na consulta: {e}", [])
-    
+
 # Controle de estado
 if "termo_aceito" not in st.session_state:
     st.session_state.termo_aceito = None
