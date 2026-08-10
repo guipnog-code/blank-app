@@ -11,7 +11,7 @@ import io
 from datetime import datetime
 import time
 import gspread
-from oauth2client.service_account import ServiceAccountCredentials
+from google.oauth2 import service_account
 
 st.set_page_config(
     page_title="Sistema - Ação Correção Monetária",
@@ -63,28 +63,26 @@ GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz8lQ3xhchTyl2
 CHAVE_ADMIN = "Sindicatojus"
 ASSINAFY_API_KEY = "TCJJguVdZTIiMNUZ1nzHtZ-r0d8kvOyVT8-bejN_HHAjws9veiWZdcQ_L8pZ-KMJ"
 
-# --- FUNÇÕES DE CONEXÃO COM O GOOGLE SHEETS ---
-from google.oauth2 import service_account
-
+# --- FUNÇÕES DE CONEXÃO COM O GOOGLE SHEETS (Blindada com Partes) ---
 def obter_credenciais():
-    # Carrega os dados do segredo
-    info = dict(st.secrets["google_sheets"])
-    
-    # GARANTIA: Removemos qualquer caractere de controle estranho
-    # O JSON do Google usa \n literal, o TOML pode interpretar mal
-    info["private_key"] = info["private_key"].replace("\\n", "\n")
-    
-    return service_account.Credentials.from_service_account_info(info)
-
-def obter_credenciais():
-    # Cria o dicionário exatamente como o Google espera
-    info = dict(st.secrets["google_sheets"])
-    # O segredo é que o google-auth lida melhor com as quebras de linha
+    s = st.secrets["google_sheets"]
+    info = {
+        "type": s["type"],
+        "project_id": s["project_id"],
+        "private_key_id": "88da13a3bc6530de64266415996bf098608bc4e5",
+        "private_key": s["private_key_part1"] + s["private_key_part2"],
+        "client_email": s["client_email"],
+        "client_id": s["client_id"],
+        "auth_uri": s["auth_uri"],
+        "token_uri": s["token_uri"],
+        "auth_provider_x509_cert_url": s["auth_provider_x509_cert_url"],
+        "client_x509_cert_url": s["client_x509_cert_url"],
+        "universe_domain": s.get("universe_domain", "googleapis.com")
+    }
     return service_account.Credentials.from_service_account_info(info)
 
 def carregar_servidores_cadastrados():
     try:
-        # Usamos o método autorizado pelo google-auth
         credenciais = obter_credenciais()
         cliente = gspread.authorize(credenciais)
         id_planilha = "1OPl-0WAFUTQt6Nd1VZBTDgXr5SzjvLHNirpwgjf9kXc"
@@ -95,7 +93,6 @@ def carregar_servidores_cadastrados():
         st.error(f"Erro na conexão moderna: {e}")
         return pd.DataFrame()
 
-# ATUALIZE TAMBÉM A CONSULTA DA MATRÍCULA
 def consultar_status_matricula_api(matricula_buscada):
     try:
         credenciais = obter_credenciais()
@@ -185,20 +182,11 @@ if not st.session_state.matricula_verificada:
 # --- DEMAIS FUNÇÕES DO SISTEMA ---
 def salvar_no_excel(dados):
     try:
-        escopo = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-        credenciais_dict = dict(st.secrets["google_sheets"])
-        credenciais = ServiceAccountCredentials.from_json_keyfile_dict(credenciais_dict, escopo)
+        credenciais = obter_credenciais()
         cliente = gspread.authorize(credenciais)
-        
-        # ID da sua planilha oficial
         id_planilha = "1OPl-0WAFUTQt6Nd1VZBTDgXr5SzjvLHNirpwgjf9kXc"
         planilha = cliente.open_by_key(id_planilha)
-        
-        # Acessa a primeira aba (onde ficam os cadastros)
         aba = planilha.get_worksheet(0)
-        
-        # Cria a lista com os valores na mesma ordem das colunas da sua planilha
-        # Certifique-se de que a ordem corresponde exatamente aos cabeçalhos da sua planilha do Google
         nova_linha = [
             dados.get('Local Preenchimento Município', ''),
             dados.get('Local Preenchimento Estado', ''),
@@ -218,8 +206,6 @@ def salvar_no_excel(dados):
             dados.get('Município', ''),
             dados.get('Estado', '')
         ]
-        
-        # Adiciona a linha permanentemente na planilha do Google
         aba.append_row(nova_linha)
         return True
     except Exception as e:
@@ -363,7 +349,9 @@ st.session_state.aba_selecionada = st.radio(
     horizontal=True,
     label_visibility="collapsed"
 )
-st.markdown("---")# --- ABA: SERVIDORES JÁ CADASTRADOS (ÁREA DO ADMINISTRADOR) ---
+st.markdown("---")
+
+# --- ABA: SERVIDORES JÁ CADASTRADOS (ÁREA DO ADMINISTRADOR) ---
 if st.session_state.aba_selecionada == "📂 Servidores Já Cadastrados":
     st.subheader("🔍 Pesquisar e Selecionar Servidor da Planilha")
     if usuario_autorizado:
@@ -518,7 +506,6 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
                 matricula = st.text_input(f"{s(3)}3. Matrícula (SIAPE)", key="input_mat")
                 cargo = st.text_input(f"{s(5)}5. Cargo", key="input_cargo")
                 orgao = st.text_input(f"{s(7)}7. Órgão", key="input_orgao")
-                # NOVO CAMPO DATA DE NASCIMENTO NO LUGAR PEDIDO
                 nascimento = st.text_input(f"{s(9)}9. Data de Nascimento", placeholder="DD/MM/AAAA", key="input_nasc_raw", max_chars=10, on_change=formatar_nasc_callback)
                 ingresso = st.text_input(f"{s(10)}10. Data de Ingresso", placeholder="DD/MM/AAAA", key="input_ing_raw", max_chars=10, on_change=formatar_data_callback)
 
@@ -560,7 +547,7 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
                     "Local Preenchimento Estado": local_estado,
                     "Matrícula": matricula, "Cargo": cargo, "Órgão": orgao, 
                     "Data de Nascimento": nascimento, "Data de Ingresso": ingresso,
-                    "Nome": nome, "CPF": CPF if 'cpf' in locals() else "", "E-mail": email, "RG": rg, "Telefone": telefone,
+                    "Nome": nome, "CPF": cpf, "E-mail": email, "RG": rg, "Telefone": telefone,
                     "Estado Civil": estado_civil, "CEP": cep, "Endereço": endereco, "Município": municipio, "Estado": estado
                 }
                 salvar_no_excel(dados_usuario)
