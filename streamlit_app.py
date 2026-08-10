@@ -63,12 +63,21 @@ GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz8lQ3xhchTyl2
 CHAVE_ADMIN = "Sindicatojus"
 ASSINAFY_API_KEY = "TCJJguVdZTIiMNUZ1nzHtZ-r0d8kvOyVT8-bejN_HHAjws9veiWZdcQ_L8pZ-KMJ"
 
-# --- FUNÇÕES DE CONEXÃO COM O GOOGLE SHEETS ---
+# --- FUNÇÕES DE CONEXÃO COM O GOOGLE SHEETS (Blindada) ---
 def obter_credenciais():
     s = st.secrets["google_sheets"]
-    # Converte os caracteres literais \n em quebras de linha reais exigidas pelo PEM
-    pk = s["private_key"].replace("\\n", "\n")
+    pk = str(s["private_key"])
     
+    # Corrige quebras de linha literais caso venham corrompidas do painel
+    if "\\n" in pk:
+        pk = pk.replace("\\n", "\n")
+        
+    pk = pk.strip()
+    if not pk.startswith("-----BEGIN PRIVATE KEY-----"):
+        pk = "-----BEGIN PRIVATE KEY-----\n" + pk
+    if not pk.endswith("-----END PRIVATE KEY-----"):
+        pk = pk + "\n-----END PRIVATE KEY-----"
+
     info = {
         "type": s["type"],
         "project_id": s["project_id"],
