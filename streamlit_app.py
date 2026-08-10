@@ -63,14 +63,17 @@ GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz8lQ3xhchTyl2
 CHAVE_ADMIN = "Sindicatojus"
 ASSINAFY_API_KEY = "TCJJguVdZTIiMNUZ1nzHtZ-r0d8kvOyVT8-bejN_HHAjws9veiWZdcQ_L8pZ-KMJ"
 
-# --- FUNÇÕES DE CONEXÃO COM O GOOGLE SHEETS (Blindada com Partes) ---
+# --- FUNÇÕES DE CONEXÃO COM O GOOGLE SHEETS (Blindada por Base64) ---
 def obter_credenciais():
     s = st.secrets["google_sheets"]
+    # Decodifica a chave privada de Base64 para texto puro em tempo de execução
+    private_key_decodificada = base64.b64decode(s["private_key_base64"]).decode("utf-8")
+    
     info = {
         "type": s["type"],
         "project_id": s["project_id"],
-        "private_key_id": "88da13a3bc6530de64266415996bf098608bc4e5",
-        "private_key": s["private_key_part1"] + s["private_key_part2"],
+        "private_key_id": s["private_key_id"],
+        "private_key": private_key_decodificada,
         "client_email": s["client_email"],
         "client_id": s["client_id"],
         "auth_uri": s["auth_uri"],
