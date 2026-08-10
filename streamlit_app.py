@@ -74,36 +74,40 @@ def obter_credenciais():
         "https://www.googleapis.com/auth/drive"
     ])
 
+from google.oauth2 import service_account
+
+def obter_credenciais():
+    # Cria o dicionário exatamente como o Google espera
+    info = dict(st.secrets["google_sheets"])
+    # O segredo é que o google-auth lida melhor com as quebras de linha
+    return service_account.Credentials.from_service_account_info(info)
+
 def carregar_servidores_cadastrados():
     try:
-        cliente = gspread.authorize(obter_credenciais())
+        # Usamos o método autorizado pelo google-auth
+        credenciais = obter_credenciais()
+        cliente = gspread.authorize(credenciais)
         id_planilha = "1OPl-0WAFUTQt6Nd1VZBTDgXr5SzjvLHNirpwgjf9kXc"
         planilha = cliente.open_by_key(id_planilha)
         aba = planilha.get_worksheet(0)
         return pd.DataFrame(aba.get_all_records())
     except Exception as e:
-        st.error(f"Erro crítico de conexão: {e}")
+        st.error(f"Erro na conexão moderna: {e}")
         return pd.DataFrame()
+
+# ATUALIZE TAMBÉM A CONSULTA DA MATRÍCULA
 def consultar_status_matricula_api(matricula_buscada):
     try:
-        escopo = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-        credenciais_dict = dict(st.secrets["google_sheets"])
-        credenciais = ServiceAccountCredentials.from_json_keyfile_dict(credenciais_dict, escopo)
+        credenciais = obter_credenciais()
         cliente = gspread.authorize(credenciais)
-        id_planilha = "1OPl-0WAFUTQt6Nd1VZBTDgXr5SzjvLHNirpwgjf9kXc"
-        planilha = cliente.open_by_key(id_planilha)
+        planilha = cliente.open_by_key("1OPl-0WAFUTQt6Nd1VZBTDgXr5SzjvLHNirpwgjf9kXc")
         aba_pesquisa = planilha.worksheet("Ferramenta de Pesquisa")
         aba_pesquisa.update("B2", [[str(matricula_buscada)]])
         time.sleep(1)
-        valores_b6_g6 = aba_pesquisa.row_values(6)[1:7]
-        tem_resultado = any(str(val).strip() != "" for val in valores_b6_g6)
-        if tem_resultado:
-            return "Enviou", valores_b6_g6
-        else:
-            return "Não enviou", []
-    except Exception as e:
-        return f"Erro na consulta: {e}", []
-
+        res = aba_pesquisa.row_values(6)[1:7]
+        return ("Enviou", res) if any(str(v).strip() != "" for v in res) else ("Não enviou", [])
+    except Exception as e: return (f"Erro na consulta: {e}", [])
+    
 # Controle de estado
 if "termo_aceito" not in st.session_state:
     st.session_state.termo_aceito = None
