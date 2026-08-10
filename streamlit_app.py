@@ -64,23 +64,26 @@ CHAVE_ADMIN = "Sindicatojus"
 ASSINAFY_API_KEY = "TCJJguVdZTIiMNUZ1nzHtZ-r0d8kvOyVT8-bejN_HHAjws9veiWZdcQ_L8pZ-KMJ"
 
 # --- FUNÇÕES DE CONEXÃO COM O GOOGLE SHEETS ---
+def obter_credenciais():
+    # Carrega os segredos de forma direta
+    cred_dict = dict(st.secrets["google_sheets"])
+    # Garante que a chave privada tenha exatamente o formato que o Google exige
+    cred_dict["private_key"] = cred_dict["private_key"].replace("\\n", "\n")
+    return ServiceAccountCredentials.from_json_keyfile_dict(cred_dict, [
+        "https://spreadsheets.google.com/feeds", 
+        "https://www.googleapis.com/auth/drive"
+    ])
+
 def carregar_servidores_cadastrados():
     try:
-        escopo = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-        credenciais_dict = dict(st.secrets["google_sheets"])
-        credenciais = ServiceAccountCredentials.from_json_keyfile_dict(credenciais_dict, escopo)
-        cliente = gspread.authorize(credenciais)
+        cliente = gspread.authorize(obter_credenciais())
         id_planilha = "1OPl-0WAFUTQt6Nd1VZBTDgXr5SzjvLHNirpwgjf9kXc"
         planilha = cliente.open_by_key(id_planilha)
         aba = planilha.get_worksheet(0)
-        dados = aba.get_all_records()
-        df = pd.DataFrame(dados)
-        if not df.empty and "Nome" in df.columns:
-            return df
+        return pd.DataFrame(aba.get_all_records())
     except Exception as e:
-        print(f"Erro ao conectar com o Google Planilhas: {e}")
-    return pd.DataFrame()
-
+        st.error(f"Erro crítico de conexão: {e}")
+        return pd.DataFrame()
 def consultar_status_matricula_api(matricula_buscada):
     try:
         escopo = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
