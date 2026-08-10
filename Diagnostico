@@ -1,0 +1,35 @@
+# --- INÍCIO DO DIAGNÓSTICO ---
+st.write("### 🛠️ Painel de Diagnóstico da Chave Privada")
+try:
+    # Ajuste aqui para o nome da variável que você está usando no secrets.toml
+    # Vou assumir que você está usando aquele JSON puro no momento:
+    json_str = st.secrets["google_sheets"]["json_data"]
+    info = json.loads(json_str)
+    pk = info.get("private_key", "")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        st.write("**O que o Python está enxergando (Usando repr):**")
+        st.code(repr(pk[:45])) # Mostra os primeiros 45 caracteres exatamente como a máquina lê
+        st.code(repr(pk[-45:])) # Mostra os últimos 45 caracteres
+        
+    with col2:
+        st.write("**Análise dos caracteres invisíveis:**")
+        st.write(f"Tamanho total: `{len(pk)}` caracteres")
+        st.write(f"Possui barra dupla e N (`\\\\n`)? `{ '\\n' in pk }`")
+        st.write(f"Possui quebra de linha real (`\\n`)? `{ '\n' in pk }`")
+        st.write(f"A chave tem o cabeçalho correto? `{pk.startswith('-----BEGIN PRIVATE KEY-----')}`")
+        
+    # Tenta converter para ver se a biblioteca do Google aceita:
+    try:
+        pk_corrigida = pk.replace("\\n", "\n")
+        info["private_key"] = pk_corrigida
+        service_account.Credentials.from_service_account_info(info)
+        st.success("✅ O Google aceitou a chave após aplicar replace!")
+    except Exception as e:
+        st.error(f"❌ O Google recusou a chave corrigida. Erro: {e}")
+
+except Exception as e:
+    st.error(f"Erro ao acessar as Secrets no diagnóstico: {e}")
+st.markdown("---")
+# --- FIM DO DIAGNÓSTICO ---
