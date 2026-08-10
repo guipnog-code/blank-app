@@ -1,6 +1,6 @@
 streamlit
 pandas
-openpyxl
-pymupdf
+PyMuPDF
+requests
 gspread
 oauth2client
