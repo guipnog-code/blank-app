@@ -63,34 +63,14 @@ GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz8lQ3xhchTyl2
 CHAVE_ADMIN = "Sindicatojus"
 ASSINAFY_API_KEY = "TCJJguVdZTIiMNUZ1nzHtZ-r0d8kvOyVT8-bejN_HHAjws9veiWZdcQ_L8pZ-KMJ"
 
-# --- FUNÇÕES DE CONEXÃO COM O GOOGLE SHEETS (Blindada) ---
+# --- FUNÇÕES DE CONEXÃO COM O GOOGLE SHEETS ---
 def obter_credenciais():
-    s = st.secrets["google_sheets"]
-    pk = str(s["private_key"])
-    
-    # Corrige quebras de linha literais caso venham corrompidas do painel
-    if "\\n" in pk:
-        pk = pk.replace("\\n", "\n")
-        
-    pk = pk.strip()
-    if not pk.startswith("-----BEGIN PRIVATE KEY-----"):
-        pk = "-----BEGIN PRIVATE KEY-----\n" + pk
-    if not pk.endswith("-----END PRIVATE KEY-----"):
-        pk = pk + "\n-----END PRIVATE KEY-----"
-
-    info = {
-        "type": s["type"],
-        "project_id": s["project_id"],
-        "private_key_id": s["private_key_id"],
-        "private_key": pk,
-        "client_email": s["client_email"],
-        "client_id": s["client_id"],
-        "auth_uri": s["auth_uri"],
-        "token_uri": s["token_uri"],
-        "auth_provider_x509_cert_url": s["auth_provider_x509_cert_url"],
-        "client_x509_cert_url": s["client_x509_cert_url"],
-        "universe_domain": s.get("universe_domain", "googleapis.com")
-    }
+    info = dict(st.secrets["google_sheets"])
+    if "private_key" in info and isinstance(info["private_key"], str):
+        pk = info["private_key"]
+        if "\\n" in pk:
+            pk = pk.replace("\\n", "\n")
+        info["private_key"] = pk.strip()
     return service_account.Credentials.from_service_account_info(info)
 
 def carregar_servidores_cadastrados():
@@ -115,7 +95,8 @@ def consultar_status_matricula_api(matricula_buscada):
         time.sleep(1)
         res = aba_pesquisa.row_values(6)[1:7]
         return ("Enviou", res) if any(str(v).strip() != "" for v in res) else ("Não enviou", [])
-    except Exception as e: return (f"Erro na consulta: {e}", [])
+    except Exception as e: 
+        return (f"Erro na consulta: {e}", [])
 
 # Controle de estado
 if "termo_aceito" not in st.session_state:
@@ -199,6 +180,7 @@ def salvar_no_excel(dados):
         id_planilha = "1OPl-0WAFUTQt6Nd1VZBTDgXr5SzjvLHNirpwgjf9kXc"
         planilha = cliente.open_by_key(id_planilha)
         aba = planilha.get_worksheet(0)
+        
         nova_linha = [
             dados.get('Local Preenchimento Município', ''),
             dados.get('Local Preenchimento Estado', ''),
@@ -218,6 +200,7 @@ def salvar_no_excel(dados):
             dados.get('Município', ''),
             dados.get('Estado', '')
         ]
+        
         aba.append_row(nova_linha)
         return True
     except Exception as e:
