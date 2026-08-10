@@ -65,23 +65,15 @@ ASSINAFY_API_KEY = "TCJJguVdZTIiMNUZ1nzHtZ-r0d8kvOyVT8-bejN_HHAjws9veiWZdcQ_L8pZ
 
 # --- FUNÇÕES DE CONEXÃO COM O GOOGLE SHEETS ---
 def obter_credenciais():
-    s = st.secrets["google_sheets"]
-    # Decodifica de Base64 para a string da chave PEM original
-    pk_raw = base64.b64decode(s["private_key_b64"]).decode("utf-8")
+    # Carrega a string JSON pura do segredo
+    json_str = st.secrets["google_sheets"]["json_data"]
+    # Converte a string para um dicionário Python
+    info = json.loads(json_str)
     
-    info = {
-        "type": s["type"],
-        "project_id": s["project_id"],
-        "private_key_id": s["private_key_id"],
-        "private_key": pk_raw,
-        "client_email": s["client_email"],
-        "client_id": s["client_id"],
-        "auth_uri": s["auth_uri"],
-        "token_uri": s["token_uri"],
-        "auth_provider_x509_cert_url": s["auth_provider_x509_cert_url"],
-        "client_x509_cert_url": s["client_x509_cert_url"],
-        "universe_domain": s.get("universe_domain", "googleapis.com")
-    }
+    # O Google Auth exige que \n sejam quebras de linha reais
+    if "\\n" in info["private_key"]:
+        info["private_key"] = info["private_key"].replace("\\n", "\n")
+        
     return service_account.Credentials.from_service_account_info(info)
 
 def carregar_servidores_cadastrados():
