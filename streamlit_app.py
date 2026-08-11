@@ -3,7 +3,6 @@ import streamlit as st
 import pandas as pd
 import fitz  # PyMuPDF
 import requests
-import base64
 import json
 import urllib.parse
 import zipfile
@@ -88,7 +87,7 @@ def carregar_servidores_cadastrados():
         planilha = cliente.open_by_key(id_planilha)
         aba = planilha.get_worksheet(0)
         
-        # Correção do erro de cabeçalhos vazios: usando get_all_values() em vez de get_all_records()
+        # Lendo todos os valores para evitar erro de cabeçalho duplicado
         valores = aba.get_all_values()
         
         if not valores or len(valores) < 2:
@@ -97,7 +96,13 @@ def carregar_servidores_cadastrados():
         cabecalhos = valores[0]
         linhas = valores[1:]
         
-        return pd.DataFrame(linhas, columns=cabecalhos)
+        df = pd.DataFrame(linhas, columns=cabecalhos)
+        
+        # --- FILTRO ANTIFANTASMA: Remove linhas em branco que o Google Sheets manda ---
+        if 'Nome' in df.columns:
+            df = df[df['Nome'].astype(str).str.strip() != '']
+            
+        return df
         
     except Exception as e:
         st.error(f"Erro ao carregar dados da planilha: {e}")
@@ -229,17 +234,13 @@ def enviar_para_google_drive(nome_servidor, lista_arquivos):
     payload = {"nomeServidor": nome_servidor, "arquivos": lista_arquivos}
     try:
         headers = {"Content-Type": "application/json"}
+        import base64 # Importação global garantida
         response = requests.post(GOOGLE_APPS_SCRIPT_URL, data=json.dumps(payload), headers=headers)
         resultado = response.json()
         return resultado.get("status") == "sucesso"
     except Exception as e:
         print(f"Erro ao conectar: {e}")
         return False
-
-def enviar_para_assinafy(nome, email, pdf_bytes, nome_arquivo):
-    if not pdf_bytes:
-        return False, "PDF não foi gerado."
-    return False, "ASSINATURA_MANUAL_NECESSARIA"
 
 def formatar_data_callback():
     val = st.session_state.get("input_ing_raw", "")
@@ -550,10 +551,10 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
             btn_salvar = st.button("💾 Salvar na Planilha e Gerar Documentos", key="btn_salvar_novo")
 
         if btn_salvar:
-            if not nome.strip():
-                st.error("⚠️ Por favor, preencha o campo 'Nome completo'.")
-            elif not email.strip():
-                st.error("⚠️ Por favor, preencha o campo 'E-mail'.")
+            # --- PROTEÇÃO ADICIONADA AQUI ---
+            # Só avança se o usuário tiver preenchido os 17 campos do formulário
+            if not todos_preenchidos:
+                st.error("⚠️ Atenção: Por favor, preencha TODOS os 17 campos do formulário antes de salvar.")
             else:
                 dados_usuario = {
                     "Local Preenchimento Município": local_municipio,
@@ -579,6 +580,7 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
             col_dl1, col_dl2 = st.columns(2)
             if st.session_state.get("pdf_proc"):
                 with col_dl1:
+                    import base64 # Import local de segurança
                     st.download_button(label="📄 Baixar Procuração", data=st.session_state.pdf_proc, file_name="Procuracao_Preenchida.pdf", mime="application/pdf", key=f"dl_proc_{sufixo_chave}")
             if st.session_state.get("pdf_termo"):
                 with col_dl2:
