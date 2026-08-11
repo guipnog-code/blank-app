@@ -114,10 +114,25 @@ def consultar_status_matricula_api(matricula_buscada):
         cliente = gspread.authorize(credenciais)
         planilha = cliente.open_by_key("1OPl-0WAFUTQt6Nd1VZBTDgXr5SzjvLHNirpwgjf9kXc")
         aba_pesquisa = planilha.worksheet("Ferramenta de Pesquisa")
+        
+        # Insere a matrícula para o Google Sheets calcular
         aba_pesquisa.update("B2", [[str(matricula_buscada)]])
-        time.sleep(1)
+        
+        # Aumentamos para 1.5s para garantir que a fórmula do Sheets tenha tempo de atualizar
+        time.sleep(1.5) 
+        
+        # Puxa os resultados da linha 6 (colunas B a G)
         res = aba_pesquisa.row_values(6)[1:7]
-        return ("Enviou", res) if any(str(v).strip() != "" for v in res) else ("Não enviou", [])
+        
+        # LISTA DE FALSOS POSITIVOS: 
+        # Tudo o que o Google Sheets pode retornar quando não acha a pessoa
+        falsos_positivos = ["", "#N/A", "#N/D", "#REF!", "#VALUE!", "#VALOR!", "0", "-", "None", "False"]
+        
+        # Verifica se existe algum dado real nessas células que não seja um dos erros acima
+        tem_dado_real = any(str(v).strip().upper() not in falsos_positivos for v in res)
+        
+        return ("Enviou", res) if tem_dado_real else ("Não enviou", [])
+        
     except Exception as e: 
         return (f"Erro na consulta: {e}", [])
 
