@@ -124,22 +124,22 @@ def consultar_status_matricula_api(matricula_buscada):
         # Puxa a linha 6 inteira
         linha_6 = aba_pesquisa.row_values(6)
         
-        # Como o gspread corta colunas vazias no final, garantimos que a lista "res" tenha as 6 colunas (B até G)
+        # Colunas de verificação de documentos (B a G, índices 1 a 6)
         res = []
-        for i in range(1, 7): # Índices 1 a 6 equivalem a B, C, D, E, F e G
+        for i in range(1, 7):
             if i < len(linha_6):
                 res.append(linha_6[i])
             else:
-                res.append("") # Preenche com vazio se a coluna não existir
+                res.append("")
         
         # Lista de erros e itens vazios que não são considerados "preenchidos"
         falsos_positivos = ["", "#N/A", "#N/D", "#REF!", "#VALUE!", "#VALOR!", "0", "-", "NONE", "FALSE"]
         
-        # Aqui está a mágica: usamos o 'all()' em vez de 'any()'
-        # TODAS as colunas de B6 a G6 devem ter dados reais para considerar como "Enviou"
+        # Verifica se TODAS as colunas B6 a G6 estão preenchidas validamente
         todas_preenchidas = all(str(v).strip().upper() not in falsos_positivos for v in res)
         
-        return ("Enviou", res) if todas_preenchidas else ("Não enviou", [])
+        # Se NÃO enviou, retorna a linha_6 para podermos usar o Nome, Vinculo e Sindicato no pré-preenchimento
+        return ("Enviou", res) if todas_preenchidas else ("Não enviou", linha_6)
         
     except Exception as e: 
         return (f"Erro na consulta: {e}", [])
@@ -211,7 +211,24 @@ if not st.session_state.matricula_verificada:
                         elif status_envio == "Não enviou":
                             st.session_state.matricula_verificada = True
                             st.session_state["input_mat"] = mat_check.strip()
-                            st.success("✅ Verificação concluída! Liberando formulário...")
+                            
+                            # --- PRÉ-PREENCHIMENTO DE DADOS DA PLANILHA ---
+                            # A planilha retorna: Índice 0 = Nome, 1 = Vínculo, 2 = Sindicato
+                            falsos_pos = ["", "#N/A", "#N/D", "#REF!", "#VALUE!", "#VALOR!", "0", "-", "NONE", "FALSE"]
+                            
+                            # 1. Pré-preenche o Nome
+                            if len(dados_envio) > 0 and str(dados_envio[0]).strip().upper() not in falsos_pos:
+                                st.session_state["input_nome"] = str(dados_envio[0]).strip()
+                                
+                            # 2. Pré-preenche o Vínculo -> no campo Cargo
+                            if len(dados_envio) > 1 and str(dados_envio[1]).strip().upper() not in falsos_pos:
+                                st.session_state["input_cargo"] = str(dados_envio[1]).strip()
+                                
+                            # 3. Pré-preenche o Sindicato -> no campo Órgão
+                            if len(dados_envio) > 2 and str(dados_envio[2]).strip().upper() not in falsos_pos:
+                                st.session_state["input_orgao"] = str(dados_envio[2]).strip()
+                            
+                            st.success("✅ Verificação concluída! Carregando seus dados no formulário...")
                             time.sleep(1)
                             st.rerun()
                         else:
