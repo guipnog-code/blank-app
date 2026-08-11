@@ -65,14 +65,17 @@ ASSINAFY_API_KEY = "TCJJguVdZTIiMNUZ1nzHtZ-r0d8kvOyVT8-bejN_HHAjws9veiWZdcQ_L8pZ
 
 # --- FUNÇÕES DE CONEXÃO COM O GOOGLE SHEETS ---
 def obter_credenciais():
-    # Agora que o secrets está com aspas triplas, o Streamlit já lê o dicionário perfeito
     info = dict(st.secrets["google_sheets"])
     
-    # Tratamento rápido de segurança caso venha alguma string corrompida com "\n"
     if "\\n" in info["private_key"]:
         info["private_key"] = info["private_key"].replace("\\n", "\n")
-        
-    return service_account.Credentials.from_service_account_info(info)
+    
+    escopos = [
+        "https://www.googleapis.com/auth/spreadsheets",
+        "https://www.googleapis.com/auth/drive"
+    ]
+    
+    return service_account.Credentials.from_service_account_info(info, scopes=escopos)
 
 def carregar_servidores_cadastrados():
     try:
