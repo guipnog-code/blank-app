@@ -97,7 +97,7 @@ def consultar_status_matricula_api(matricula_buscada):
         aba_pesquisa = planilha.worksheet("Ferramenta de Pesquisa")
         aba_pesquisa.update("B2", [[str(matricula_buscada)]])
         time.sleep(1)
-        res = aba_pesquisa.row_values(6)[0:7]  # Colunas A até G
+        res = aba_pesquisa.row_values(6)[0:7]
         todas_preenchidas = len(res) == 7 and all(str(v).strip() != "" for v in res)
         return ("Enviou", res) if todas_preenchidas else ("Não enviou", [])
     except Exception as e:
