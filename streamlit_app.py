@@ -213,22 +213,14 @@ if not st.session_state.matricula_verificada:
                             st.session_state["input_mat"] = mat_check.strip()
                             
                             # --- PRÉ-PREENCHIMENTO DE DADOS DA PLANILHA ---
-                            # A planilha retorna: Índice 0 = Nome, 1 = Vínculo, 2 = Sindicato
+                            # A planilha retorna a linha 6: Índice 0 = Nome
                             falsos_pos = ["", "#N/A", "#N/D", "#REF!", "#VALUE!", "#VALOR!", "0", "-", "NONE", "FALSE"]
                             
-                            # 1. Pré-preenche o Nome
+                            # Pré-preenche APENAS o Nome (ignorando Cargo e Órgão)
                             if len(dados_envio) > 0 and str(dados_envio[0]).strip().upper() not in falsos_pos:
                                 st.session_state["input_nome"] = str(dados_envio[0]).strip()
-                                
-                            # 2. Pré-preenche o Vínculo -> no campo Cargo
-                            if len(dados_envio) > 1 and str(dados_envio[1]).strip().upper() not in falsos_pos:
-                                st.session_state["input_cargo"] = str(dados_envio[1]).strip()
-                                
-                            # 3. Pré-preenche o Sindicato -> no campo Órgão
-                            if len(dados_envio) > 2 and str(dados_envio[2]).strip().upper() not in falsos_pos:
-                                st.session_state["input_orgao"] = str(dados_envio[2]).strip()
                             
-                            st.success("✅ Verificação concluída! Carregando seus dados no formulário...")
+                            st.success("✅ Verificação concluída! Carregando o formulário...")
                             time.sleep(1)
                             st.rerun()
                         else:
