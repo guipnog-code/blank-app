@@ -67,15 +67,18 @@ ASSINAFY_API_KEY = "TCJJguVdZTIiMNUZ1nzHtZ-r0d8kvOyVT8-bejN_HHAjws9veiWZdcQ_L8pZ
 def obter_credenciais():
     info = dict(st.secrets["google_sheets"])
     
+    # Tratamento de segurança caso venha alguma string corrompida com "\n"
     if "\\n" in info["private_key"]:
         info["private_key"] = info["private_key"].replace("\\n", "\n")
+        
+    credenciais = service_account.Credentials.from_service_account_info(info)
     
+    # Adicionando os ESCOPOS (Permissões) obrigatórios para o Gspread funcionar
     escopos = [
         "https://www.googleapis.com/auth/spreadsheets",
         "https://www.googleapis.com/auth/drive"
     ]
-    
-    return service_account.Credentials.from_service_account_info(info, scopes=escopos)
+    return credenciais.with_scopes(escopos)
 
 def carregar_servidores_cadastrados():
     try:
@@ -84,9 +87,20 @@ def carregar_servidores_cadastrados():
         id_planilha = "1OPl-0WAFUTQt6Nd1VZBTDgXr5SzjvLHNirpwgjf9kXc"
         planilha = cliente.open_by_key(id_planilha)
         aba = planilha.get_worksheet(0)
-        return pd.DataFrame(aba.get_all_records())
+        
+        # Correção do erro de cabeçalhos vazios: usando get_all_values() em vez de get_all_records()
+        valores = aba.get_all_values()
+        
+        if not valores or len(valores) < 2:
+            return pd.DataFrame()
+            
+        cabecalhos = valores[0]
+        linhas = valores[1:]
+        
+        return pd.DataFrame(linhas, columns=cabecalhos)
+        
     except Exception as e:
-        st.error(f"Erro na conexão moderna: {e}")
+        st.error(f"Erro ao carregar dados da planilha: {e}")
         return pd.DataFrame()
 
 def consultar_status_matricula_api(matricula_buscada):
@@ -97,10 +111,9 @@ def consultar_status_matricula_api(matricula_buscada):
         aba_pesquisa = planilha.worksheet("Ferramenta de Pesquisa")
         aba_pesquisa.update("B2", [[str(matricula_buscada)]])
         time.sleep(1)
-        res = aba_pesquisa.row_values(6)[0:7]
-        todas_preenchidas = len(res) == 7 and all(str(v).strip() != "" for v in res)
-        return ("Enviou", res) if todas_preenchidas else ("Não enviou", [])
-    except Exception as e:
+        res = aba_pesquisa.row_values(6)[1:7]
+        return ("Enviou", res) if any(str(v).strip() != "" for v in res) else ("Não enviou", [])
+    except Exception as e: 
         return (f"Erro na consulta: {e}", [])
 
 # Controle de estado
