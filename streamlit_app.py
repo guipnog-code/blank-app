@@ -124,6 +124,16 @@ def consultar_status_matricula_api(matricula_buscada):
         # Puxa a linha 6 inteira
         linha_6 = aba_pesquisa.row_values(6)
         
+        # Lista de erros e itens vazios que não são considerados "preenchidos"
+        falsos_positivos = ["", "#N/A", "#N/D", "#REF!", "#VALUE!", "#VALOR!", "0", "-", "NONE", "FALSE"]
+        
+        # --- 1. VERIFICA SE O SERVIDOR EXISTE ---
+        # O nome fica na primeira coluna (índice 0). Se retornar erro, a pessoa não está na base.
+        nome_encontrado = str(linha_6[0]).strip().upper() if len(linha_6) > 0 else ""
+        if nome_encontrado in falsos_positivos:
+            return ("Sem direito", [])
+        
+        # --- 2. VERIFICA SE A PESSOA JÁ ENVIOU OS DOCUMENTOS ---
         # Colunas de verificação de documentos (B a G, índices 1 a 6)
         res = []
         for i in range(1, 7):
@@ -131,14 +141,11 @@ def consultar_status_matricula_api(matricula_buscada):
                 res.append(linha_6[i])
             else:
                 res.append("")
-        
-        # Lista de erros e itens vazios que não são considerados "preenchidos"
-        falsos_positivos = ["", "#N/A", "#N/D", "#REF!", "#VALUE!", "#VALOR!", "0", "-", "NONE", "FALSE"]
-        
+                
         # Verifica se TODAS as colunas B6 a G6 estão preenchidas validamente
         todas_preenchidas = all(str(v).strip().upper() not in falsos_positivos for v in res)
         
-        # Se NÃO enviou, retorna a linha_6 para podermos usar o Nome, Vinculo e Sindicato no pré-preenchimento
+        # Se NÃO enviou, retorna a linha_6 para podermos usar o Nome no pré-preenchimento
         return ("Enviou", res) if todas_preenchidas else ("Não enviou", linha_6)
         
     except Exception as e: 
@@ -205,18 +212,23 @@ if not st.session_state.matricula_verificada:
                 else:
                     with st.spinner("Consultando status no sistema..."):
                         status_envio, dados_envio = consultar_status_matricula_api(mat_check.strip())
-                        if status_envio == "Enviou":
+                        
+                        if status_envio == "Sem direito":
+                            st.error("🚫 **Acesso Bloqueado.**\n\nIdentificamos que esta matrícula não possui direito à ação. Portanto, não é necessário preencher o formulário.")
+                            st.stop()
+                            
+                        elif status_envio == "Enviou":
                             st.error("🚫 **Acesso Bloqueado: Documentação Já Enviada!**\n\nIdentificamos que você já enviou os documentos necessários.")
                             st.stop()
+                            
                         elif status_envio == "Não enviou":
                             st.session_state.matricula_verificada = True
                             st.session_state["input_mat"] = mat_check.strip()
                             
                             # --- PRÉ-PREENCHIMENTO DE DADOS DA PLANILHA ---
-                            # A planilha retorna a linha 6: Índice 0 = Nome
                             falsos_pos = ["", "#N/A", "#N/D", "#REF!", "#VALUE!", "#VALOR!", "0", "-", "NONE", "FALSE"]
                             
-                            # Pré-preenche APENAS o Nome (ignorando Cargo e Órgão)
+                            # Pré-preenche APENAS o Nome (índice 0)
                             if len(dados_envio) > 0 and str(dados_envio[0]).strip().upper() not in falsos_pos:
                                 st.session_state["input_nome"] = str(dados_envio[0]).strip()
                             
