@@ -118,20 +118,28 @@ def consultar_status_matricula_api(matricula_buscada):
         # Insere a matrícula para o Google Sheets calcular
         aba_pesquisa.update("B2", [[str(matricula_buscada)]])
         
-        # Aumentamos para 1.5s para garantir que a fórmula do Sheets tenha tempo de atualizar
+        # Aguarda a fórmula do Sheets atualizar
         time.sleep(1.5) 
         
-        # Puxa os resultados da linha 6 (colunas B a G)
-        res = aba_pesquisa.row_values(6)[1:7]
+        # Puxa a linha 6 inteira
+        linha_6 = aba_pesquisa.row_values(6)
         
-        # LISTA DE FALSOS POSITIVOS: 
-        # Tudo o que o Google Sheets pode retornar quando não acha a pessoa
-        falsos_positivos = ["", "#N/A", "#N/D", "#REF!", "#VALUE!", "#VALOR!", "0", "-", "None", "False"]
+        # Como o gspread corta colunas vazias no final, garantimos que a lista "res" tenha as 6 colunas (B até G)
+        res = []
+        for i in range(1, 7): # Índices 1 a 6 equivalem a B, C, D, E, F e G
+            if i < len(linha_6):
+                res.append(linha_6[i])
+            else:
+                res.append("") # Preenche com vazio se a coluna não existir
         
-        # Verifica se existe algum dado real nessas células que não seja um dos erros acima
-        tem_dado_real = any(str(v).strip().upper() not in falsos_positivos for v in res)
+        # Lista de erros e itens vazios que não são considerados "preenchidos"
+        falsos_positivos = ["", "#N/A", "#N/D", "#REF!", "#VALUE!", "#VALOR!", "0", "-", "NONE", "FALSE"]
         
-        return ("Enviou", res) if tem_dado_real else ("Não enviou", [])
+        # Aqui está a mágica: usamos o 'all()' em vez de 'any()'
+        # TODAS as colunas de B6 a G6 devem ter dados reais para considerar como "Enviou"
+        todas_preenchidas = all(str(v).strip().upper() not in falsos_positivos for v in res)
+        
+        return ("Enviou", res) if todas_preenchidas else ("Não enviou", [])
         
     except Exception as e: 
         return (f"Erro na consulta: {e}", [])
