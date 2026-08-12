@@ -342,7 +342,7 @@ def preencher_documentos_oficiais(dados):
         pag_proc.insert_text((457, 260), str(dados.get('CEP', '')), fontsize=9, color=(0,0,0))
         
         # INSERÇÃO DA DATA NA PROCURAÇÃO (PÁGINA 1)
-        pag_proc.insert_text((57, 675), local_data_str, fontsize=9, color=(0,0,0))
+        pag_proc.insert_text((57, 672), local_data_str, fontsize=9, color=(0,0,0))
         
         pdf_procuracao_bytes = doc_proc.tobytes()
         doc_proc.close()
@@ -593,10 +593,8 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
             btn_salvar = st.button("💾 Salvar na Planilha e Gerar Documentos", key="btn_salvar_novo")
 
         if btn_salvar:
-            if not nome.strip():
-                st.error("⚠️ Por favor, preencha o campo 'Nome completo'.")
-            elif not email.strip():
-                st.error("⚠️ Por favor, preencha o campo 'E-mail'.")
+            if not todos_preenchidos:
+                st.error("⚠️ Atenção: Por favor, preencha TODOS os 17 campos do formulário antes de salvar.")
             else:
                 dados_usuario = {
                     "Local Preenchimento Município": local_municipio,
@@ -622,7 +620,7 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
             col_dl1, col_dl2 = st.columns(2)
             if st.session_state.get("pdf_proc"):
                 with col_dl1:
-                    import base64
+                    import base64 
                     st.download_button(label="📄 Baixar Procuração", data=st.session_state.pdf_proc, file_name="Procuracao_Preenchida.pdf", mime="application/pdf", key=f"dl_proc_{sufixo_chave}")
             if st.session_state.get("pdf_termo"):
                 with col_dl2:
