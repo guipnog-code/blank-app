@@ -3,6 +3,7 @@ import streamlit as st
 import pandas as pd
 import fitz  # PyMuPDF
 import requests
+import base64
 import json
 import urllib.parse
 import zipfile
@@ -65,14 +66,10 @@ ASSINAFY_API_KEY = "TCJJguVdZTIiMNUZ1nzHtZ-r0d8kvOyVT8-bejN_HHAjws9veiWZdcQ_L8pZ
 # --- FUNÇÕES DE CONEXÃO COM O GOOGLE SHEETS ---
 def obter_credenciais():
     info = dict(st.secrets["google_sheets"])
-    
-    # Tratamento de segurança caso venha alguma string corrompida com "\n"
     if "\\n" in info["private_key"]:
         info["private_key"] = info["private_key"].replace("\\n", "\n")
         
     credenciais = service_account.Credentials.from_service_account_info(info)
-    
-    # Adicionando os ESCOPOS (Permissões) obrigatórios para o Gspread funcionar
     escopos = [
         "https://www.googleapis.com/auth/spreadsheets",
         "https://www.googleapis.com/auth/drive"
@@ -87,7 +84,6 @@ def carregar_servidores_cadastrados():
         planilha = cliente.open_by_key(id_planilha)
         aba = planilha.get_worksheet(0)
         
-        # Lendo todos os valores para evitar erro de cabeçalho duplicado
         valores = aba.get_all_values()
         
         if not valores or len(valores) < 2:
@@ -98,7 +94,6 @@ def carregar_servidores_cadastrados():
         
         df = pd.DataFrame(linhas, columns=cabecalhos)
         
-        # --- FILTRO ANTIFANTASMA: Remove linhas em branco que o Google Sheets manda ---
         if 'Nome' in df.columns:
             df = df[df['Nome'].astype(str).str.strip() != '']
             
@@ -115,26 +110,17 @@ def consultar_status_matricula_api(matricula_buscada):
         planilha = cliente.open_by_key("1OPl-0WAFUTQt6Nd1VZBTDgXr5SzjvLHNirpwgjf9kXc")
         aba_pesquisa = planilha.worksheet("Ferramenta de Pesquisa")
         
-        # Insere a matrícula para o Google Sheets calcular
         aba_pesquisa.update("B2", [[str(matricula_buscada)]])
-        
-        # Aguarda a fórmula do Sheets atualizar
         time.sleep(1.5) 
         
-        # Puxa a linha 6 inteira
         linha_6 = aba_pesquisa.row_values(6)
         
-        # Lista de erros e itens vazios que não são considerados "preenchidos"
         falsos_positivos = ["", "#N/A", "#N/D", "#REF!", "#VALUE!", "#VALOR!", "0", "-", "NONE", "FALSE"]
         
-        # --- 1. VERIFICA SE O SERVIDOR EXISTE ---
-        # O nome fica na primeira coluna (índice 0). Se retornar erro, a pessoa não está na base.
         nome_encontrado = str(linha_6[0]).strip().upper() if len(linha_6) > 0 else ""
         if nome_encontrado in falsos_positivos:
             return ("Sem direito", [])
         
-        # --- 2. VERIFICA SE A PESSOA JÁ ENVIOU OS DOCUMENTOS ---
-        # Colunas de verificação de documentos (B a G, índices 1 a 6)
         res = []
         for i in range(1, 7):
             if i < len(linha_6):
@@ -142,10 +128,8 @@ def consultar_status_matricula_api(matricula_buscada):
             else:
                 res.append("")
                 
-        # Verifica se TODAS as colunas B6 a G6 estão preenchidas validamente
         todas_preenchidas = all(str(v).strip().upper() not in falsos_positivos for v in res)
         
-        # Se NÃO enviou, retorna a linha_6 para podermos usar o Nome no pré-preenchimento
         return ("Enviou", res) if todas_preenchidas else ("Não enviou", linha_6)
         
     except Exception as e: 
@@ -225,10 +209,8 @@ if not st.session_state.matricula_verificada:
                             st.session_state.matricula_verificada = True
                             st.session_state["input_mat"] = mat_check.strip()
                             
-                            # --- PRÉ-PREENCHIMENTO DE DADOS DA PLANILHA ---
                             falsos_pos = ["", "#N/A", "#N/D", "#REF!", "#VALUE!", "#VALOR!", "0", "-", "NONE", "FALSE"]
                             
-                            # Pré-preenche APENAS o Nome (índice 0)
                             if len(dados_envio) > 0 and str(dados_envio[0]).strip().upper() not in falsos_pos:
                                 st.session_state["input_nome"] = str(dados_envio[0]).strip()
                             
@@ -278,13 +260,18 @@ def enviar_para_google_drive(nome_servidor, lista_arquivos):
     payload = {"nomeServidor": nome_servidor, "arquivos": lista_arquivos}
     try:
         headers = {"Content-Type": "application/json"}
-        import base64 # Importação global garantida
+        import base64
         response = requests.post(GOOGLE_APPS_SCRIPT_URL, data=json.dumps(payload), headers=headers)
         resultado = response.json()
         return resultado.get("status") == "sucesso"
     except Exception as e:
         print(f"Erro ao conectar: {e}")
         return False
+
+def enviar_para_assinafy(nome, email, pdf_bytes, nome_arquivo):
+    if not pdf_bytes:
+        return False, "PDF não foi gerado."
+    return False, "ASSINATURA_MANUAL_NECESSARIA"
 
 def formatar_data_callback():
     val = st.session_state.get("input_ing_raw", "")
@@ -353,7 +340,10 @@ def preencher_documentos_oficiais(dados):
         pag_proc.insert_text((99, 260), str(dados.get('Município', '')), fontsize=9, color=(0,0,0))
         pag_proc.insert_text((392, 260), str(dados.get('Estado', '')), fontsize=9, color=(0,0,0))
         pag_proc.insert_text((457, 260), str(dados.get('CEP', '')), fontsize=9, color=(0,0,0))
-        pag_proc.insert_text((90, 715), local_data_str, fontsize=9, color=(0,0,0))
+        
+        # INSERÇÃO DA DATA NA PROCURAÇÃO (PÁGINA 1)
+        pag_proc.insert_text((57, 675), local_data_str, fontsize=9, color=(0,0,0))
+        
         pdf_procuracao_bytes = doc_proc.tobytes()
         doc_proc.close()
 
@@ -364,7 +354,15 @@ def preencher_documentos_oficiais(dados):
         pag_termo.insert_text((82, 170), str(dados.get('CPF', '')), fontsize=9, color=(0,0,0))
         pag_termo.insert_text((265, 170), str(dados.get('Matrícula', '')), fontsize=9, color=(0,0,0))
         pag_termo.insert_text((377, 169), str(dados.get('Cargo', '')), fontsize=9, color=(0,0,0))
-        pag_termo.insert_text((90, 310), local_data_str, fontsize=9, color=(0,0,0))
+        
+        # INSERÇÃO DA DATA NO TERMO (PÁGINA 1)
+        pag_termo.insert_text((112, 690), local_data_str, fontsize=9, color=(0,0,0))
+        
+        # INSERÇÃO DA DATA NO TERMO (PÁGINA 2)
+        if len(doc_termo) > 1:
+            pag_termo_2 = doc_termo[1]
+            pag_termo_2.insert_text((112, 450), local_data_str, fontsize=9, color=(0,0,0))
+            
         pdf_termo_bytes = doc_termo.tobytes()
         doc_termo.close()
 
@@ -595,10 +593,10 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
             btn_salvar = st.button("💾 Salvar na Planilha e Gerar Documentos", key="btn_salvar_novo")
 
         if btn_salvar:
-            # --- PROTEÇÃO ADICIONADA AQUI ---
-            # Só avança se o usuário tiver preenchido os 17 campos do formulário
-            if not todos_preenchidos:
-                st.error("⚠️ Atenção: Por favor, preencha TODOS os 17 campos do formulário antes de salvar.")
+            if not nome.strip():
+                st.error("⚠️ Por favor, preencha o campo 'Nome completo'.")
+            elif not email.strip():
+                st.error("⚠️ Por favor, preencha o campo 'E-mail'.")
             else:
                 dados_usuario = {
                     "Local Preenchimento Município": local_municipio,
@@ -624,7 +622,7 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
             col_dl1, col_dl2 = st.columns(2)
             if st.session_state.get("pdf_proc"):
                 with col_dl1:
-                    import base64 # Import local de segurança
+                    import base64
                     st.download_button(label="📄 Baixar Procuração", data=st.session_state.pdf_proc, file_name="Procuracao_Preenchida.pdf", mime="application/pdf", key=f"dl_proc_{sufixo_chave}")
             if st.session_state.get("pdf_termo"):
                 with col_dl2:
