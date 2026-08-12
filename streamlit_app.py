@@ -89,7 +89,8 @@ def carregar_servidores_cadastrados():
         if not valores or len(valores) < 2:
             return pd.DataFrame()
             
-        cabecalhos = valores[0]
+        # Limpa os cabeçalhos para evitar problemas de espaço em branco
+        cabecalhos = [str(c).strip() for c in valores[0]]
         linhas = valores[1:]
         
         df = pd.DataFrame(linhas, columns=cabecalhos)
@@ -250,10 +251,12 @@ def salvar_no_excel(dados):
             dados.get('Estado', '')
         ]
         
-        aba.append_row(nova_linha)
+        # O parâmetro value_input_option garante que ele vá para a próxima linha visível e respeite formatos
+        aba.append_row(nova_linha, value_input_option="USER_ENTERED")
         return True
     except Exception as e:
-        print(f"Erro ao salvar na planilha: {e}")
+        # Agora o erro vai aparecer na tela caso a API do Google Sheets falhe!
+        st.error(f"Erro técnico ao tentar salvar na planilha: {e}")
         return False
 
 def enviar_para_google_drive(nome_servidor, lista_arquivos):
@@ -267,11 +270,6 @@ def enviar_para_google_drive(nome_servidor, lista_arquivos):
     except Exception as e:
         print(f"Erro ao conectar: {e}")
         return False
-
-def enviar_para_assinafy(nome, email, pdf_bytes, nome_arquivo):
-    if not pdf_bytes:
-        return False, "PDF não foi gerado."
-    return False, "ASSINATURA_MANUAL_NECESSARIA"
 
 def formatar_data_callback():
     val = st.session_state.get("input_ing_raw", "")
@@ -341,7 +339,6 @@ def preencher_documentos_oficiais(dados):
         pag_proc.insert_text((392, 260), str(dados.get('Estado', '')), fontsize=9, color=(0,0,0))
         pag_proc.insert_text((457, 260), str(dados.get('CEP', '')), fontsize=9, color=(0,0,0))
         
-        # INSERÇÃO DA DATA NA PROCURAÇÃO (PÁGINA 1)
         pag_proc.insert_text((59, 669), local_data_str, fontsize=9, color=(0,0,0))
         
         pdf_procuracao_bytes = doc_proc.tobytes()
@@ -355,10 +352,8 @@ def preencher_documentos_oficiais(dados):
         pag_termo.insert_text((265, 170), str(dados.get('Matrícula', '')), fontsize=9, color=(0,0,0))
         pag_termo.insert_text((377, 169), str(dados.get('Cargo', '')), fontsize=9, color=(0,0,0))
         
-        # INSERÇÃO DA DATA NO TERMO (PÁGINA 1)
         pag_termo.insert_text((112, 690), local_data_str, fontsize=9, color=(0,0,0))
         
-        # INSERÇÃO DA DATA NO TERMO (PÁGINA 2)
         if len(doc_termo) > 1:
             pag_termo_2 = doc_termo[1]
             pag_termo_2.insert_text((112, 450), local_data_str, fontsize=9, color=(0,0,0))
@@ -604,12 +599,17 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
                     "Nome": nome, "CPF": cpf, "E-mail": email, "RG": rg, "Telefone": telefone,
                     "Estado Civil": estado_civil, "CEP": cep, "Endereço": endereco, "Município": municipio, "Estado": estado
                 }
-                salvar_no_excel(dados_usuario)
-                st.session_state.dados_usuario = dados_usuario
-                st.session_state.nome_servidor = nome.strip()
-                st.session_state.pdf_proc, st.session_state.pdf_termo = preencher_documentos_oficiais(dados_usuario)
-                st.success(f"✨ Dados salvos com sucesso para **{st.session_state.nome_servidor}**!")
-                st.rerun()
+                
+                # ADICIONADO A CHECAGEM AQUI! Agora ele só avança se a função salvar_no_excel confirmar que deu certo
+                if salvar_no_excel(dados_usuario):
+                    st.session_state.dados_usuario = dados_usuario
+                    st.session_state.nome_servidor = nome.strip()
+                    st.session_state.pdf_proc, st.session_state.pdf_termo = preencher_documentos_oficiais(dados_usuario)
+                    st.success(f"✨ Dados salvos com sucesso para **{st.session_state.nome_servidor}**!")
+                    time.sleep(2)
+                    st.rerun()
+                else:
+                    st.error("❌ Ocorreu um erro ao tentar salvar os dados na planilha. Verifique a conexão.")
 
     if st.session_state.get("pdf_proc") is not None:
         st.markdown("---")
