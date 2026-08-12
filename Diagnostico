@@ -27,7 +27,9 @@ try:
         service_account.Credentials.from_service_account_info(info)
         st.success("✅ O Google aceitou a chave após aplicar replace!")
     except Exception as e:
-        st.error(f"❌ O Google recusou a chave corrigida. Erro: {e}")
+        st.error(f"❌ O Google recusou a chave c
+        
+        orrigida. Erro: {e}")
 
 except Exception as e:
     st.error(f"Erro ao acessar as Secrets no diagnóstico: {e}")
