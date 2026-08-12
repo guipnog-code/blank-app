@@ -342,8 +342,7 @@ def preencher_documentos_oficiais(dados):
         pag_proc.insert_text((457, 260), str(dados.get('CEP', '')), fontsize=9, color=(0,0,0))
         
         # INSERÇÃO DA DATA NA PROCURAÇÃO (PÁGINA 1)
-        # O eixo Y foi ajustado para 715 para descer a linha
-        pag_proc.insert_text((59, 715), local_data_str, fontsize=9, color=(0,0,0))
+        pag_proc.insert_text((59, 663), local_data_str, fontsize=9, color=(0,0,0))
         
         pdf_procuracao_bytes = doc_proc.tobytes()
         doc_proc.close()
