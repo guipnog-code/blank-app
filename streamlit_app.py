@@ -76,20 +76,22 @@ def obter_credenciais():
     ]
     return credenciais.with_scopes(escopos)
 
+@st.cache_data(ttl=60, show_spinner=False)
 def carregar_servidores_cadastrados():
     try:
         credenciais = obter_credenciais()
         cliente = gspread.authorize(credenciais)
         id_planilha = "1OPl-0WAFUTQt6Nd1VZBTDgXr5SzjvLHNirpwgjf9kXc"
         planilha = cliente.open_by_key(id_planilha)
-        aba = planilha.get_worksheet(0)
+        
+        # AGORA CHAMA PELO NOME EXATO DA ABA: "Dados"
+        aba = planilha.worksheet("Dados")
         
         valores = aba.get_all_values()
         
         if not valores or len(valores) < 2:
             return pd.DataFrame()
             
-        # Limpa os cabeçalhos para evitar problemas de espaço em branco
         cabecalhos = [str(c).strip() for c in valores[0]]
         linhas = valores[1:]
         
@@ -101,7 +103,6 @@ def carregar_servidores_cadastrados():
         return df
         
     except Exception as e:
-        st.error(f"Erro ao carregar dados da planilha: {e}")
         return pd.DataFrame()
 
 def consultar_status_matricula_api(matricula_buscada):
@@ -229,7 +230,9 @@ def salvar_no_excel(dados):
         cliente = gspread.authorize(credenciais)
         id_planilha = "1OPl-0WAFUTQt6Nd1VZBTDgXr5SzjvLHNirpwgjf9kXc"
         planilha = cliente.open_by_key(id_planilha)
-        aba = planilha.get_worksheet(0)
+        
+        # AGORA CHAMA PELO NOME EXATO DA ABA: "Dados"
+        aba = planilha.worksheet("Dados")
         
         nova_linha = [
             dados.get('Local Preenchimento Município', ''),
@@ -251,11 +254,9 @@ def salvar_no_excel(dados):
             dados.get('Estado', '')
         ]
         
-        # O parâmetro value_input_option garante que ele vá para a próxima linha visível e respeite formatos
         aba.append_row(nova_linha, value_input_option="USER_ENTERED")
         return True
     except Exception as e:
-        # Agora o erro vai aparecer na tela caso a API do Google Sheets falhe!
         st.error(f"Erro técnico ao tentar salvar na planilha: {e}")
         return False
 
@@ -270,6 +271,11 @@ def enviar_para_google_drive(nome_servidor, lista_arquivos):
     except Exception as e:
         print(f"Erro ao conectar: {e}")
         return False
+
+def enviar_para_assinafy(nome, email, pdf_bytes, nome_arquivo):
+    if not pdf_bytes:
+        return False, "PDF não foi gerado."
+    return False, "ASSINATURA_MANUAL_NECESSARIA"
 
 def formatar_data_callback():
     val = st.session_state.get("input_ing_raw", "")
@@ -600,8 +606,8 @@ elif st.session_state.aba_selecionada == "➕ Novo Cadastro":
                     "Estado Civil": estado_civil, "CEP": cep, "Endereço": endereco, "Município": municipio, "Estado": estado
                 }
                 
-                # ADICIONADO A CHECAGEM AQUI! Agora ele só avança se a função salvar_no_excel confirmar que deu certo
                 if salvar_no_excel(dados_usuario):
+                    st.cache_data.clear() 
                     st.session_state.dados_usuario = dados_usuario
                     st.session_state.nome_servidor = nome.strip()
                     st.session_state.pdf_proc, st.session_state.pdf_termo = preencher_documentos_oficiais(dados_usuario)
